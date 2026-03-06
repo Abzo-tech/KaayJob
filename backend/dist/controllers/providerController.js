@@ -1,0 +1,647 @@
+"use strict";
+/**
+ * Contrôleur pour les prestataires
+ * Gère les opérations sur les profils prestataires
+ * Utilise Prisma pour les queries
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ProviderController = void 0;
+const prisma_1 = require("../config/prisma");
+const client_1 = require("@prisma/client");
+class ProviderController {
+    /**
+     * Liste des prestataires avec filtres
+     */
+    static async getAll(req, res) {
+        try {
+            const { specialty, location, minRating, isAvailable, search, page = 1, limit = 12, } = req.query;
+            const skip = (Number(page) - 1) * Number(limit);
+            // Build where clause
+            const where = {
+                user: {
+                    role: client_1.Role.PRESTATAIRE,
+                },
+            };
+            if (specialty) {
+                where.specialty = { contains: specialty, mode: "insensitive" };
+            }
+            if (location) {
+                where.location = { contains: location, mode: "insensitive" };
+            }
+            if (minRating) {
+                where.rating = { gte: Number(minRating) };
+            }
+            if (isAvailable !== undefined) {
+                where.isAvailable = isAvailable === "true";
+            }
+            if (search) {
+                where.OR = [
+                    { user: { firstName: { contains: search, mode: "insensitive" } } },
+                    { user: { lastName: { contains: search, mode: "insensitive" } } },
+                    { businessName: { contains: search, mode: "insensitive" } },
+                    { specialty: { contains: search, mode: "insensitive" } },
+                ];
+            }
+            const [providers, total] = await Promise.all([
+                prisma_1.prisma.providerProfile.findMany({
+                    where,
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                email: true,
+                                phone: true,
+                                avatar: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        rating: "desc",
+                    },
+                    skip,
+                    take: Number(limit),
+                }),
+                prisma_1.prisma.providerProfile.count({ where }),
+            ]);
+            res.json({
+                success: true,
+                data: providers,
+                pagination: {
+                    page: Number(page),
+                    limit: Number(limit),
+                    total,
+                    totalPages: Math.ceil(total / Number(limit)),
+                },
+            });
+        }
+        catch (error) {
+            console.error("Erreur liste prestataires:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Obtenir un prestataire par ID
+     */
+    static async getById(req, res) {
+        try {
+            const { id } = req.params;
+            const provider = await prisma_1.prisma.providerProfile.findFirst({
+                where: {
+                    id,
+                    user: {
+                        role: client_1.Role.PRESTATAIRE,
+                    },
+                },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phone: true,
+                            avatar: true,
+                            createdAt: true,
+                        },
+                    },
+                    services: {
+                        where: { isActive: true },
+                        orderBy: { createdAt: "desc" },
+                    },
+                },
+            });
+            if (!provider) {
+                res
+                    .status(404)
+                    .json({ success: false, message: "Prestataire non trouvé" });
+                return;
+            }
+            // Get reviews
+            const reviews = await prisma_1.prisma.review.findMany({
+                where: { providerId: id },
+                include: {
+                    client: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            avatar: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: "desc" },
+                take: 10,
+            });
+            res.json({
+                success: true,
+                data: {
+                    ...provider,
+                    reviews,
+                },
+            });
+        }
+        catch (error) {
+            console.error("Erreur récupération prestataire:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Obtenir les services d'un prestataire
+     */
+    static async getServices(req, res) {
+        try {
+            const { id } = req.params;
+            const { page = 1, limit = 20 } = req.query;
+            const skip = (Number(page) - 1) * Number(limit);
+            const [services, total] = await Promise.all([
+                prisma_1.prisma.service.findMany({
+                    where: { providerId: id, isActive: true },
+                    orderBy: { createdAt: "desc" },
+                    skip,
+                    take: Number(limit),
+                }),
+                prisma_1.prisma.service.count({ where: { providerId: id, isActive: true } }),
+            ]);
+            res.json({
+                success: true,
+                data: services,
+                pagination: {
+                    page: Number(page),
+                    limit: Number(limit),
+                    total,
+                    totalPages: Math.ceil(total / Number(limit)),
+                },
+            });
+        }
+        catch (error) {
+            console.error("Erreur services:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Obtenir les avis d'un prestataire
+     */
+    static async getReviews(req, res) {
+        try {
+            const { id } = req.params;
+            const { page = 1, limit = 10 } = req.query;
+            const skip = (Number(page) - 1) * Number(limit);
+            const [reviews, total] = await Promise.all([
+                prisma_1.prisma.review.findMany({
+                    where: { providerId: id },
+                    include: {
+                        client: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                avatar: true,
+                            },
+                        },
+                    },
+                    orderBy: { createdAt: "desc" },
+                    skip,
+                    take: Number(limit),
+                }),
+                prisma_1.prisma.review.count({ where: { providerId: id } }),
+            ]);
+            res.json({
+                success: true,
+                data: reviews,
+                pagination: {
+                    page: Number(page),
+                    limit: Number(limit),
+                    total,
+                    totalPages: Math.ceil(total / Number(limit)),
+                },
+            });
+        }
+        catch (error) {
+            console.error("Erreur avis:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Obtenir les catégories de services des prestataires
+     */
+    static async getCategories(req, res) {
+        try {
+            const specialties = await prisma_1.prisma.providerProfile.findMany({
+                where: {
+                    specialty: {
+                        not: null,
+                    },
+                    NOT: {
+                        specialty: "",
+                    },
+                },
+                select: { specialty: true },
+                distinct: ["specialty"],
+            });
+            res.json({
+                success: true,
+                data: specialties.map((s) => s.specialty).filter(Boolean),
+            });
+        }
+        catch (error) {
+            console.error("Erreur catégories:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Obtenir le profil du prestataire connecté
+     */
+    static async getMyProfile(req, res) {
+        try {
+            const user = req.user;
+            const provider = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phone: true,
+                            avatar: true,
+                            createdAt: true,
+                        },
+                    },
+                },
+            });
+            if (!provider) {
+                res.status(404).json({ success: false, message: "Profil non trouvé" });
+                return;
+            }
+            // Get stats
+            const stats = await prisma_1.prisma.booking.groupBy({
+                by: ["status"],
+                where: {
+                    service: {
+                        providerId: provider.id,
+                    },
+                },
+                _count: true,
+            });
+            res.json({
+                success: true,
+                data: {
+                    ...provider,
+                    stats,
+                },
+            });
+        }
+        catch (error) {
+            console.error("Erreur récupération profil:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Mettre à jour le profil prestataire
+     */
+    static async updateProfile(req, res) {
+        try {
+            const user = req.user;
+            if (user.role !== client_1.Role.PRESTATAIRE) {
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
+                return;
+            }
+            const { businessName, specialty, bio, hourlyRate, yearsExperience, location, address, city, region, postalCode, serviceRadius, isAvailable, } = req.body;
+            const updated = await prisma_1.prisma.providerProfile.update({
+                where: { userId: user.id },
+                data: {
+                    ...(businessName !== undefined && { businessName }),
+                    ...(specialty !== undefined && { specialty }),
+                    ...(bio !== undefined && { bio }),
+                    ...(hourlyRate !== undefined && { hourlyRate: Number(hourlyRate) }),
+                    ...(yearsExperience !== undefined && {
+                        yearsExperience: Number(yearsExperience),
+                    }),
+                    ...(location !== undefined && { location }),
+                    ...(address !== undefined && { address }),
+                    ...(city !== undefined && { city }),
+                    ...(region !== undefined && { region }),
+                    ...(postalCode !== undefined && { postalCode }),
+                    ...(serviceRadius !== undefined && {
+                        serviceRadius: Number(serviceRadius),
+                    }),
+                    ...(isAvailable !== undefined && { isAvailable }),
+                },
+            });
+            res.json({
+                success: true,
+                message: "Profil mis à jour",
+                data: updated,
+            });
+        }
+        catch (error) {
+            console.error("Erreur mise à jour profil:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Mettre à jour la disponibilité
+     */
+    static async updateAvailability(req, res) {
+        try {
+            const user = req.user;
+            if (user.role !== client_1.Role.PRESTATAIRE) {
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
+                return;
+            }
+            const { availability } = req.body;
+            const updated = await prisma_1.prisma.providerProfile.update({
+                where: { userId: user.id },
+                data: {
+                    availability: availability,
+                },
+            });
+            res.json({
+                success: true,
+                message: "Disponibilité mise à jour",
+                data: updated,
+            });
+        }
+        catch (error) {
+            console.error("Erreur mise à jour disponibilité:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Basculer la disponibilité
+     */
+    static async toggleAvailability(req, res) {
+        try {
+            const user = req.user;
+            if (user.role !== client_1.Role.PRESTATAIRE) {
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
+                return;
+            }
+            const provider = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+            });
+            if (!provider) {
+                res.status(404).json({ success: false, message: "Profil non trouvé" });
+                return;
+            }
+            const updated = await prisma_1.prisma.providerProfile.update({
+                where: { userId: user.id },
+                data: {
+                    isAvailable: !provider.isAvailable,
+                },
+            });
+            res.json({
+                success: true,
+                message: updated.isAvailable
+                    ? "Disponibilité activée"
+                    : "Disponibilité désactivée",
+                data: updated,
+            });
+        }
+        catch (error) {
+            console.error("Erreur changement disponibilité:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Obtenir le tableau de bord
+     */
+    static async getDashboard(req, res) {
+        try {
+            const user = req.user;
+            if (user.role !== client_1.Role.PRESTATAIRE) {
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
+                return;
+            }
+            const provider = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+            });
+            if (!provider) {
+                res.status(404).json({ success: false, message: "Profil non trouvé" });
+                return;
+            }
+            // Recent bookings
+            const recentBookings = await prisma_1.prisma.booking.findMany({
+                where: {
+                    service: {
+                        providerId: provider.id,
+                    },
+                },
+                include: {
+                    client: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                        },
+                    },
+                    service: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+                take: 5,
+            });
+            // Today's stats
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayStats = await prisma_1.prisma.booking.groupBy({
+                by: ["status"],
+                where: {
+                    service: {
+                        providerId: provider.id,
+                    },
+                    bookingDate: {
+                        gte: today,
+                    },
+                },
+                _count: true,
+            });
+            // Month earnings
+            const firstDayOfMonth = new Date();
+            firstDayOfMonth.setDate(1);
+            firstDayOfMonth.setHours(0, 0, 0, 0);
+            const monthEarnings = await prisma_1.prisma.booking.aggregate({
+                where: {
+                    service: {
+                        providerId: provider.id,
+                    },
+                    status: "COMPLETED",
+                    updatedAt: {
+                        gte: firstDayOfMonth,
+                    },
+                },
+                _sum: {
+                    totalAmount: true,
+                },
+            });
+            res.json({
+                success: true,
+                data: {
+                    recentBookings,
+                    todayStats,
+                    monthEarnings: monthEarnings._sum.totalAmount || 0,
+                },
+            });
+        }
+        catch (error) {
+            console.error("Erreur tableau de bord:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Obtenir les statistiques
+     */
+    static async getStats(req, res) {
+        try {
+            const user = req.user;
+            const { period = "month" } = req.query;
+            if (user.role !== client_1.Role.PRESTATAIRE) {
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
+                return;
+            }
+            const provider = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+            });
+            if (!provider) {
+                res.status(404).json({ success: false, message: "Profil non trouvé" });
+                return;
+            }
+            // Date filter
+            let dateFilter;
+            const now = new Date();
+            if (period === "week") {
+                dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            }
+            else if (period === "month") {
+                dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            }
+            else if (period === "year") {
+                dateFilter = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+            }
+            // Stats
+            const stats = await prisma_1.prisma.booking.groupBy({
+                by: ["status"],
+                where: {
+                    service: {
+                        providerId: provider.id,
+                    },
+                    ...(dateFilter && {
+                        createdAt: { gte: dateFilter },
+                    }),
+                },
+                _count: true,
+                _sum: {
+                    totalAmount: true,
+                },
+            });
+            // Unique clients
+            const uniqueClients = await prisma_1.prisma.booking.findMany({
+                where: {
+                    service: {
+                        providerId: provider.id,
+                    },
+                    ...(dateFilter && {
+                        createdAt: { gte: dateFilter },
+                    }),
+                },
+                select: {
+                    clientId: true,
+                },
+                distinct: ["clientId"],
+            });
+            // Top services
+            const topServices = await prisma_1.prisma.service.findMany({
+                where: {
+                    providerId: provider.id,
+                },
+                include: {
+                    bookings: {
+                        where: {
+                            ...(dateFilter && {
+                                createdAt: { gte: dateFilter },
+                            }),
+                        },
+                        select: {
+                            id: true,
+                            totalAmount: true,
+                        },
+                    },
+                },
+            });
+            const formattedTopServices = topServices
+                .map((s) => ({
+                id: s.id,
+                name: s.name,
+                bookingsCount: s.bookings.length,
+                revenue: s.bookings.reduce((sum, b) => sum + (b.totalAmount?.toNumber() || 0), 0),
+            }))
+                .sort((a, b) => b.bookingsCount - a.bookingsCount)
+                .slice(0, 5);
+            res.json({
+                success: true,
+                data: {
+                    totalBookings: stats.reduce((sum, s) => sum + s._count, 0),
+                    completedBookings: stats.find((s) => s.status === "COMPLETED")?._count || 0,
+                    cancelledBookings: stats.find((s) => s.status === "CANCELLED")?._count || 0,
+                    totalEarnings: stats.reduce((sum, s) => sum + (s._sum.totalAmount?.toNumber() || 0), 0),
+                    uniqueClients: uniqueClients.length,
+                    topServices: formattedTopServices,
+                },
+            });
+        }
+        catch (error) {
+            console.error("Erreur statistiques:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+    /**
+     * Demander la vérification
+     */
+    static async requestVerification(req, res) {
+        try {
+            const user = req.user;
+            const { documents } = req.body;
+            if (user.role !== client_1.Role.PRESTATAIRE) {
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
+                return;
+            }
+            await prisma_1.prisma.verificationRequest.create({
+                data: {
+                    userId: user.id,
+                    documents: documents,
+                    status: "pending",
+                },
+            });
+            res.json({
+                success: true,
+                message: "Demande de vérification envoyée",
+            });
+        }
+        catch (error) {
+            console.error("Erreur demande vérification:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
+        }
+    }
+}
+exports.ProviderController = ProviderController;
+exports.default = ProviderController;
+//# sourceMappingURL=providerController.js.map
