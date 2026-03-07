@@ -10,6 +10,7 @@ import {
   X,
   Crown,
   CreditCard,
+  Folder,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
@@ -24,6 +25,7 @@ const menuItems = [
   { id: "admin-dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { id: "admin-users", label: "Utilisateurs", icon: Users },
   { id: "admin-services", label: "Services", icon: Briefcase },
+  { id: "admin-categories", label: "Catégories", icon: Folder },
   { id: "admin-bookings", label: "Réservations", icon: Calendar },
   { id: "admin-analytics", label: "Analyses", icon: BarChart3 },
   { id: "admin-subscriptions", label: "Abonnements", icon: Crown },

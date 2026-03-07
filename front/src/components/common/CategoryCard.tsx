@@ -20,7 +20,7 @@ export function CategoryCard({
 }: CategoryCardProps) {
   return (
     <div
-      className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer"
+      className="group relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-105"
       style={{
         animation: `scale-in 0.6s ease-out ${index * 0.1}s both`,
       }}
@@ -31,7 +31,7 @@ export function CategoryCard({
         <ImageWithFallback
           src={image}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       </div>

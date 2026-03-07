@@ -3,6 +3,9 @@ import React, { useState } from 'react'
 const ERROR_IMG_SRC =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg=='
 
+// API base URL for local images
+const API_BASE_URL = 'http://localhost:3001';
+
 // Default fallback images for categories without images
 const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
   'bricolage': 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=800',
@@ -13,6 +16,12 @@ const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
   'ménage': 'https://images.unsplash.com/photo-1581578731548-c64695b64635?w=800',
   'peinture': 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800',
   'plomberie': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800',
+  'maçon': 'https://images.unsplash.com/photo-1518729571365-8a8642109cab?w=800',
+  'menuisier bois': 'https://images.unsplash.com/photo-1618842676088-c4d48a6a7c9d?w=800',
+  'menuisier métallique': 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800',
+  'éducation': 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800',
+  'réparation': 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=800',
+  'mécanique': 'https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=800',
 }
 
 export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElement>) {
@@ -25,7 +34,11 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   const { src, alt, style, className, ...rest } = props
 
   // If src is null, undefined, or empty, use a default image based on alt text
-  const effectiveSrc = !src ? getDefaultImage(alt) : src
+  // If src starts with /images/, prepend the API base URL
+  let effectiveSrc = !src ? getDefaultImage(alt) : src;
+  if (effectiveSrc.startsWith('/images/')) {
+    effectiveSrc = `${API_BASE_URL}${effectiveSrc}`;
+  }
 
   function getDefaultImage(categoryName?: string): string {
     if (!categoryName) return ERROR_IMG_SRC

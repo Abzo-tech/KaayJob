@@ -163,16 +163,18 @@ export function ServiceProvidersListPage({
               {filteredProviders.map((provider) => (
                 <Card
                   key={provider.id}
-                  className="bg-white border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                  className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
                   onClick={() => onNavigate("service-detail", { providerId: provider.id })}
                 >
                   <CardContent className="p-6">
                     <div className="flex gap-4">
-                      <ImageWithFallback
-                        src={getProviderAvatar(provider)}
-                        alt={`${provider.user.firstName} ${provider.user.lastName}`}
-                        className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
-                      />
+                      <div className="overflow-hidden rounded-xl flex-shrink-0">
+                        <ImageWithFallback
+                          src={getProviderAvatar(provider)}
+                          alt={`${provider.user.firstName} ${provider.user.lastName}`}
+                          className="w-24 h-24 object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-1">
                           <h3 className="text-xl font-bold text-[#000080]">

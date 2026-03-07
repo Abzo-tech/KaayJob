@@ -21,6 +21,7 @@ import { AdminAnalytics } from "./components/admin/AdminAnalytics";
 import { AdminSettings } from "./components/admin/AdminSettings";
 import { AdminSubscriptions } from "./components/admin/AdminSubscriptions";
 import { AdminPayments } from "./components/admin/AdminPayments";
+import { AdminCategories } from "./components/admin/AdminCategories";
 
 // Prestataire imports
 import { PrestataireSidebar } from "./components/prestataire/PrestataireSidebar";
@@ -107,18 +108,18 @@ export default function App() {
     // Si des paramètres sont fournis, les inclure dans l'URL
     if (params && Object.keys(params).length > 0) {
       const queryString = new URLSearchParams(params).toString();
-      window.history.pushState({}, '', `/${page}?${queryString}`);
+      window.history.pushState({}, "", `/${page}?${queryString}`);
       setCurrentPage(`${page}?${queryString}`);
     } else if (page.includes("?")) {
       // Si la page contient déjà des paramètres de requête
       const [pageName, queryString] = page.split("?");
-      window.history.pushState({}, '', `/${page}`);
+      window.history.pushState({}, "", `/${page}`);
       setCurrentPage(page);
     } else if (page === "home") {
-      window.history.pushState({}, '', "/");
+      window.history.pushState({}, "", "/");
       setCurrentPage(page);
     } else {
-      window.history.pushState({}, '', `/${page}`);
+      window.history.pushState({}, "", `/${page}`);
       setCurrentPage(page);
     }
   };
@@ -155,6 +156,8 @@ export default function App() {
         return <AdminSubscriptions />;
       case "admin-payments":
         return <AdminPayments />;
+      case "admin-categories":
+        return <AdminCategories />;
       default:
         return <AdminDashboard />;
     }
@@ -204,7 +207,7 @@ export default function App() {
 
     // Pages client
     const pageName = currentPage.split("?")[0]; // Extraire le nom de la page sans les paramètres
-    
+
     // Extraire les paramètres de requête
     const getPageParams = (): Record<string, string> => {
       const params: Record<string, string> = {};
@@ -217,9 +220,9 @@ export default function App() {
       }
       return params;
     };
-    
+
     const pageParams = getPageParams();
-    
+
     switch (pageName) {
       case "home":
         return <HomePage onNavigate={handleNavigate} />;
@@ -228,11 +231,23 @@ export default function App() {
       case "login-provider":
         return <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />;
       case "categories":
-        return <ServiceCategoriesPage onNavigate={handleNavigate} params={pageParams} />;
+        return (
+          <ServiceCategoriesPage
+            onNavigate={handleNavigate}
+            params={pageParams}
+          />
+        );
       case "service-providers":
-        return <ServiceProvidersListPage onNavigate={handleNavigate} params={pageParams} />;
+        return (
+          <ServiceProvidersListPage
+            onNavigate={handleNavigate}
+            params={pageParams}
+          />
+        );
       case "service-detail":
-        return <ServiceDetailPage onNavigate={handleNavigate} params={pageParams} />;
+        return (
+          <ServiceDetailPage onNavigate={handleNavigate} params={pageParams} />
+        );
       case "booking":
         return <BookingPage onNavigate={handleNavigate} params={pageParams} />;
       case "checkout":
@@ -253,8 +268,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hide Header on admin and prestataire pages */}
-      {!isAdminPage && !isPrestatairePage && (
+      {/* Hide Header on admin, prestataire, and login pages */}
+      {!isAdminPage && !isPrestatairePage && !isLoginPage && (
         <Header
           currentPage={currentPage}
           onNavigate={handleNavigate}

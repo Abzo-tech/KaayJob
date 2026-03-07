@@ -98,7 +98,7 @@ async function seed() {
                 slug: "demangement",
                 description: "Aide au déménagement et transport",
                 icon: "📦",
-                image: "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=800",
+                image: "/images/Demenagement.png",
                 displayOrder: 7
             },
             {
@@ -106,7 +106,7 @@ async function seed() {
                 slug: "reparation",
                 description: "Services de réparation et maintenance",
                 icon: "🔩",
-                image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=800",
+                image: "/images/Cuisine.png",
                 displayOrder: 8
             },
             {
@@ -122,7 +122,7 @@ async function seed() {
                 slug: "menuisier-bois",
                 description: "Travail du bois et fabrication de meubles",
                 icon: "🪵",
-                image: "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=800",
+                image: "/images/menuiserie.png",
                 displayOrder: 10
             },
             {
@@ -130,7 +130,7 @@ async function seed() {
                 slug: "menuisier-metal",
                 description: "Travail du métal et ferronnerie",
                 icon: "⚙️",
-                image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800",
+                image: "/images/metalique.png",
                 displayOrder: 11
             },
             {
@@ -138,7 +138,7 @@ async function seed() {
                 slug: "education",
                 description: "Cours à domicile et soutien scolaire",
                 icon: "📚",
-                image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800",
+                image: "/images/education.png",
                 displayOrder: 12
             },
         ];

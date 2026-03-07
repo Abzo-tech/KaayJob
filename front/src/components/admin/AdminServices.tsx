@@ -26,13 +26,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { api } from "../../lib/api";
+import { toast } from "sonner";
 
 export function AdminServices() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
+  // Modal states
+  const [viewService, setViewService] = useState<any>(null);
+  const [editService, setEditService] = useState<any>(null);
+  const [deleteService, setDeleteService] = useState<any>(null);
+  const [editForm, setEditForm] = useState({ name: "", description: "", price: "", duration: "", isActive: true });
 
   useEffect(() => {
     loadServices();
@@ -83,6 +92,62 @@ export function AdminServices() {
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === "string" ? parseFloat(price) : price;
     return numPrice.toLocaleString();
+  };
+
+  // Handlers
+  const handleViewService = (service: any) => {
+    setViewService(service);
+  };
+
+  const handleEditClick = (service: any) => {
+    setEditService(service);
+    setEditForm({
+      name: service.name || "",
+      description: service.description || "",
+      price: service.price?.toString() || "",
+      duration: service.duration?.toString() || "",
+      isActive: service.isActive ?? true
+    });
+  };
+
+  const handleDeleteClick = (service: any) => {
+    setDeleteService(service);
+  };
+
+  const handleUpdateService = async () => {
+    if (!editService) return;
+    try {
+      setActionLoading("update");
+      await api.put(`/admin/services/${editService.id}`, {
+        name: editForm.name,
+        description: editForm.description,
+        price: parseFloat(editForm.price),
+        duration: parseInt(editForm.duration),
+        isActive: editForm.isActive
+      });
+      toast.success("Service mis à jour avec succès!");
+      setEditService(null);
+      loadServices();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la mise à jour");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteService = async () => {
+    if (!deleteService) return;
+    try {
+      setActionLoading("delete");
+      await api.delete(`/admin/services/${deleteService.id}`);
+      toast.success("Service supprimé avec succès!");
+      setDeleteService(null);
+      loadServices();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la suppression");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   // Statistiques
@@ -237,15 +302,18 @@ export function AdminServices() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleViewService(service)}>
                           <Eye size={14} className="mr-2" />
                           Voir
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditClick(service)}>
                           <Edit size={14} className="mr-2" />
                           Modifier
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          onClick={() => handleDeleteClick(service)}
+                        >
                           <Trash2 size={14} className="mr-2" />
                           Supprimer
                         </DropdownMenuItem>
@@ -258,6 +326,141 @@ export function AdminServices() {
           </Table>
         </CardContent>
       </Card>
+      
+      {/* Modal View Service */}
+      <Dialog open={!!viewService} onOpenChange={() => setViewService(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Détails du service</DialogTitle>
+          </DialogHeader>
+          {viewService && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Nom</label>
+                <p className="text-lg">{viewService.name}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <p className="text-gray-600">{viewService.description || "-"}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Prix</label>
+                  <p>{viewService.price?.toLocaleString()} CFA</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Durée</label>
+                  <p>{viewService.duration || "-"} minutes</p>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Catégorie</label>
+                <p>{viewService.category_name || "-"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Prestataire</label>
+                <p>{viewService.first_name} {viewService.last_name}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Statut</label>
+                <Badge className={viewService.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                  {viewService.isActive ? "Actif" : "Inactif"}
+                </Badge>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Edit Service */}
+      <Dialog open={!!editService} onOpenChange={() => setEditService(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier le service</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Nom</label>
+              <Input 
+                value={editForm.name} 
+                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Description</label>
+              <Input 
+                value={editForm.description} 
+                onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                className="mt-1"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Prix (CFA)</label>
+                <Input 
+                  type="number"
+                  value={editForm.price} 
+                  onChange={(e) => setEditForm({...editForm, price: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Durée (min)</label>
+                <Input 
+                  type="number"
+                  value={editForm.duration} 
+                  onChange={(e) => setEditForm({...editForm, duration: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input 
+                type="checkbox" 
+                id="isActive"
+                checked={editForm.isActive}
+                onChange={(e) => setEditForm({...editForm, isActive: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <label htmlFor="isActive" className="text-sm font-medium">Service actif</label>
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setEditService(null)}>Annuler</Button>
+            <Button 
+              onClick={handleUpdateService} 
+              disabled={actionLoading === "update"}
+              className="bg-[#000080]"
+            >
+              {actionLoading === "update" ? <Loader2 className="animate-spin mr-2" /> : null}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Delete Confirmation */}
+      <Dialog open={!!deleteService} onOpenChange={() => setDeleteService(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmer la suppression</DialogTitle>
+          </DialogHeader>
+          <p>Êtes-vous sûr de vouloir supprimer le service "{deleteService?.name}"? Cette action est irréversible.</p>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setDeleteService(null)}>Annuler</Button>
+            <Button 
+              variant="destructive"
+              onClick={handleDeleteService} 
+              disabled={actionLoading === "delete"}
+            >
+              {actionLoading === "delete" ? <Loader2 className="animate-spin mr-2" /> : null}
+              Supprimer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+

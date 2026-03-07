@@ -29,6 +29,11 @@ const handleResponse = async (response: Response): Promise<any> => {
   const data = await response.json();
 
   if (!response.ok) {
+    // Gérer les erreurs de validation
+    if (data.errors && Array.isArray(data.errors)) {
+      const errorMessages = data.errors.map((e: any) => e.msg || e.message).join(", ");
+      throw new Error(errorMessages || "Une erreur de validation est survenue");
+    }
     throw new Error(data.message || "Une erreur est survenue");
   }
 

@@ -12,6 +12,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
+const path_1 = __importDefault(require("path"));
 const auth_1 = __importDefault(require("./routes/auth"));
 const bookings_1 = __importDefault(require("./routes/bookings"));
 const providers_1 = __importDefault(require("./routes/providers"));
@@ -38,6 +39,8 @@ app.use((0, cors_1.default)({
     ],
     credentials: true,
 }));
+// Servir les fichiers statiques (images)
+app.use("/images", express_1.default.static(path_1.default.join(__dirname, "../public/images")));
 // Routes
 app.use("/api/auth", auth_1.default);
 app.use("/api/bookings", bookings_1.default);

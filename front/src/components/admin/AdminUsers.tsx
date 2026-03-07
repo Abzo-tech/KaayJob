@@ -8,6 +8,9 @@ import {
   Loader2,
   Check,
   Trash2,
+  Plus,
+  Eye,
+  Edit,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -27,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 
@@ -36,6 +40,18 @@ export function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  
+  // Modal states
+  const [viewUser, setViewUser] = useState<any>(null);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    role: "CLIENT"
+  });
 
   useEffect(() => {
     loadUsers();
@@ -111,6 +127,49 @@ export function AdminUsers() {
     }
   };
 
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur?")) return;
+    try {
+      setActionLoading(userId);
+      await api.delete(`/admin/users/${userId}`);
+      toast.success("Utilisateur supprimé avec succès!");
+      loadUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la suppression");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    try {
+      setActionLoading("create");
+      await api.post("/admin/users", {
+        email: createForm.email,
+        password: createForm.password,
+        firstName: createForm.firstName,
+        lastName: createForm.lastName,
+        phone: createForm.phone,
+        role: createForm.role
+      });
+      toast.success("Utilisateur créé avec succès!");
+      setCreateUserOpen(false);
+      setCreateForm({
+        email: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        phone: "",
+        role: "CLIENT"
+      });
+      loadUsers();
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de la création");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
@@ -121,6 +180,7 @@ export function AdminUsers() {
   const totalUsers = users.length;
   const totalProviders = users.filter((u) => u.role === "PRESTATAIRE").length;
   const totalClients = users.filter((u) => u.role === "CLIENT").length;
+  const unverifiedProviders = users.filter((u) => u.role === "PRESTATAIRE" && !u.is_verified).length;
 
   if (loading) {
     return (
@@ -144,6 +204,13 @@ export function AdminUsers() {
             Gérez les clients, prestataires et administrateurs
           </p>
         </div>
+        <Button 
+          onClick={() => setCreateUserOpen(true)}
+          className="mt-4 md:mt-0 bg-[#000080]"
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Nouvel utilisateur
+        </Button>
       </div>
 
       {/* Filtres */}
@@ -190,7 +257,7 @@ export function AdminUsers() {
       </Card>
 
       {/* Statistiques rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
@@ -230,6 +297,19 @@ export function AdminUsers() {
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                <Check className="text-orange-600" size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">En attente</p>
+                <p className="text-2xl font-bold text-orange-600">{unverifiedProviders}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tableau des utilisateurs */}
@@ -261,7 +341,14 @@ export function AdminUsers() {
                     </div>
                   </TableCell>
                   <TableCell>{user.phone || "-"}</TableCell>
-                  <TableCell>{getRoleBadge(user.role)}</TableCell>
+                  <TableCell>
+                    {getRoleBadge(user.role)}
+                    {user.role === "PRESTATAIRE" && !user.is_verified && (
+                      <Badge className="ml-2 bg-orange-100 text-orange-800">
+                        Non vérifié
+                      </Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{user.booking_count || 0}</TableCell>
                   <TableCell>{formatDate(user.created_at)}</TableCell>
                   <TableCell className="text-right">
@@ -272,7 +359,10 @@ export function AdminUsers() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Voir le profil</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setViewUser(user)}>
+                          <Eye size={14} className="mr-2" />
+                          Voir le profil
+                        </DropdownMenuItem>
                         {user.role === "PRESTATAIRE" && !user.is_verified && (
                           <DropdownMenuItem 
                             className="text-green-600"
@@ -287,6 +377,14 @@ export function AdminUsers() {
                             Vérifier le prestataire
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem 
+                          className="text-red-600"
+                          onClick={() => handleDeleteUser(user.id)}
+                          disabled={actionLoading === user.id}
+                        >
+                          <Trash2 size={14} className="mr-2" />
+                          Supprimer
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -296,6 +394,124 @@ export function AdminUsers() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Modal View User */}
+      <Dialog open={!!viewUser} onOpenChange={() => setViewUser(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Détails de l'utilisateur</DialogTitle>
+          </DialogHeader>
+          {viewUser && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Nom complet</label>
+                <p className="text-lg">{viewUser.first_name} {viewUser.last_name}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <p>{viewUser.email}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Téléphone</label>
+                <p>{viewUser.phone || "-"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Rôle</label>
+                <div className="mt-1">{getRoleBadge(viewUser.role)}</div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Vérifié</label>
+                <p>{viewUser.is_verified ? "Oui" : "Non"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Date d'inscription</label>
+                <p>{formatDate(viewUser.created_at)}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Create User */}
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Email</label>
+              <Input 
+                type="email"
+                value={createForm.email} 
+                onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
+                className="mt-1"
+                placeholder="email@exemple.com"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Mot de passe</label>
+              <Input 
+                type="password"
+                value={createForm.password} 
+                onChange={(e) => setCreateForm({...createForm, password: e.target.value})}
+                className="mt-1"
+                placeholder="Minimum 6 caractères"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Prénom</label>
+                <Input 
+                  value={createForm.firstName} 
+                  onChange={(e) => setCreateForm({...createForm, firstName: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Nom</label>
+                <Input 
+                  value={createForm.lastName} 
+                  onChange={(e) => setCreateForm({...createForm, lastName: e.target.value})}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Téléphone</label>
+              <Input 
+                value={createForm.phone} 
+                onChange={(e) => setCreateForm({...createForm, phone: e.target.value})}
+                className="mt-1"
+                placeholder="+221..."
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Rôle</label>
+              <select 
+                value={createForm.role}
+                onChange={(e) => setCreateForm({...createForm, role: e.target.value})}
+                className="w-full mt-1 p-2 border rounded-md"
+              >
+                <option value="CLIENT">Client</option>
+                <option value="PRESTATAIRE">Prestataire</option>
+                <option value="ADMIN">Administrateur</option>
+              </select>
+            </div>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setCreateUserOpen(false)}>Annuler</Button>
+            <Button 
+              onClick={handleCreateUser} 
+              disabled={actionLoading === "create" || !createForm.email || !createForm.password || !createForm.firstName || !createForm.lastName}
+              className="bg-[#000080]"
+            >
+              {actionLoading === "create" ? <Loader2 className="animate-spin mr-2" /> : null}
+              Créer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

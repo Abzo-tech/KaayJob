@@ -63,29 +63,32 @@ router.get("/users", async (req: AuthRequest, res: Response) => {
     let paramIndex = 1;
 
     if (role) {
-      whereClause += ` AND role = $${paramIndex}`;
+      whereClause += ` AND role = ${paramIndex}`;
       params.push(role);
       paramIndex++;
     }
 
     if (search) {
-      whereClause += ` AND (first_name ILIKE $${paramIndex} OR last_name ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`;
+      whereClause += ` AND (first_name ILIKE ${paramIndex} OR last_name ILIKE ${paramIndex} OR email ILIKE ${paramIndex})`;
       params.push(`%${search}%`);
       paramIndex++;
     }
 
     const countResult = await query(
-      `SELECT COUNT(*) FROM users WHERE ${whereClause}`,
+      `SELECT COUNT(*) as count FROM users WHERE ${whereClause}`,
+      params,
     );
 
     const result = await query(
-      `SELECT id, email, first_name, last_name, phone, role, created_at,
-              (SELECT COUNT(*) FROM bookings WHERE client_id = users.id) as booking_count
-       FROM users
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role, u.created_at,
+              COALESCE(pp.is_verified, false) as is_verified,
+              (SELECT COUNT(*) FROM bookings WHERE client_id = u.id) as booking_count
+       FROM users u
+       LEFT JOIN provider_profiles pp ON u.id = pp.user_id
        WHERE ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-      [...params, Number(limit), offset],
+       ORDER BY u.created_at DESC
+       LIMIT ${Number(limit)} OFFSET ${offset}`,
+      params,
     );
 
     res.json({
@@ -108,15 +111,43 @@ router.put("/users/:id/verify", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const result = await query(
-      "UPDATE provider_profiles SET is_verified = true, updated_at = NOW() WHERE user_id = $1 RETURNING *",
+    // Vérifier si l'utilisateur est un prestataire
+    const userCheck = await query("SELECT role FROM users WHERE id = $1", [id]);
+
+    if (userCheck.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur non trouvé" });
+    }
+
+    if (userCheck.rows[0].role !== "PRESTATAIRE") {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Cet utilisateur n'est pas un prestataire",
+        });
+    }
+
+    // Créer le provider_profile s'il n'existe pas, puis mettre à jour
+    const existingProfile = await query(
+      "SELECT id FROM provider_profiles WHERE user_id = $1",
       [id],
     );
 
-    if (result.rows.length === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Prestataire non trouvé" });
+    let result;
+    if (existingProfile.rows.length === 0) {
+      // Créer le profil puis le vérifier
+      result = await query(
+        "INSERT INTO provider_profiles (user_id, is_verified, created_at, updated_at) VALUES ($1, true, NOW(), NOW()) RETURNING *",
+        [id],
+      );
+    } else {
+      // Mettre à jour le profil existant
+      result = await query(
+        "UPDATE provider_profiles SET is_verified = true, updated_at = NOW() WHERE user_id = $1 RETURNING *",
+        [id],
+      );
     }
 
     res.json({
@@ -144,6 +175,165 @@ router.delete("/users/:id", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// POST /api/admin/users - Créer un utilisateur
+router.post(
+  "/users",
+  [
+    body("email").isEmail().withMessage("Email invalide"),
+    body("password")
+      .isLength({ min: 6 })
+      .withMessage("Mot de passe requis (min 6 caractères)"),
+    body("firstName").notEmpty().withMessage("Prénom requis"),
+    body("lastName").notEmpty().withMessage("Nom requis"),
+    body("role")
+      .optional()
+      .isIn(["ADMIN", "CLIENT", "PRESTATAIRE"])
+      .withMessage("Rôle invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { email, password, firstName, lastName, phone, role } = req.body;
+
+      // Vérifier si l'email existe déjà
+      const existingUser = await query(
+        "SELECT id FROM users WHERE email = $1",
+        [email],
+      );
+      if (existingUser.rows.length > 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Email déjà utilisé" });
+      }
+
+      // Hasher le mot de passe
+      const bcrypt = require("bcryptjs");
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      const result = await query(
+        `INSERT INTO users (email, password, first_name, last_name, phone, role, is_active, is_verified)
+         VALUES ($1, $2, $3, $4, $5, $6, true, true) RETURNING id, email, first_name, last_name, phone, role, created_at`,
+        [email, hashedPassword, firstName, lastName, phone || null, role],
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Utilisateur créé",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur création utilisateur:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// PUT /api/admin/users/:id - Mettre à jour un utilisateur
+router.put(
+  "/users/:id",
+  [
+    body("email").optional().isEmail().withMessage("Email invalide"),
+    body("firstName").optional().notEmpty().withMessage("Prénom requis"),
+    body("lastName").optional().notEmpty().withMessage("Nom requis"),
+    body("role")
+      .optional()
+      .isIn(["ADMIN", "CLIENT", "PRESTATAIRE"])
+      .withMessage("Rôle invalide"),
+    body("isActive")
+      .optional()
+      .isBoolean()
+      .withMessage("Statut actif invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { id } = req.params;
+      const { email, firstName, lastName, phone, role, isActive } = req.body;
+
+      // Vérifier si l'utilisateur existe
+      const existingUser = await query("SELECT id FROM users WHERE id = $1", [
+        id,
+      ]);
+      if (existingUser.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Utilisateur non trouvé" });
+      }
+
+      // Vérifier si le nouvel email est déjà utilisé par un autre utilisateur
+      if (email) {
+        const emailExists = await query(
+          "SELECT id FROM users WHERE email = $1 AND id != $2",
+          [email, id],
+        );
+        if (emailExists.rows.length > 0) {
+          return res
+            .status(400)
+            .json({ success: false, message: "Email déjà utilisé" });
+        }
+      }
+
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (email) {
+        updates.push(`email = $${paramIndex++}`);
+        params.push(email);
+      }
+      if (firstName) {
+        updates.push(`first_name = $${paramIndex++}`);
+        params.push(firstName);
+      }
+      if (lastName) {
+        updates.push(`last_name = $${paramIndex++}`);
+        params.push(lastName);
+      }
+      if (phone !== undefined) {
+        updates.push(`phone = $${paramIndex++}`);
+        params.push(phone);
+      }
+      if (role) {
+        updates.push(`role = $${paramIndex++}`);
+        params.push(role);
+      }
+      if (isActive !== undefined) {
+        updates.push(`is_active = $${paramIndex++}`);
+        params.push(isActive);
+      }
+
+      if (updates.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Aucune donnée à mettre à jour" });
+      }
+
+      updates.push(`updated_at = NOW()`);
+      params.push(id);
+
+      const result = await query(
+        `UPDATE users SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING id, email, first_name, last_name, phone, role, is_active, created_at`,
+        params,
+      );
+
+      res.json({
+        success: true,
+        message: "Utilisateur mis à jour",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur mise à jour utilisateur:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
 // GET /api/admin/services - Tous les services
 router.get("/services", async (req: AuthRequest, res: Response) => {
   try {
@@ -161,17 +351,22 @@ router.get("/services", async (req: AuthRequest, res: Response) => {
     }
 
     const countResult = await query(
-      `SELECT COUNT(*) FROM services s WHERE ${whereClause}`,
+      `SELECT COUNT(*) as count FROM services s WHERE ${whereClause}`,
+      params,
     );
+
+    // LIMIT et OFFSET utilisent des placeholders paramétrés dynamiques
+    const limitParamIndex = paramIndex;
+    const offsetParamIndex = paramIndex + 1;
 
     const result = await query(
       `SELECT s.*, c.name as category_name, u.first_name, u.last_name
        FROM services s
-       JOIN categories c ON s.category_id = c.id
+       LEFT JOIN categories c ON s.category_id = c.id
        JOIN users u ON s.provider_id = u.id
        WHERE ${whereClause}
        ORDER BY s.created_at DESC
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`,
       [...params, Number(limit), offset],
     );
 
@@ -186,6 +381,129 @@ router.get("/services", async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Erreur liste services:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+// PUT /api/admin/services/:id - Mettre à jour un service
+router.put(
+  "/services/:id",
+  [
+    body("name").optional().notEmpty().withMessage("Nom requis"),
+    body("description").optional(),
+    body("price").optional().isNumeric().withMessage("Prix invalide"),
+    body("duration")
+      .optional()
+      .isInt({ min: 15 })
+      .withMessage("Durée invalide"),
+    body("isActive").optional().isBoolean().withMessage("Statut invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { id } = req.params;
+      const { name, description, price, duration, isActive, priceType } =
+        req.body;
+
+      // Vérifier si le service existe
+      const existing = await query("SELECT id FROM services WHERE id = $1", [
+        id,
+      ]);
+      if (existing.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Service non trouvé" });
+      }
+
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (name) {
+        updates.push(`name = $${paramIndex++}`);
+        params.push(name);
+      }
+      if (description !== undefined) {
+        updates.push(`description = $${paramIndex++}`);
+        params.push(description);
+      }
+      if (price !== undefined) {
+        updates.push(`price = $${paramIndex++}`);
+        params.push(price);
+      }
+      if (duration !== undefined) {
+        updates.push(`duration = $${paramIndex++}`);
+        params.push(duration);
+      }
+      if (isActive !== undefined) {
+        updates.push(`is_active = $${paramIndex++}`);
+        params.push(isActive);
+      }
+      if (priceType !== undefined) {
+        updates.push(`price_type = $${paramIndex++}`);
+        params.push(priceType);
+      }
+
+      if (updates.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Aucune donnée à mettre à jour" });
+      }
+
+      updates.push(`updated_at = NOW()`);
+      params.push(id);
+
+      const result = await query(
+        `UPDATE services SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        params,
+      );
+
+      res.json({
+        success: true,
+        message: "Service mis à jour",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur mise à jour service:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// DELETE /api/admin/services/:id - Supprimer un service
+router.delete("/services/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier si le service existe
+    const existing = await query("SELECT id FROM services WHERE id = $1", [id]);
+    if (existing.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Service non trouvé" });
+    }
+
+    // Vérifier si des réservations utilisent ce service
+    const bookingsCount = await query(
+      "SELECT COUNT(*) as count FROM bookings WHERE service_id = $1",
+      [id],
+    );
+    if (parseInt(bookingsCount.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Impossible de supprimer ce service car il est utilisé par des réservations",
+      });
+    }
+
+    await query("DELETE FROM services WHERE id = $1", [id]);
+
+    res.json({ success: true, message: "Service supprimé" });
+  } catch (error) {
+    console.error("Erreur suppression service:", error);
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 });
@@ -219,8 +537,13 @@ router.get("/bookings", async (req: AuthRequest, res: Response) => {
     }
 
     const countResult = await query(
-      `SELECT COUNT(*) FROM bookings b WHERE ${whereClause}`,
+      `SELECT COUNT(*) as count FROM bookings b WHERE ${whereClause}`,
+      params,
     );
+
+    // LIMIT et OFFSET utilisent des placeholders paramétrés dynamiques
+    const limitParamIndex = paramIndex;
+    const offsetParamIndex = paramIndex + 1;
 
     const result = await query(
       `SELECT b.*, u.first_name as client_first_name, u.last_name as client_last_name,
@@ -231,7 +554,7 @@ router.get("/bookings", async (req: AuthRequest, res: Response) => {
        JOIN users p ON s.provider_id = p.id
        WHERE ${whereClause}
        ORDER BY b.created_at DESC
-       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
+       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`,
       [...params, Number(limit), offset],
     );
 
@@ -246,6 +569,141 @@ router.get("/bookings", async (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Erreur liste réservations:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+// PUT /api/admin/bookings/:id - Mettre à jour une réservation
+router.put(
+  "/bookings/:id",
+  [
+    body("status")
+      .optional()
+      .isIn(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"])
+      .withMessage("Statut invalide"),
+    body("paymentStatus")
+      .optional()
+      .isIn(["PENDING", "PAID", "REFUNDED"])
+      .withMessage("Statut paiement invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { id } = req.params;
+      const {
+        status,
+        paymentStatus,
+        bookingDate,
+        bookingTime,
+        address,
+        city,
+        notes,
+      } = req.body;
+
+      // Vérifier si la réservation existe
+      const existing = await query("SELECT id FROM bookings WHERE id = $1", [
+        id,
+      ]);
+      if (existing.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Réservation non trouvée" });
+      }
+
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (status) {
+        updates.push(`status = $${paramIndex++}`);
+        params.push(status);
+      }
+      if (paymentStatus) {
+        updates.push(`payment_status = $${paramIndex++}`);
+        params.push(paymentStatus);
+      }
+      if (bookingDate) {
+        updates.push(`booking_date = $${paramIndex++}`);
+        params.push(bookingDate);
+      }
+      if (bookingTime) {
+        updates.push(`booking_time = $${paramIndex++}`);
+        params.push(bookingTime);
+      }
+      if (address !== undefined) {
+        updates.push(`address = $${paramIndex++}`);
+        params.push(address);
+      }
+      if (city !== undefined) {
+        updates.push(`city = $${paramIndex++}`);
+        params.push(city);
+      }
+      if (notes !== undefined) {
+        updates.push(`notes = $${paramIndex++}`);
+        params.push(notes);
+      }
+
+      if (updates.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Aucune donnée à mettre à jour" });
+      }
+
+      updates.push(`updated_at = NOW()`);
+      params.push(id);
+
+      const result = await query(
+        `UPDATE bookings SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        params,
+      );
+
+      res.json({
+        success: true,
+        message: "Réservation mise à jour",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur mise à jour réservation:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// DELETE /api/admin/bookings/:id - Supprimer une réservation
+router.delete("/bookings/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier si la réservation existe
+    const existing = await query("SELECT id FROM bookings WHERE id = $1", [id]);
+    if (existing.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Réservation non trouvée" });
+    }
+
+    // Vérifier si la réservation est terminée (ne pas supprimer les réservations complétées)
+    const booking = await query("SELECT status FROM bookings WHERE id = $1", [
+      id,
+    ]);
+    if (booking.rows[0].status === "COMPLETED") {
+      return res.status(400).json({
+        success: false,
+        message: "Impossible de supprimer une réservation terminée",
+      });
+    }
+
+    // Supprimer les avis liés
+    await query("DELETE FROM reviews WHERE booking_id = $1", [id]);
+
+    await query("DELETE FROM bookings WHERE id = $1", [id]);
+
+    res.json({ success: true, message: "Réservation supprimée" });
+  } catch (error) {
+    console.error("Erreur suppression réservation:", error);
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 });
@@ -282,26 +740,147 @@ router.post(
       if (!errors.isEmpty())
         return res.status(400).json({ success: false, errors: errors.array() });
 
-      const { name, description, icon } = req.body;
+      const { name, description, icon, image } = req.body;
 
       const result = await query(
-        "INSERT INTO categories (name, description, icon) VALUES ($1, $2, $3) RETURNING *",
-        [name, description, icon],
+        "INSERT INTO categories (name, description, icon, image) VALUES ($1, $2, $3, $4) RETURNING *",
+        [name, description, icon, image || null],
       );
 
-      res
-        .status(201)
-        .json({
-          success: true,
-          message: "Catégorie créée",
-          data: result.rows[0],
-        });
+      res.status(201).json({
+        success: true,
+        message: "Catégorie créée",
+        data: result.rows[0],
+      });
     } catch (error) {
       console.error("Erreur création catégorie:", error);
       res.status(500).json({ success: false, message: "Erreur serveur" });
     }
   },
 );
+
+// PUT /api/admin/categories/:id - Mettre à jour une catégorie
+router.put(
+  "/categories/:id",
+  [
+    body("name")
+      .optional()
+      .notEmpty()
+      .withMessage("Nom requis")
+      .isLength({ max: 50 }),
+    body("description").optional().isLength({ max: 200 }),
+    body("icon").optional().isLength({ max: 50 }),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { id } = req.params;
+      const { name, description, icon, image, isActive, displayOrder } =
+        req.body;
+
+      // Vérifier si la catégorie existe
+      const existing = await query("SELECT id FROM categories WHERE id = $1", [
+        id,
+      ]);
+      if (existing.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Catégorie non trouvée" });
+      }
+
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (name) {
+        updates.push(`name = $${paramIndex++}`);
+        params.push(name);
+      }
+      if (description !== undefined) {
+        updates.push(`description = $${paramIndex++}`);
+        params.push(description);
+      }
+      if (icon !== undefined) {
+        updates.push(`icon = $${paramIndex++}`);
+        params.push(icon);
+      }
+      if (image !== undefined) {
+        updates.push(`image = $${paramIndex++}`);
+        params.push(image);
+      }
+      if (isActive !== undefined) {
+        updates.push(`is_active = $${paramIndex++}`);
+        params.push(isActive);
+      }
+      if (displayOrder !== undefined) {
+        updates.push(`display_order = $${paramIndex++}`);
+        params.push(displayOrder);
+      }
+
+      if (updates.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Aucune donnée à mettre à jour" });
+      }
+
+      params.push(id);
+
+      const result = await query(
+        `UPDATE categories SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        params,
+      );
+
+      res.json({
+        success: true,
+        message: "Catégorie mise à jour",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur mise à jour catégorie:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// DELETE /api/admin/categories/:id - Supprimer une catégorie
+router.delete("/categories/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier si la catégorie existe
+    const existing = await query("SELECT id FROM categories WHERE id = $1", [
+      id,
+    ]);
+    if (existing.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Catégorie non trouvée" });
+    }
+
+    // Vérifier si des services utilisent cette catégorie
+    const servicesCount = await query(
+      "SELECT COUNT(*) as count FROM services WHERE category_id = $1",
+      [id],
+    );
+    if (parseInt(servicesCount.rows[0].count) > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Impossible de supprimer cette catégorie car elle contient des services",
+      });
+    }
+
+    await query("DELETE FROM categories WHERE id = $1", [id]);
+
+    res.json({ success: true, message: "Catégorie supprimée" });
+  } catch (error) {
+    console.error("Erreur suppression catégorie:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
 
 // GET /api/admin/payments - Historique des paiements
 router.get("/payments", async (req: AuthRequest, res: Response) => {
@@ -403,8 +982,8 @@ router.get("/analytics", async (req: AuthRequest, res: Response) => {
         monthly: monthlyResult.rows,
         topProviders: topProvidersResult.rows,
         categories: categoriesResult.rows,
-        activity: activityResult.rows
-      }
+        activity: activityResult.rows,
+      },
     });
   } catch (error) {
     console.error("Erreur analytiques:", error);

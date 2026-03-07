@@ -80,7 +80,13 @@ export function ServiceCategoriesPage({
 
   // Helper to get category image or default
   const getCategoryImage = (category: Category) => {
-    if (category.image) return category.image;
+    if (category.image) {
+      // If it's a local image (starts with /images/), prepend the API URL
+      if (category.image.startsWith('/images/')) {
+        return `http://localhost:3001${category.image}`;
+      }
+      return category.image;
+    }
     // Default images based on category name (in French from API)
     const defaultImages: Record<string, string> = {
       "Plomberie": "https://i.pinimg.com/736x/4d/3d/a8/4d3da898a7f0383572935a16f1e6df3a.jpg",
@@ -91,6 +97,12 @@ export function ServiceCategoriesPage({
       "Cuisine": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&q=80",
       "Déménagement": "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=400&q=80",
       "Bricolage": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80",
+      "Maçon": "https://images.unsplash.com/photo-1518729571365-8a8642109cab?w=400&q=80",
+      "Menuisier bois": "https://images.unsplash.com/photo-1618842676088-c4d48a6a7c9d?w=400&q=80",
+      "Menuisier métallique": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&q=80",
+      "Éducation": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80",
+      "Réparation": "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&q=80",
+      "Mécanique": "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=400&q=80",
     };
     return defaultImages[category.name] || "https://i.pinimg.com/736x/cc/35/ba/cc35baaadabca6dd0d5fceca0260363d.jpg";
   };
@@ -191,7 +203,7 @@ export function ServiceCategoriesPage({
               {filteredCategories.map((category, index) => (
                 <div
                   key={category.id}
-                  className="group relative rounded-3xl overflow-hidden shadow-xl bg-white hover:scale-[1.03] transition-transform duration-500 cursor-pointer animate-fade-in-up"
+                  className="group relative rounded-3xl overflow-hidden shadow-xl bg-white cursor-pointer animate-fade-in-up transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
                   style={{ animationDelay: `${index * 0.08}s` }}
                   onClick={() => onNavigate("service-providers", { categoryId: category.id, categoryName: category.name })}
                 >
@@ -199,15 +211,16 @@ export function ServiceCategoriesPage({
                     <img
                       src={getCategoryImage(category)}
                       alt={category.name}
-                      className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-700"
+                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                       loading="lazy"
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                     <div className="absolute top-4 right-4 bg-white/80 rounded-full px-4 py-1 text-xs font-semibold text-[#000080] shadow">
                       {category._count?.services || 0} services
                     </div>
                   </div>
                   <div className="p-6 flex flex-col gap-2">
-                    <h3 className="text-2xl font-bold text-[#000080] mb-1 group-hover:text-blue-700 transition-colors duration-300">
+                    <h3 className="text-2xl font-bold text-[#000080] mb-1">
                       {category.name}
                     </h3>
                     <p className="text-gray-600 mb-2 text-base leading-relaxed min-h-[56px]">
@@ -230,10 +243,6 @@ export function ServiceCategoriesPage({
                         Voir les Prestataires
                       </Button>
                     </div>
-                  </div>
-                  {/* Animation de halo moderne */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute -inset-8 rounded-3xl opacity-0 group-hover:opacity-40 transition-opacity duration-500 bg-gradient-to-br from-blue-200 via-blue-100 to-transparent blur-2xl"></div>
                   </div>
                 </div>
               ))}

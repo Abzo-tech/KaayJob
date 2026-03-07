@@ -9,6 +9,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "path";
 
 import authRoutes from "./routes/auth";
 import bookingsRoutes from "./routes/bookings";
@@ -25,7 +26,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -42,6 +45,14 @@ app.use(
     credentials: true,
   }),
 );
+
+// Servir les fichiers statiques (images) avec CORS
+app.use("/images", (req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+}, express.static(path.join(__dirname, "../public/images")));
 
 // Routes
 app.use("/api/auth", authRoutes);
