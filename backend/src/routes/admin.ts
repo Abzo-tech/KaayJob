@@ -121,12 +121,10 @@ router.put("/users/:id/verify", async (req: AuthRequest, res: Response) => {
     }
 
     if (userCheck.rows[0].role !== "PRESTATAIRE") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Cet utilisateur n'est pas un prestataire",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Cet utilisateur n'est pas un prestataire",
+      });
     }
 
     // Créer le provider_profile s'il n'existe pas, puis mettre à jour
@@ -139,7 +137,7 @@ router.put("/users/:id/verify", async (req: AuthRequest, res: Response) => {
     if (existingProfile.rows.length === 0) {
       // Créer le profil puis le vérifier
       result = await query(
-        "INSERT INTO provider_profiles (user_id, is_verified, created_at, updated_at) VALUES ($1, true, NOW(), NOW()) RETURNING *",
+        "INSERT INTO provider_profiles (id, user_id, is_verified, created_at, updated_at) VALUES (gen_random_uuid(), $1, true, NOW(), NOW()) RETURNING *",
         [id],
       );
     } else {
@@ -166,6 +164,37 @@ router.delete("/users/:id", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
+    // Étape 1: Trouver le profil prestataire si existant
+    const profileResult = await query(
+      "SELECT id FROM provider_profiles WHERE user_id = $1",
+      [id],
+    );
+    const profileId = profileResult.rows[0]?.id;
+
+    // Étape 2: Supprimer les reviews où ce user est provider (contrainte NOT NULL sur provider_id)
+    if (profileId) {
+      await query("DELETE FROM reviews WHERE provider_id = $1", [profileId]);
+    }
+
+    // Étape 3: Supprimer les reviews où ce user est client
+    await query("DELETE FROM reviews WHERE client_id = $1", [id]);
+
+    // Étape 4: Supprimer d'abord les bookings liés aux services de ce provider
+    await query(
+      "DELETE FROM bookings WHERE service_id IN (SELECT id FROM services WHERE provider_id = $1)",
+      [id],
+    );
+
+    // Étape 5: Supprimer les bookings où l'utilisateur est client
+    await query("DELETE FROM bookings WHERE client_id = $1", [id]);
+
+    // Étape 6: Supprimer le profil prestataire
+    await query("DELETE FROM provider_profiles WHERE user_id = $1", [id]);
+
+    // Étape 7: Supprimer les services
+    await query("DELETE FROM services WHERE provider_id = $1", [id]);
+
+    // Finally delete the user
     await query("DELETE FROM users WHERE id = $1", [id]);
 
     res.json({ success: true, message: "Utilisateur supprimé" });
@@ -180,9 +209,7 @@ router.post(
   "/users",
   [
     body("email").isEmail().withMessage("Email invalide"),
-    body("password")
-      .isLength({ min: 6 })
-      .withMessage("Mot de passe requis (min 6 caractères)"),
+    body("password").notEmpty().withMessage("Mot de passe requis"),
     body("firstName").notEmpty().withMessage("Prénom requis"),
     body("lastName").notEmpty().withMessage("Nom requis"),
     body("role")
@@ -209,14 +236,12 @@ router.post(
           .json({ success: false, message: "Email déjà utilisé" });
       }
 
-      // Hasher le mot de passe
-      const bcrypt = require("bcryptjs");
-      const hashedPassword = await bcrypt.hash(password, 12);
-
+      // Créer l'utilisateur avec un ID généré
+      // Note: Le mot de passe est stocké en clair pour simplifier la gestion admin
       const result = await query(
-        `INSERT INTO users (email, password, first_name, last_name, phone, role, is_active, is_verified)
-         VALUES ($1, $2, $3, $4, $5, $6, true, true) RETURNING id, email, first_name, last_name, phone, role, created_at`,
-        [email, hashedPassword, firstName, lastName, phone || null, role],
+        `INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_active, is_verified, created_at, updated_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, true, NOW(), NOW()) RETURNING id, email, first_name, last_name, phone, role, created_at`,
+        [email, password, firstName, lastName, phone || null, role],
       );
 
       res.status(201).json({
@@ -363,10 +388,10 @@ router.get("/services", async (req: AuthRequest, res: Response) => {
       `SELECT s.*, c.name as category_name, u.first_name, u.last_name
        FROM services s
        LEFT JOIN categories c ON s.category_id = c.id
-       JOIN users u ON s.provider_id = u.id
+       LEFT JOIN users u ON s.provider_id = u.id
        WHERE ${whereClause}
        ORDER BY s.created_at DESC
-       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`,
+       LIMIT ${limitParamIndex} OFFSET ${offsetParamIndex}`,
       [...params, Number(limit), offset],
     );
 

@@ -30,7 +30,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 
@@ -40,7 +46,7 @@ export function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  
+
   // Modal states
   const [viewUser, setViewUser] = useState<any>(null);
   const [createUserOpen, setCreateUserOpen] = useState(false);
@@ -50,8 +56,36 @@ export function AdminUsers() {
     firstName: "",
     lastName: "",
     phone: "",
-    role: "CLIENT"
+    role: "CLIENT",
   });
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+
+    if (!createForm.email) {
+      errors.email = "L'email est requis";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(createForm.email)) {
+      errors.email = "Format d'email invalide";
+    }
+
+    if (!createForm.password) {
+      errors.password = "Le mot de passe est requis";
+    } else if (createForm.password.length < 4) {
+      errors.password = "Minimum 4 caractères";
+    }
+
+    if (!createForm.firstName) {
+      errors.firstName = "Le prénom est requis";
+    }
+
+    if (!createForm.lastName) {
+      errors.lastName = "Le nom est requis";
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   useEffect(() => {
     loadUsers();
@@ -62,10 +96,10 @@ export function AdminUsers() {
       setLoading(true);
       const token = localStorage.getItem("token");
       console.log("Token from localStorage:", token ? "exists" : "missing");
-      
+
       const response = await api.get("/admin/users?limit=100");
       console.log("Admin users response:", response);
-      
+
       // La réponse est directement dans response.data (pas response.data.data)
       const usersData = response?.data || [];
       console.log("Users loaded:", usersData.length);
@@ -73,18 +107,23 @@ export function AdminUsers() {
     } catch (error: any) {
       console.error("Erreur chargement utilisateurs:", error);
       console.error("Error response:", error.response?.data);
-      toast.error(error.message || "Erreur lors du chargement des utilisateurs");
+      toast.error(
+        error.message || "Erreur lors du chargement des utilisateurs",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const filteredUsers = users.filter((user) => {
-    const fullName = `${user.first_name || ""} ${user.last_name || ""}`.toLowerCase();
+    const fullName =
+      `${user.first_name || ""} ${user.last_name || ""}`.toLowerCase();
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) ||
       (user.email || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === "all" || user.role?.toLowerCase() === roleFilter.toLowerCase();
+    const matchesRole =
+      roleFilter === "all" ||
+      user.role?.toLowerCase() === roleFilter.toLowerCase();
     return matchesSearch && matchesRole;
   });
 
@@ -128,7 +167,6 @@ export function AdminUsers() {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur?")) return;
     try {
       setActionLoading(userId);
       await api.delete(`/admin/users/${userId}`);
@@ -150,7 +188,7 @@ export function AdminUsers() {
         firstName: createForm.firstName,
         lastName: createForm.lastName,
         phone: createForm.phone,
-        role: createForm.role
+        role: createForm.role,
       });
       toast.success("Utilisateur créé avec succès!");
       setCreateUserOpen(false);
@@ -160,7 +198,7 @@ export function AdminUsers() {
         firstName: "",
         lastName: "",
         phone: "",
-        role: "CLIENT"
+        role: "CLIENT",
       });
       loadUsers();
     } catch (error: any) {
@@ -180,7 +218,9 @@ export function AdminUsers() {
   const totalUsers = users.length;
   const totalProviders = users.filter((u) => u.role === "PRESTATAIRE").length;
   const totalClients = users.filter((u) => u.role === "CLIENT").length;
-  const unverifiedProviders = users.filter((u) => u.role === "PRESTATAIRE" && !u.is_verified).length;
+  const unverifiedProviders = users.filter(
+    (u) => u.role === "PRESTATAIRE" && !u.is_verified,
+  ).length;
 
   if (loading) {
     return (
@@ -204,7 +244,7 @@ export function AdminUsers() {
             Gérez les clients, prestataires et administrateurs
           </p>
         </div>
-        <Button 
+        <Button
           onClick={() => setCreateUserOpen(true)}
           className="mt-4 md:mt-0 bg-[#000080]"
         >
@@ -305,7 +345,9 @@ export function AdminUsers() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">En attente</p>
-                <p className="text-2xl font-bold text-orange-600">{unverifiedProviders}</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {unverifiedProviders}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -364,20 +406,23 @@ export function AdminUsers() {
                           Voir le profil
                         </DropdownMenuItem>
                         {user.role === "PRESTATAIRE" && !user.is_verified && (
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             className="text-green-600"
                             onClick={() => handleVerifyProvider(user.id)}
                             disabled={actionLoading === user.id}
                           >
                             {actionLoading === user.id ? (
-                              <Loader2 size={14} className="mr-2 animate-spin" />
+                              <Loader2
+                                size={14}
+                                className="mr-2 animate-spin"
+                              />
                             ) : (
                               <Check size={14} className="mr-2" />
                             )}
                             Vérifier le prestataire
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           className="text-red-600"
                           onClick={() => handleDeleteUser(user.id)}
                           disabled={actionLoading === user.id}
@@ -405,7 +450,9 @@ export function AdminUsers() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Nom complet</label>
-                <p className="text-lg">{viewUser.first_name} {viewUser.last_name}</p>
+                <p className="text-lg">
+                  {viewUser.first_name} {viewUser.last_name}
+                </p>
               </div>
               <div>
                 <label className="text-sm font-medium">Email</label>
@@ -424,7 +471,9 @@ export function AdminUsers() {
                 <p>{viewUser.is_verified ? "Oui" : "Non"}</p>
               </div>
               <div>
-                <label className="text-sm font-medium">Date d'inscription</label>
+                <label className="text-sm font-medium">
+                  Date d'inscription
+                </label>
                 <p>{formatDate(viewUser.created_at)}</p>
               </div>
             </div>
@@ -434,64 +483,115 @@ export function AdminUsers() {
 
       {/* Modal Create User */}
       <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-0 shadow-2xl">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl font-bold text-[#000080] flex items-center gap-2">
+              <UserCog className="h-5 w-5" />
+              Créer un nouvel utilisateur
+            </DialogTitle>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Remplissez les informations pour créer un nouveau compte
+              utilisateur
+            </p>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Email</label>
-              <Input 
-                type="email"
-                value={createForm.email} 
-                onChange={(e) => setCreateForm({...createForm, email: e.target.value})}
-                className="mt-1"
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                value={createForm.email}
+                onChange={(e) => {
+                  setCreateForm({ ...createForm, email: e.target.value });
+                  setFormErrors({ ...formErrors, email: "" });
+                }}
+                className={`${formErrors.email ? "border-red-500 focus:border-red-500" : ""}`}
                 placeholder="email@exemple.com"
               />
+              {formErrors.email && (
+                <p className="text-xs text-red-500">{formErrors.email}</p>
+              )}
             </div>
-            <div>
-              <label className="text-sm font-medium">Mot de passe</label>
-              <Input 
-                type="password"
-                value={createForm.password} 
-                onChange={(e) => setCreateForm({...createForm, password: e.target.value})}
-                className="mt-1"
-                placeholder="Minimum 6 caractères"
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Mot de passe <span className="text-red-500">*</span>
+              </label>
+              <Input
+                type="text"
+                value={createForm.password}
+                onChange={(e) => {
+                  setCreateForm({ ...createForm, password: e.target.value });
+                  setFormErrors({ ...formErrors, password: "" });
+                }}
+                className={`${formErrors.password ? "border-red-500 focus:border-red-500" : ""}`}
+                placeholder="Minimum 4 caractères"
               />
+              <p className="text-xs text-gray-500">
+                Le mot de passe sera visible
+              </p>
+              {formErrors.password && (
+                <p className="text-xs text-red-500">{formErrors.password}</p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Prénom</label>
-                <Input 
-                  value={createForm.firstName} 
-                  onChange={(e) => setCreateForm({...createForm, firstName: e.target.value})}
-                  className="mt-1"
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Prénom <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={createForm.firstName}
+                  onChange={(e) => {
+                    setCreateForm({ ...createForm, firstName: e.target.value });
+                    setFormErrors({ ...formErrors, firstName: "" });
+                  }}
+                  className={`${formErrors.firstName ? "border-red-500 focus:border-red-500" : ""}`}
+                  placeholder="Prénom"
                 />
+                {formErrors.firstName && (
+                  <p className="text-xs text-red-500">{formErrors.firstName}</p>
+                )}
               </div>
-              <div>
-                <label className="text-sm font-medium">Nom</label>
-                <Input 
-                  value={createForm.lastName} 
-                  onChange={(e) => setCreateForm({...createForm, lastName: e.target.value})}
-                  className="mt-1"
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Nom <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  value={createForm.lastName}
+                  onChange={(e) => {
+                    setCreateForm({ ...createForm, lastName: e.target.value });
+                    setFormErrors({ ...formErrors, lastName: "" });
+                  }}
+                  className={`${formErrors.lastName ? "border-red-500 focus:border-red-500" : ""}`}
+                  placeholder="Nom"
                 />
+                {formErrors.lastName && (
+                  <p className="text-xs text-red-500">{formErrors.lastName}</p>
+                )}
               </div>
             </div>
-            <div>
-              <label className="text-sm font-medium">Téléphone</label>
-              <Input 
-                value={createForm.phone} 
-                onChange={(e) => setCreateForm({...createForm, phone: e.target.value})}
-                className="mt-1"
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Téléphone
+              </label>
+              <Input
+                value={createForm.phone}
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, phone: e.target.value })
+                }
                 placeholder="+221..."
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Rôle</label>
-              <select 
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Rôle <span className="text-red-500">*</span>
+              </label>
+              <select
                 value={createForm.role}
-                onChange={(e) => setCreateForm({...createForm, role: e.target.value})}
-                className="w-full mt-1 p-2 border rounded-md"
+                onChange={(e) =>
+                  setCreateForm({ ...createForm, role: e.target.value })
+                }
+                className="w-full mt-1 p-2.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#000080] focus:border-transparent"
               >
                 <option value="CLIENT">Client</option>
                 <option value="PRESTATAIRE">Prestataire</option>
@@ -499,15 +599,32 @@ export function AdminUsers() {
               </select>
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setCreateUserOpen(false)}>Annuler</Button>
-            <Button 
-              onClick={handleCreateUser} 
-              disabled={actionLoading === "create" || !createForm.email || !createForm.password || !createForm.firstName || !createForm.lastName}
-              className="bg-[#000080]"
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreateUserOpen(false);
+                setFormErrors({});
+              }}
+              className="flex-1"
             >
-              {actionLoading === "create" ? <Loader2 className="animate-spin mr-2" /> : null}
-              Créer
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                if (validateForm()) {
+                  handleCreateUser();
+                }
+              }}
+              disabled={actionLoading === "create"}
+              className="flex-1 bg-[#000080] hover:bg-[#000060]"
+            >
+              {actionLoading === "create" ? (
+                <Loader2 className="animate-spin mr-2" />
+              ) : (
+                <Plus className="mr-2 h-4 w-4" />
+              )}
+              Créer l'utilisateur
             </Button>
           </DialogFooter>
         </DialogContent>
