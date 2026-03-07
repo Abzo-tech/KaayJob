@@ -7,6 +7,16 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BookingController = void 0;
 const prisma_1 = require("../config/prisma");
+const database_1 = require("../config/database");
+// Fonction utilitaire pour créer une notification (utilise query direct pour compatibilité)
+async function createNotification(userId, title, message, type = "info", link) {
+    try {
+        await (0, database_1.query)("INSERT INTO notifications (id, user_id, title, message, type, link, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())", [userId, title, message, type, link || null]);
+    }
+    catch (error) {
+        console.error("Erreur création notification:", error);
+    }
+}
 class BookingController {
     /**
      * Mes réservations (alias de getAll pour client)
@@ -214,6 +224,16 @@ class BookingController {
                     },
                 },
             });
+            // Notifier le prestataire de la nouvelle réservation
+            if (service.providerId) {
+                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
+                    where: { id: service.providerId },
+                    include: { user: true },
+                });
+                if (providerProfile) {
+                    await createNotification(providerProfile.userId, "Nouvelle réservation", `${user.firstName} ${user.lastName} a réservé "${service.name}"`, "info", "/prestataire/bookings");
+                }
+            }
             res.status(201).json({
                 success: true,
                 message: "Réservation créée",
@@ -283,6 +303,21 @@ class BookingController {
                     status: upperStatus,
                 },
             });
+            // Notifier le client du changement de statut
+            await createNotification(booking.clientId, "Statut de réservationmis à jour", `Votre réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
+                ? "error"
+                : "success", "/client/bookings");
+            // Notifier le prestataire du changement de statut
+            if (booking.service.providerId) {
+                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
+                    where: { id: booking.service.providerId },
+                });
+                if (providerProfile) {
+                    await createNotification(providerProfile.userId, "Réservation mise à jour", `La réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
+                        ? "error"
+                        : "success", "/prestataire/bookings");
+                }
+            }
             res.json({
                 success: true,
                 message: "Statut mis à jour",
@@ -329,6 +364,20 @@ class BookingController {
                     status: "CANCELLED",
                 },
             });
+            // Notifier le client de l'annulation
+            await createNotification(booking.clientId, "Réservation annulée", "Votre réservation a été annulée", "warning", "/client/bookings");
+            // Notifier le prestataire de l'annulation
+            const service = await prisma_1.prisma.service.findUnique({
+                where: { id: booking.serviceId },
+            });
+            if (service?.providerId) {
+                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
+                    where: { id: service.providerId },
+                });
+                if (providerProfile) {
+                    await createNotification(providerProfile.userId, "Réservation annulée", `Une réservation a été annulée`, "warning", "/prestataire/bookings");
+                }
+            }
             res.json({ success: true, message: "Réservation annulée" });
         }
         catch (error) {

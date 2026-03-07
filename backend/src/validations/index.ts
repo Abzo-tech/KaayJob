@@ -241,8 +241,9 @@ export const isRating = (fieldName: string, required = true) => {
 };
 
 // Statut de réservation
+// Accepte les deux formats: lowercase (bookings route) et uppercase (admin route)
 export const isBookingStatus = (fieldName: string, required = true) => {
-  const validStatuses = [
+  const validStatusesLower = [
     "pending",
     "confirmed",
     "in_progress",
@@ -250,16 +251,26 @@ export const isBookingStatus = (fieldName: string, required = true) => {
     "cancelled",
     "rejected",
   ];
+  const validStatusesUpper = [
+    "PENDING",
+    "CONFIRMED",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "CANCELLED",
+    "REJECTED",
+  ];
+  const allValidStatuses = [...validStatusesLower, ...validStatusesUpper];
+
   return required
     ? body(fieldName)
         .notEmpty()
         .withMessage(`${fieldName} est requis`)
-        .isIn(validStatuses)
-        .withMessage(`${fieldName} invalide: ${validStatuses.join(", ")}`)
+        .isIn(allValidStatuses)
+        .withMessage(`${fieldName} invalide: ${validStatusesLower.join(", ")}`)
     : body(fieldName)
         .optional()
-        .isIn(validStatuses)
-        .withMessage(`${fieldName} invalide: ${validStatuses.join(", ")}`);
+        .isIn(allValidStatuses)
+        .withMessage(`${fieldName} invalide: ${validStatusesLower.join(", ")}`);
 };
 
 // Type de prix

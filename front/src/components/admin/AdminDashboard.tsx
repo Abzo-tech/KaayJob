@@ -76,16 +76,32 @@ export function AdminDashboard() {
       }
 
       // Charger les statistiques depuis l'endpoint admin
-      const statsRes = await api.get("/admin/stats");
-      const usersRes = await api.get("/admin/users?limit=100");
-      const servicesRes = await api.get("/admin/services?limit=100");
-      const bookingsRes = await api.get("/admin/bookings?limit=100");
+      // Utiliser Promise.allSettled pour continuer même si un endpoint échoue
+      const results = await Promise.allSettled([
+        api.get("/admin/stats"),
+        api.get("/admin/users?limit=100"),
+        api.get("/admin/services?limit=100"),
+        api.get("/admin/bookings?limit=100"),
+      ]);
+
+      // Extraire les données de chaque réponse
+      const statsRes = results[0].status === "fulfilled" ? results[0].value : null;
+      const usersRes = results[1].status === "fulfilled" ? results[1].value : null;
+      const servicesRes = results[2].status === "fulfilled" ? results[2].value : null;
+      const bookingsRes = results[3].status === "fulfilled" ? results[3].value : null;
+
+      // Log les erreurs pour le débogage
+      results.forEach((result, index) => {
+        if (result.status === "rejected") {
+          console.error(`Erreur endpoint ${index}:`, result.reason);
+        }
+      });
 
       const stats = statsRes?.data;
       // La réponse est directement dans response.data (pas response.data.data)
-      const users = usersRes?.data || [];
-      const services = servicesRes?.data || [];
-      const bookings = bookingsRes?.data || [];
+      const users = usersRes?.data?.data || usersRes?.data || [];
+      const services = servicesRes?.data?.data || servicesRes?.data || [];
+      const bookings = bookingsRes?.data?.data || bookingsRes?.data || [];
 
       // Compter par rôle
       const clients = users.filter((u: any) => u.role === "CLIENT" || u.role === "client");

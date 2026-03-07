@@ -109,7 +109,8 @@ export function AdminBookings() {
   const handleConfirmBooking = async (bookingId: string) => {
     try {
       setActionLoading(bookingId);
-      await api.put(`/bookings/${bookingId}/status`, { status: "CONFIRMED" });
+      // Utiliser l'endpoint admin pour mettre à jour le statut
+      await api.put(`/admin/bookings/${bookingId}`, { status: "CONFIRMED" });
       toast.success("Réservation confirmée !");
       loadBookings();
     } catch (error: any) {
@@ -123,7 +124,8 @@ export function AdminBookings() {
   const handleCancelBooking = async (bookingId: string) => {
     try {
       setActionLoading(bookingId);
-      await api.put(`/bookings/${bookingId}/status`, { status: "CANCELLED" });
+      // Utiliser l'endpoint admin pour mettre à jour le statut
+      await api.put(`/admin/bookings/${bookingId}`, { status: "CANCELLED" });
       toast.success("Réservation annulée");
       loadBookings();
     } catch (error: any) {

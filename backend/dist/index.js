@@ -20,12 +20,15 @@ const categories_1 = __importDefault(require("./routes/categories"));
 const services_1 = __importDefault(require("./routes/services"));
 const reviews_1 = __importDefault(require("./routes/reviews"));
 const admin_1 = __importDefault(require("./routes/admin"));
+const notifications_1 = __importDefault(require("./routes/notifications"));
 const database_1 = require("./config/database");
 const prisma_1 = require("./config/prisma");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // Middleware
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -39,8 +42,13 @@ app.use((0, cors_1.default)({
     ],
     credentials: true,
 }));
-// Servir les fichiers statiques (images)
-app.use("/images", express_1.default.static(path_1.default.join(__dirname, "../public/images")));
+// Servir les fichiers statiques (images) avec CORS
+app.use("/images", (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    next();
+}, express_1.default.static(path_1.default.join(__dirname, "../public/images")));
 // Routes
 app.use("/api/auth", auth_1.default);
 app.use("/api/bookings", bookings_1.default);
@@ -49,6 +57,7 @@ app.use("/api/categories", categories_1.default);
 app.use("/api/services", services_1.default);
 app.use("/api/reviews", reviews_1.default);
 app.use("/api/admin", admin_1.default);
+app.use("/api/notifications", notifications_1.default);
 // Health check
 app.get("/api/health", async (req, res) => {
     try {

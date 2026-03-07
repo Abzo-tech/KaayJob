@@ -54,14 +54,6 @@ async function seed() {
                 displayOrder: 1
             },
             {
-                name: "Jardinage",
-                slug: "jardinage",
-                description: "Entretien de jardins et espaces verts",
-                icon: "🌱",
-                image: "https://images.unsplash.com/photo-1558904541-efa843a96f01?w=800",
-                displayOrder: 2
-            },
-            {
                 name: "Bricolage",
                 slug: "bricolage",
                 description: "Travaux de réparation et petit bricolage",
@@ -82,7 +74,7 @@ async function seed() {
                 slug: "plomberie",
                 description: "Réparation plomberie et installation",
                 icon: "🚿",
-                image: "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=800",
+                image: "/images/plomberie.png",
                 displayOrder: 5
             },
             {
@@ -106,7 +98,7 @@ async function seed() {
                 slug: "reparation",
                 description: "Services de réparation et maintenance",
                 icon: "🔩",
-                image: "/images/Cuisine.png",
+                image: "/images/Reparation.png",
                 displayOrder: 8
             },
             {
@@ -114,7 +106,7 @@ async function seed() {
                 slug: "macon",
                 description: "Travaux de construction et maçonnerie",
                 icon: "🧱",
-                image: "https://images.unsplash.com/photo-1518729571365-8a8642109cab?w=800",
+                image: "/images/maçon.png",
                 displayOrder: 9
             },
             {
@@ -140,6 +132,22 @@ async function seed() {
                 icon: "📚",
                 image: "/images/education.png",
                 displayOrder: 12
+            },
+            {
+                name: "Mécanique",
+                slug: "mecanique",
+                description: "Services de mécanique automobile",
+                icon: "🔧",
+                image: "/images/mecanique.png",
+                displayOrder: 13
+            },
+            {
+                name: "Cuisine",
+                slug: "cuisine",
+                description: "Services de cuisine et préparation de repas",
+                icon: "🍳",
+                image: "/images/cuisine.png",
+                displayOrder: 14
             },
         ];
         const createdCategories = [];
@@ -196,19 +204,6 @@ async function seed() {
                 bio: "Électricien certifié. Installation électrique, dépannage, mise aux normes.",
                 hourlyRate: 30,
                 yearsExperience: 8,
-                location: "Dakar",
-                city: "Dakar",
-            },
-            {
-                email: "fatou.jardin@email.com",
-                firstName: "Fatou",
-                lastName: "Ndiaye",
-                phone: "+221771234570",
-                businessName: "Jardin de Fatou",
-                specialty: "Jardinage",
-                bio: "Paysagiste et entretien de jardins. Création et mantenimiento des espaces verts.",
-                hourlyRate: 20,
-                yearsExperience: 6,
                 location: "Dakar",
                 city: "Dakar",
             },
@@ -349,49 +344,45 @@ async function seed() {
         // ============================================
         const servicesData = [
             // Services Plomberie (Ahmed)
-            { providerIndex: 0, categoryIndex: 4, name: "Réparation de fuite", description: "Détection et réparation de fuites d'eau", price: 5000, duration: 60 },
-            { providerIndex: 0, categoryIndex: 4, name: "Débouchage canalisation", description: "Débouchage de WC, lavabo, évier", price: 8000, duration: 90 },
-            { providerIndex: 0, categoryIndex: 4, name: "Installation sanitaires", description: "Pose de lavabo, WC, baignoire", price: 25000, duration: 180 },
+            { providerIndex: 0, categoryIndex: 3, name: "Réparation de fuite", description: "Détection et réparation de fuites d'eau", price: 5000, duration: 60 },
+            { providerIndex: 0, categoryIndex: 3, name: "Débouchage canalisation", description: "Débouchage de WC, lavabo, évier", price: 8000, duration: 90 },
+            { providerIndex: 0, categoryIndex: 3, name: "Installation sanitaires", description: "Pose de lavabo, WC, baignoire", price: 25000, duration: 180 },
             // Services Ménage (Marie)
             { providerIndex: 1, categoryIndex: 0, name: "Nettoyage maison", description: "Nettoyage complet domicile", price: 10000, duration: 120 },
             { providerIndex: 1, categoryIndex: 0, name: "Nettoyage bureau", description: "Nettoyage de locaux professionnels", price: 15000, duration: 120 },
             { providerIndex: 1, categoryIndex: 0, name: "Nettoyage fin de bail", description: "Nettoyage approfondi pour départ locataire", price: 30000, duration: 240 },
             // Services Électricité (Ibrahim)
-            { providerIndex: 2, categoryIndex: 3, name: "Dépannage électrique", description: "Intervention rapide pour panne électrique", price: 10000, duration: 60 },
-            { providerIndex: 2, categoryIndex: 3, name: "Installation prise", description: "Pose de prises électriques", price: 5000, duration: 30 },
-            { providerIndex: 2, categoryIndex: 3, name: "Mise aux normes", description: "Mise aux normes du tableau électrique", price: 50000, duration: 360 },
-            // Services Jardinage (Fatou)
-            { providerIndex: 3, categoryIndex: 1, name: "Entretien jardin", description: "Tonte pelouse, taille haies", price: 8000, duration: 90 },
-            { providerIndex: 3, categoryIndex: 1, name: "Création jardin", description: "Aménagement paysager complet", price: 50000, duration: 480 },
-            { providerIndex: 3, categoryIndex: 1, name: "Traitement plantes", description: "Soin et traitement phytosanitaire", price: 10000, duration: 60 },
+            { providerIndex: 2, categoryIndex: 2, name: "Dépannage électrique", description: "Intervention rapide pour panne électrique", price: 10000, duration: 60 },
+            { providerIndex: 2, categoryIndex: 2, name: "Installation prise", description: "Pose de prises électriques", price: 5000, duration: 30 },
+            { providerIndex: 2, categoryIndex: 2, name: "Mise aux normes", description: "Mise aux normes du tableau électrique", price: 50000, duration: 360 },
             // Services Bricolage (Ousseynou)
-            { providerIndex: 4, categoryIndex: 2, name: "Montage meubles", description: "Montage de meubles IKEA et autres", price: 5000, duration: 45 },
-            { providerIndex: 4, categoryIndex: 2, name: "Petite réparation", description: "Réparations diverses à domicile", price: 3000, duration: 30 },
-            { providerIndex: 4, categoryIndex: 2, name: "Pose étagère", description: "Installation d'étagères et rangements", price: 4000, duration: 30 },
+            { providerIndex: 3, categoryIndex: 1, name: "Montage meubles", description: "Montage de meubles IKEA et autres", price: 5000, duration: 45 },
+            { providerIndex: 3, categoryIndex: 1, name: "Petite réparation", description: "Réparations diverses à domicile", price: 3000, duration: 30 },
+            { providerIndex: 3, categoryIndex: 1, name: "Pose étagère", description: "Installation d'étagères et rangements", price: 4000, duration: 30 },
             // Services Maçon (Moussa)
-            { providerIndex: 5, categoryIndex: 8, name: "Construction mur", description: "Construction de murs en briques ou parpaings", price: 25000, duration: 240 },
-            { providerIndex: 5, categoryIndex: 8, name: "Rénovation maçonnerie", description: "Réparation et réfection de maçonnerie", price: 20000, duration: 180 },
-            { providerIndex: 5, categoryIndex: 8, name: "Dallage", description: "Pose de dallage extérieur ou intérieur", price: 30000, duration: 300 },
+            { providerIndex: 4, categoryIndex: 7, name: "Construction mur", description: "Construction de murs en briques ou parpaings", price: 25000, duration: 240 },
+            { providerIndex: 4, categoryIndex: 7, name: "Rénovation maçonnerie", description: "Réparation et réfection de maçonnerie", price: 20000, duration: 180 },
+            { providerIndex: 4, categoryIndex: 7, name: "Dallage", description: "Pose de dallage extérieur ou intérieur", price: 30000, duration: 300 },
             // Services Menuisier bois (Ali)
-            { providerIndex: 6, categoryIndex: 9, name: "Fabrication meuble", description: "Meuble sur mesure en bois", price: 45000, duration: 480 },
-            { providerIndex: 6, categoryIndex: 9, name: "Pose porte", description: "Installation de portes intérieures et extérieures", price: 15000, duration: 120 },
-            { providerIndex: 6, categoryIndex: 9, name: "Pose fenêtre", description: "Pose de fenêtres en bois", price: 20000, duration: 180 },
+            { providerIndex: 5, categoryIndex: 8, name: "Fabrication meuble", description: "Meuble sur mesure en bois", price: 45000, duration: 480 },
+            { providerIndex: 5, categoryIndex: 8, name: "Pose porte", description: "Installation de portes intérieures et extérieures", price: 15000, duration: 120 },
+            { providerIndex: 5, categoryIndex: 8, name: "Pose fenêtre", description: "Pose de fenêtres en bois", price: 20000, duration: 180 },
             // Services Menuisier métallique (Youssoufa)
-            { providerIndex: 7, categoryIndex: 10, name: "Portail métallique", description: "Fabrication et pose de portail", price: 80000, duration: 360 },
-            { providerIndex: 7, categoryIndex: 10, name: "Grille de sécurité", description: "Installation de grilles aux fenêtres", price: 25000, duration: 180 },
-            { providerIndex: 7, categoryIndex: 10, name: "Rambarde escalier", description: "Pose de rambarde ou garde-corps", price: 35000, duration: 240 },
+            { providerIndex: 6, categoryIndex: 9, name: "Portail métallique", description: "Fabrication et pose de portail", price: 80000, duration: 360 },
+            { providerIndex: 6, categoryIndex: 9, name: "Grille de sécurité", description: "Installation de grilles aux fenêtres", price: 25000, duration: 180 },
+            { providerIndex: 6, categoryIndex: 9, name: "Rambarde escalier", description: "Pose de rambarde ou garde-corps", price: 35000, duration: 240 },
             // Services Réparation (Mamadou)
-            { providerIndex: 8, categoryIndex: 7, name: "Réparation electroménager", description: "Réparation d'appareils électroménagers", price: 8000, duration: 60 },
-            { providerIndex: 8, categoryIndex: 7, name: "Réparation meubles", description: "Réparation et restauration de meubles", price: 5000, duration: 45 },
-            { providerIndex: 8, categoryIndex: 7, name: "Maintenance équipements", description: "Entretien et maintenance d'équipements", price: 6000, duration: 45 },
+            { providerIndex: 7, categoryIndex: 6, name: "Réparation electroménager", description: "Réparation d'appareils électroménagers", price: 8000, duration: 60 },
+            { providerIndex: 7, categoryIndex: 6, name: "Réparation meubles", description: "Réparation et restauration de meubles", price: 5000, duration: 45 },
+            { providerIndex: 7, categoryIndex: 6, name: "Maintenance équipements", description: "Entretien et maintenance d'équipements", price: 6000, duration: 45 },
             // Services Femme de ménage (Fatou)
-            { providerIndex: 9, categoryIndex: 0, name: "Nettoyage quotidien", description: "Nettoyage quotidien du domicile", price: 8000, duration: 120 },
-            { providerIndex: 9, categoryIndex: 0, name: "Repassage", description: "Service de repassage à domicile", price: 5000, duration: 90 },
-            { providerIndex: 9, categoryIndex: 0, name: "Grand nettoyage", description: "Nettoyage complet et approfondi", price: 20000, duration: 240 },
+            { providerIndex: 8, categoryIndex: 0, name: "Nettoyage quotidien", description: "Nettoyage quotidien du domicile", price: 8000, duration: 120 },
+            { providerIndex: 8, categoryIndex: 0, name: "Repassage", description: "Service de repassage à domicile", price: 5000, duration: 90 },
+            { providerIndex: 8, categoryIndex: 0, name: "Grand nettoyage", description: "Nettoyage complet et approfondi", price: 20000, duration: 240 },
             // Services Éducation (Samba)
-            { providerIndex: 10, categoryIndex: 11, name: "Cours de Maths", description: "Cours particuliers de mathématiques", price: 10000, duration: 60 },
-            { providerIndex: 10, categoryIndex: 11, name: "Cours de Physique", description: "Cours particuliers de physique", price: 10000, duration: 60 },
-            { providerIndex: 10, categoryIndex: 11, name: "Soutien scolaire", description: "Aide aux devoirs et soutien scolaire", price: 8000, duration: 60 },
+            { providerIndex: 9, categoryIndex: 10, name: "Cours de Maths", description: "Cours particuliers de mathématiques", price: 10000, duration: 60 },
+            { providerIndex: 9, categoryIndex: 10, name: "Cours de Physique", description: "Cours particuliers de physique", price: 10000, duration: 60 },
+            { providerIndex: 9, categoryIndex: 10, name: "Soutien scolaire", description: "Aide aux devoirs et soutien scolaire", price: 8000, duration: 60 },
         ];
         for (const s of servicesData) {
             const provider = createdProviders[s.providerIndex];

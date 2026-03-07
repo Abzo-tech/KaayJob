@@ -4,6 +4,7 @@
 
 import { Router, Response, Request } from "express";
 import { body, validationResult } from "express-validator";
+import { prisma } from "../config/prisma";
 import { query } from "../config/database";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
 import { createNotification } from "../services/notificationService";
@@ -419,7 +420,7 @@ router.put(
   },
 );
 
-// GET /api/admin/services - Tous les services
+// GET /api/admin/services - Tous les services (using Prisma)
 router.get("/services", async (req: AuthRequest, res: Response) => {
   try {
     const { page = 1, limit = 20, category } = req.query;
@@ -427,57 +428,104 @@ router.get("/services", async (req: AuthRequest, res: Response) => {
     const limitNum = Number(limit);
     const offset = (pageNum - 1) * limitNum;
 
-    console.log("Admin services query - page:", pageNum, "limit:", limitNum);
+    console.log(
+      "[AdminServices] Début de la requête - page:",
+      pageNum,
+      "limit:",
+      limitNum,
+    );
 
-    // Test simple - d'abord juste sélectionner les services
-    let testResult;
-    try {
-      testResult = await query("SELECT COUNT(*) as cnt FROM services");
-      console.log("Services count:", testResult.rows[0].cnt);
-    } catch (err: any) {
-      console.error("Erreur table services:", err.message);
-      return res.status(500).json({ 
-        success: false, 
-        message: "Erreur: table services inexistante ou erreur de connexion",
-        detail: err.message 
-      });
-    }
-
-    let whereClause = "1=1";
-    const params: any[] = [];
-
+    // Construction du where clause pour Prisma
+    const where: any = {};
     if (category) {
-      whereClause += ` AND category_id = $1`;
-      params.push(category);
+      where.categoryId = category as string;
     }
 
-    const countResult = await query(
-      `SELECT COUNT(*) as count FROM services WHERE ${whereClause}`,
-      params,
-    );
+    // Requête avec Prisma
+    let services: any[] = [];
+    let total = 0;
 
-    // Query plus simple sans les jointures pour le debug
-    const result = await query(
-      `SELECT * FROM services WHERE ${whereClause} ORDER BY created_at DESC LIMIT ${limitNum} OFFSET ${offset}`,
-      params,
-    );
+    try {
+      [services, total] = await Promise.all([
+        prisma.service.findMany({
+          where,
+          skip: offset,
+          take: limitNum,
+          orderBy: { createdAt: "desc" },
+          include: {
+            category: true,
+            provider: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        prisma.service.count({ where }),
+      ]);
+    } catch (prismaError: any) {
+      console.error("[AdminServices] Erreur Prisma:", prismaError);
+      // Si erreur avec les relations, essayer sans include
+      console.log("[AdminServices] Retry sans relations...");
+      services = await prisma.service.findMany({
+        where,
+        skip: offset,
+        take: limitNum,
+        orderBy: { createdAt: "desc" },
+      });
+      total = await prisma.service.count({ where });
+    }
 
+    // Transformation des données pour le format attendu par le frontend
+    const transformedServices = services.map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      price: s.price,
+      priceType: s.priceType,
+      duration: s.duration,
+      isActive: s.isActive,
+      provider_id: s.providerId,
+      category_id: s.categoryId,
+      category_name: s.category?.name || null,
+      first_name: s.provider?.user?.firstName || null,
+      last_name: s.provider?.user?.lastName || null,
+      provider_email: s.provider?.user?.email || null,
+      created_at: s.createdAt,
+      updated_at: s.updatedAt,
+    }));
+
+    console.log(
+      "[AdminServices] Services chargés:",
+      transformedServices.length,
+    );
     res.json({
       success: true,
-      data: result.rows,
+      data: transformedServices,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
-        total: parseInt(countResult.rows[0].count),
+        page: pageNum,
+        limit: limitNum,
+        total,
       },
     });
   } catch (error: any) {
-    console.error("Erreur liste services:", error);
-    res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
+    console.error("[AdminServices] Erreur globale:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+      detail: error.message,
+    });
   }
 });
 
-// PUT /api/admin/services/:id - Mettre à jour un service
+// PUT /api/admin/services/:id - Mettre à jour un service (using Prisma)
 router.put(
   "/services/:id",
   [
@@ -492,101 +540,104 @@ router.put(
   ],
   async (req: AuthRequest, res: Response) => {
     try {
+      console.log(
+        "[UpdateService] Début - id:",
+        req.params.id,
+        "body:",
+        req.body,
+      );
+
       const errors = validationResult(req);
-      if (!errors.isEmpty())
+      if (!errors.isEmpty()) {
+        console.log("[UpdateService] Erreurs validation:", errors.array());
         return res.status(400).json({ success: false, errors: errors.array() });
+      }
 
       const { id } = req.params;
       const { name, description, price, duration, isActive, priceType } =
         req.body;
 
-      // Vérifier si le service existe
-      const existing = await query("SELECT id FROM services WHERE id = $1", [
-        id,
-      ]);
-      if (existing.rows.length === 0) {
+      // Vérifier si le service existe avec Prisma
+      const existing = await prisma.service.findUnique({
+        where: { id },
+        include: { provider: true },
+      });
+
+      if (!existing) {
+        console.log("[UpdateService] Service non trouvé:", id);
         return res
           .status(404)
           .json({ success: false, message: "Service non trouvé" });
       }
 
-      const updates: string[] = [];
-      const params: any[] = [];
-      let paramIndex = 1;
+      // Préparer les données de mise à jour
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (price !== undefined) updateData.price = parseFloat(price);
+      if (duration !== undefined) updateData.duration = parseInt(duration);
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (priceType !== undefined) updateData.priceType = priceType;
 
-      if (name) {
-        updates.push(`name = $${paramIndex++}`);
-        params.push(name);
-      }
-      if (description !== undefined) {
-        updates.push(`description = $${paramIndex++}`);
-        params.push(description);
-      }
-      if (price !== undefined) {
-        updates.push(`price = $${paramIndex++}`);
-        params.push(price);
-      }
-      if (duration !== undefined) {
-        updates.push(`duration = $${paramIndex++}`);
-        params.push(duration);
-      }
-      if (isActive !== undefined) {
-        updates.push(`is_active = $${paramIndex++}`);
-        params.push(isActive);
-      }
-      if (priceType !== undefined) {
-        updates.push(`price_type = $${paramIndex++}`);
-        params.push(priceType);
-      }
-
-      if (updates.length === 0) {
+      if (Object.keys(updateData).length === 0) {
         return res
           .status(400)
           .json({ success: false, message: "Aucune donnée à mettre à jour" });
       }
 
-      updates.push(`updated_at = NOW()`);
-      params.push(id);
+      console.log("[UpdateService] Exécution UPDATE avec Prisma:", updateData);
 
-      const result = await query(
-        `UPDATE services SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING *`,
-        params,
-      );
+      // Mise à jour avec Prisma
+      const result = await prisma.service.update({
+        where: { id },
+        data: updateData,
+      });
 
-      // Récupérer le provider du service
-      const serviceResult = await query(
-        "SELECT provider_id, name FROM services WHERE id = $1",
-        [id],
-      );
+      console.log("[UpdateService] Update réussi:", result);
 
       // Notifier le prestataire
-      if (serviceResult.rows[0]?.provider_id) {
-        await createNotification(
-          serviceResult.rows[0].provider_id,
-          "Service mis à jour",
-          `Votre service "${serviceResult.rows[0].name}" a été mis à jour par l'administrateur`,
-          "info",
-          "/prestataire/services",
+      try {
+        if (existing.providerId) {
+          await createNotification(
+            existing.providerId,
+            "Service mis à jour",
+            `Votre service "${existing.name}" a été mis à jour par l'administrateur`,
+            "info",
+            "/prestataire/services",
+          );
+        }
+      } catch (notifError) {
+        console.error(
+          "[UpdateService] Erreur notification prestataire:",
+          notifError,
         );
       }
 
       // Créer une notification pour l'administrateur
-      await createNotification(
-        req.user!.id,
-        "Service mis à jour",
-        `Le service a été mis à jour avec succès`,
-        "info",
-        "/admin/services",
-      );
+      try {
+        await createNotification(
+          req.user!.id,
+          "Service mis à jour",
+          `Le service a été mis à jour avec succès`,
+          "info",
+          "/admin/services",
+        );
+      } catch (notifError) {
+        console.error("[UpdateService] Erreur notification admin:", notifError);
+      }
 
       res.json({
         success: true,
         message: "Service mis à jour",
-        data: result.rows[0],
+        data: result,
       });
-    } catch (error) {
-      console.error("Erreur mise à jour service:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
+    } catch (error: any) {
+      console.error("[UpdateService] Erreur globale:", error);
+      res.status(500).json({
+        success: false,
+        message: "Erreur serveur",
+        detail: error.message,
+      });
     }
   },
 );
@@ -720,14 +771,23 @@ router.get("/bookings", async (req: AuthRequest, res: Response) => {
   }
 });
 
-// PUT /api/admin/bookings/:id - Mettre à jour une réservation
+// PUT /api/admin/bookings/:id - Mettre à jour une réservation (using Prisma)
 router.put(
   "/bookings/:id",
   [
     body("status")
       .optional()
-      .isIn(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"])
-      .withMessage("Statut invalide"),
+      .isIn([
+        "PENDING",
+        "CONFIRMED",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "CANCELLED",
+        "REJECTED",
+      ])
+      .withMessage(
+        "Statut invalide: PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, REJECTED",
+      ),
     body("paymentStatus")
       .optional()
       .isIn(["PENDING", "PAID", "REFUNDED"])
@@ -750,119 +810,98 @@ router.put(
         notes,
       } = req.body;
 
-      // Vérifier si la réservation existe
-      const existing = await query("SELECT id FROM bookings WHERE id = $1", [
-        id,
-      ]);
-      if (existing.rows.length === 0) {
+      // Vérifier si la réservation existe avec Prisma
+      const existing = await prisma.booking.findUnique({
+        where: { id },
+        include: {
+          service: {
+            include: { provider: true },
+          },
+          client: true,
+        },
+      });
+
+      if (!existing) {
         return res
           .status(404)
           .json({ success: false, message: "Réservation non trouvée" });
       }
 
-      const updates: string[] = [];
-      const params: any[] = [];
-      let paramIndex = 1;
+      // Préparer les données de mise à jour
+      const updateData: any = {};
+      if (status) updateData.status = status;
+      if (paymentStatus) updateData.paymentStatus = paymentStatus;
+      if (bookingDate) updateData.bookingDate = new Date(bookingDate);
+      if (bookingTime) updateData.bookingTime = bookingTime;
+      if (address !== undefined) updateData.address = address;
+      if (city !== undefined) updateData.city = city;
+      if (notes !== undefined) updateData.notes = notes;
 
-      if (status) {
-        updates.push(`status = $${paramIndex++}`);
-        params.push(status);
-      }
-      if (paymentStatus) {
-        updates.push(`payment_status = $${paramIndex++}`);
-        params.push(paymentStatus);
-      }
-      if (bookingDate) {
-        updates.push(`booking_date = $${paramIndex++}`);
-        params.push(bookingDate);
-      }
-      if (bookingTime) {
-        updates.push(`booking_time = $${paramIndex++}`);
-        params.push(bookingTime);
-      }
-      if (address !== undefined) {
-        updates.push(`address = $${paramIndex++}`);
-        params.push(address);
-      }
-      if (city !== undefined) {
-        updates.push(`city = $${paramIndex++}`);
-        params.push(city);
-      }
-      if (notes !== undefined) {
-        updates.push(`notes = $${paramIndex++}`);
-        params.push(notes);
-      }
-
-      if (updates.length === 0) {
+      if (Object.keys(updateData).length === 0) {
         return res
           .status(400)
           .json({ success: false, message: "Aucune donnée à mettre à jour" });
       }
 
-      updates.push(`updated_at = NOW()`);
-      params.push(id);
-
-      const result = await query(
-        `UPDATE bookings SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING *`,
-        params,
-      );
+      // Mise à jour avec Prisma
+      const result = await prisma.booking.update({
+        where: { id },
+        data: updateData,
+      });
 
       // Créer une notification si le statut a changé
       if (status) {
-        const booking = await query(
-          `SELECT b.*, u.first_name as client_first_name, u.last_name as client_last_name,
-                  s.name as service_name, p.first_name as provider_first_name, p.last_name as provider_last_name
-           FROM bookings b
-           JOIN users u ON b.client_id = u.id
-           JOIN services s ON b.service_id = s.id
-           JOIN users p ON s.provider_id = p.id
-           WHERE b.id = $1`,
-          [id],
-        );
+        try {
+          const statusMessages: { [key: string]: string } = {
+            CONFIRMED: "confirmée",
+            COMPLETED: "terminée",
+            CANCELLED: "annulée",
+            PENDING: "en attente",
+          };
 
-        const statusMessages: { [key: string]: string } = {
-          CONFIRMED: "confirmée",
-          COMPLETED: "terminée",
-          CANCELLED: "annulée",
-          PENDING: "en attente",
-        };
+          // Notifier le client
+          if (existing.clientId) {
+            await createNotification(
+              existing.clientId,
+              "Statut de réservation mis à jour",
+              `Votre réservation pour "${existing.service?.name || "un service"}" a été ${statusMessages[status] || "mise à jour"} par l'administrateur`,
+              status === "CANCELLED" ? "error" : "success",
+              "/client/bookings",
+            );
+          }
 
-        // Notifier le client
-        await createNotification(
-          booking.rows[0].client_id,
-          "Statut de réservationmis à jour",
-          `Votre réservation pour "${booking.rows[0].service_name}" a été ${statusMessages[status] || "mise à jour"} par l'administrateur`,
-          status === "CANCELLED" ? "error" : "success",
-          "/client/bookings",
-        );
+          // Notifier le prestataire
+          if (existing.service?.providerId) {
+            await createNotification(
+              existing.service.providerId,
+              "Réservation mise à jour",
+              `La réservation pour "${existing.service?.name || "un service"}" a été ${statusMessages[status] || "mise à jour"} par l'administrateur`,
+              status === "CANCELLED" ? "error" : "success",
+              "/prestataire/bookings",
+            );
+          }
 
-        // Notifier le prestataire
-        await createNotification(
-          booking.rows[0].provider_id,
-          "Réservation mise à jour",
-          `La réservation pour "${booking.rows[0].service_name}" a été ${statusMessages[status] || "mise à jour"} par l'administrateur`,
-          status === "CANCELLED" ? "error" : "success",
-          "/prestataire/bookings",
-        );
-
-        // Notifier l'administrateur
-        await createNotification(
-          req.user!.id,
-          "Réservation mise à jour",
-          `La réservation #${id.slice(0, 8)} a été ${statusMessages[status] || "mise à jour"}`,
-          status === "CANCELLED" ? "error" : "success",
-          "/admin/bookings",
-        );
+          // Notifier l'administrateur
+          await createNotification(
+            req.user!.id,
+            "Réservation mise à jour",
+            `La réservation #${id.slice(0, 8)} a été ${statusMessages[status] || "mise à jour"}`,
+            status === "CANCELLED" ? "error" : "success",
+            "/admin/bookings",
+          );
+        } catch (notificationError) {
+          console.error("Erreur création notifications:", notificationError);
+        }
       }
 
       res.json({
         success: true,
         message: "Réservation mise à jour",
-        data: result.rows[0],
+        data: result,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur mise à jour réservation:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
+      res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
     }
   },
 );
@@ -903,21 +942,42 @@ router.delete("/bookings/:id", async (req: AuthRequest, res: Response) => {
   }
 });
 
-// GET /api/admin/categories - Gestion des catégories
+// GET /api/admin/categories - Gestion des catégories (using Prisma)
 router.get("/categories", async (req: AuthRequest, res: Response) => {
   try {
-    const result = await query(`
-      SELECT c.*, COUNT(s.id) as service_count
-      FROM categories c
-      LEFT JOIN services s ON s.category_id = c.id
-      GROUP BY c.id
-      ORDER BY c.name
-    `);
+    const categories = await prisma.category.findMany({
+      include: {
+        _count: {
+          select: { services: true },
+        },
+      },
+      orderBy: { name: "asc" },
+    });
 
-    res.json({ success: true, data: result.rows });
-  } catch (error) {
+    // Transformation pour le format attendu
+    const transformed = categories.map((c: any) => ({
+      id: c.id,
+      name: c.name,
+      slug: c.slug,
+      description: c.description,
+      icon: c.icon,
+      image: c.image,
+      isActive: c.isActive,
+      displayOrder: c.displayOrder,
+      service_count: c._count.services,
+      created_at: c.createdAt,
+    }));
+
+    res.json({ success: true, data: transformed });
+  } catch (error: any) {
     console.error("Erreur liste catégories:", error);
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Erreur serveur",
+        detail: error.message,
+      });
   }
 });
 
@@ -937,10 +997,15 @@ router.post(
 
       const { name, description, icon, image } = req.body;
 
-      const result = await query(
-        "INSERT INTO categories (name, description, icon, image) VALUES ($1, $2, $3, $4) RETURNING *",
-        [name, description, icon, image || null],
-      );
+      const result = await prisma.category.create({
+        data: {
+          name,
+          slug: name.toLowerCase().replace(/\s+/g, "-"),
+          description,
+          icon,
+          image,
+        },
+      });
 
       // Créer une notification pour l'administrateur
       await createNotification(
@@ -954,16 +1019,22 @@ router.post(
       res.status(201).json({
         success: true,
         message: "Catégorie créée",
-        data: result.rows[0],
+        data: result,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur création catégorie:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Erreur serveur",
+          detail: error.message,
+        });
     }
   },
 );
 
-// PUT /api/admin/categories/:id - Mettre à jour une catégorie
+// PUT /api/admin/categories/:id - Mettre à jour une catégorie (using Prisma)
 router.put(
   "/categories/:id",
   [
@@ -985,57 +1056,38 @@ router.put(
       const { name, description, icon, image, isActive, displayOrder } =
         req.body;
 
-      // Vérifier si la catégorie existe
-      const existing = await query("SELECT id FROM categories WHERE id = $1", [
-        id,
-      ]);
-      if (existing.rows.length === 0) {
+      // Vérifier si la catégorie existe avec Prisma
+      const existing = await prisma.category.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
         return res
           .status(404)
           .json({ success: false, message: "Catégorie non trouvée" });
       }
 
-      const updates: string[] = [];
-      const params: any[] = [];
-      let paramIndex = 1;
+      // Préparer les données de mise à jour
+      const updateData: any = {};
+      if (name) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (icon !== undefined) updateData.icon = icon;
+      if (image !== undefined) updateData.image = image;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (displayOrder !== undefined)
+        updateData.displayOrder = parseInt(displayOrder);
 
-      if (name) {
-        updates.push(`name = $${paramIndex++}`);
-        params.push(name);
-      }
-      if (description !== undefined) {
-        updates.push(`description = $${paramIndex++}`);
-        params.push(description);
-      }
-      if (icon !== undefined) {
-        updates.push(`icon = $${paramIndex++}`);
-        params.push(icon);
-      }
-      if (image !== undefined) {
-        updates.push(`image = $${paramIndex++}`);
-        params.push(image);
-      }
-      if (isActive !== undefined) {
-        updates.push(`is_active = $${paramIndex++}`);
-        params.push(isActive);
-      }
-      if (displayOrder !== undefined) {
-        updates.push(`display_order = $${paramIndex++}`);
-        params.push(displayOrder);
-      }
-
-      if (updates.length === 0) {
+      if (Object.keys(updateData).length === 0) {
         return res
           .status(400)
           .json({ success: false, message: "Aucune donnée à mettre à jour" });
       }
 
-      params.push(id);
-
-      const result = await query(
-        `UPDATE categories SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING *`,
-        params,
-      );
+      // Mise à jour avec Prisma
+      const result = await prisma.category.update({
+        where: { id },
+        data: updateData,
+      });
 
       // Créer une notification pour l'administrateur
       await createNotification(
@@ -1049,36 +1101,42 @@ router.put(
       res.json({
         success: true,
         message: "Catégorie mise à jour",
-        data: result.rows[0],
+        data: result,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur mise à jour catégorie:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Erreur serveur",
+          detail: error.message,
+        });
     }
   },
 );
 
-// DELETE /api/admin/categories/:id - Supprimer une catégorie
+// DELETE /api/admin/categories/:id - Supprimer une catégorie (using Prisma)
 router.delete("/categories/:id", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
     // Vérifier si la catégorie existe
-    const existing = await query("SELECT name FROM categories WHERE id = $1", [
-      id,
-    ]);
-    if (existing.rows.length === 0) {
+    const existing = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { services: true } },
+      },
+    });
+
+    if (!existing) {
       return res
         .status(404)
         .json({ success: false, message: "Catégorie non trouvée" });
     }
 
     // Vérifier si des services utilisent cette catégorie
-    const servicesCount = await query(
-      "SELECT COUNT(*) as count FROM services WHERE category_id = $1",
-      [id],
-    );
-    if (parseInt(servicesCount.rows[0].count) > 0) {
+    if (existing._count.services > 0) {
       return res.status(400).json({
         success: false,
         message:
@@ -1086,21 +1144,29 @@ router.delete("/categories/:id", async (req: AuthRequest, res: Response) => {
       });
     }
 
-    await query("DELETE FROM categories WHERE id = $1", [id]);
+    await prisma.category.delete({
+      where: { id },
+    });
 
     // Créer une notification pour l'administrateur
     await createNotification(
       req.user!.id,
       "Catégorie supprimée",
-      `La catégorie "${existing.rows[0].name}" a été supprimée avec succès`,
+      `La catégorie "${existing.name}" a été supprimée avec succès`,
       "warning",
       "/admin/categories",
     );
 
     res.json({ success: true, message: "Catégorie supprimée" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur suppression catégorie:", error);
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    res
+      .status(500)
+      .json({
+        success: false,
+        message: "Erreur serveur",
+        detail: error.message,
+      });
   }
 });
 

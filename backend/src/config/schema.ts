@@ -1,12 +1,15 @@
 /**
  * Schéma de la base de données KaayJob
- * PostgreSQL - Utilise des entiers auto-incrémentés pour la simplicité
+ * PostgreSQL - Utilise des UUIDs pour les IDs
  */
 
 export const schema = `
+-- Extension UUID
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Table des utilisateurs
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
@@ -25,7 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- Table des catégories
 CREATE TABLE IF NOT EXISTS categories (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
     slug VARCHAR(100) UNIQUE NOT NULL,
     description TEXT,
@@ -33,7 +36,7 @@ CREATE TABLE IF NOT EXISTS categories (
     image VARCHAR(500),
     is_active BOOLEAN DEFAULT TRUE,
     display_order INTEGER DEFAULT 0,
-    parent_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+    parent_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -42,8 +45,8 @@ CREATE INDEX IF NOT EXISTS idx_categories_parent ON categories(parent_id);
 
 -- Table des profils prestataires
 CREATE TABLE IF NOT EXISTS provider_profiles (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     business_name VARCHAR(200),
     specialty VARCHAR(200),
     bio TEXT,
@@ -73,9 +76,9 @@ CREATE INDEX IF NOT EXISTS idx_provider_profiles_location ON provider_profiles(l
 
 -- Table des services
 CREATE TABLE IF NOT EXISTS services (
-    id SERIAL PRIMARY KEY,
-    provider_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    provider_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
     name VARCHAR(200) NOT NULL,
     description TEXT,
     price DECIMAL(10, 2) NOT NULL,
@@ -92,9 +95,9 @@ CREATE INDEX IF NOT EXISTS idx_services_active ON services(is_active);
 
 -- Table des réservations
 CREATE TABLE IF NOT EXISTS bookings (
-    id SERIAL PRIMARY KEY,
-    client_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    service_id INTEGER REFERENCES services(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    client_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    service_id UUID REFERENCES services(id) ON DELETE SET NULL,
     booking_date DATE NOT NULL,
     booking_time TIME NOT NULL,
     duration INTEGER DEFAULT 60,
@@ -116,11 +119,11 @@ CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);
 
 -- Table des avis
 CREATE TABLE IF NOT EXISTS reviews (
-    id SERIAL PRIMARY KEY,
-    booking_id INTEGER UNIQUE REFERENCES bookings(id) ON DELETE CASCADE,
-    client_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    provider_id INTEGER REFERENCES provider_profiles(id) ON DELETE SET NULL,
-    service_id INTEGER REFERENCES services(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_id UUID UNIQUE REFERENCES bookings(id) ON DELETE CASCADE,
+    client_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    provider_id UUID REFERENCES provider_profiles(id) ON DELETE SET NULL,
+    service_id UUID REFERENCES services(id) ON DELETE SET NULL,
     rating INTEGER CHECK (rating >= 1 AND rating <= 5) NOT NULL,
     comment TEXT,
     is_verified BOOLEAN DEFAULT TRUE,
@@ -134,19 +137,19 @@ CREATE INDEX IF NOT EXISTS reviews_client ON reviews(client_id);
 
 -- Table des demandes de vérification
 CREATE TABLE IF NOT EXISTS verification_requests (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     documents JSONB,
     status VARCHAR(20) DEFAULT 'pending',
-    reviewed_by INTEGER REFERENCES users(id),
+    reviewed_by UUID REFERENCES users(id),
     reviewed_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des abonnements (pour扩展 future)
+-- Table des abonnements
 CREATE TABLE IF NOT EXISTS subscriptions (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     plan VARCHAR(50) NOT NULL,
     status VARCHAR(20) DEFAULT 'active',
     start_date DATE NOT NULL,
@@ -159,9 +162,9 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
 
 -- Table des paiements
 CREATE TABLE IF NOT EXISTS payments (
-    id SERIAL PRIMARY KEY,
-    booking_id INTEGER REFERENCES bookings(id) ON DELETE SET NULL,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     amount DECIMAL(10, 2) NOT NULL,
     payment_method VARCHAR(50),
     status VARCHAR(20) DEFAULT 'pending',
@@ -171,6 +174,21 @@ CREATE TABLE IF NOT EXISTS payments (
 
 CREATE INDEX IF NOT EXISTS idx_payments_booking ON payments(booking_id);
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
+
+-- Table des notifications
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(200) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(20) DEFAULT 'info',
+    read BOOLEAN DEFAULT FALSE,
+    link VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
 `;
 
 export default schema;
