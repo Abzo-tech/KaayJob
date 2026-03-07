@@ -6,6 +6,7 @@ import { Router, Response, Request } from "express";
 import { body, validationResult } from "express-validator";
 import { query } from "../config/database";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
+import { createNotification } from "../services/notificationService";
 
 const router = Router();
 
@@ -112,7 +113,10 @@ router.put("/users/:id/verify", async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     // Vérifier si l'utilisateur est un prestataire
-    const userCheck = await query("SELECT role FROM users WHERE id = $1", [id]);
+    const userCheck = await query(
+      "SELECT role, first_name, last_name FROM users WHERE id = $1",
+      [id],
+    );
 
     if (userCheck.rows.length === 0) {
       return res
@@ -147,6 +151,25 @@ router.put("/users/:id/verify", async (req: AuthRequest, res: Response) => {
         [id],
       );
     }
+
+    // Créer une notification pour le prestataire
+    const userName = `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name}`;
+    await createNotification(
+      id,
+      "Compte vérifié",
+      "Votre compte prestataire a été vérifié par l'administrateur. Vous pouvez maintenant offrir vos services sur la plateforme.",
+      "success",
+      "/prestataire/dashboard",
+    );
+
+    // Créer une notification pour l'administrateur
+    await createNotification(
+      req.user!.id,
+      "Prestataire vérifié",
+      `${userName} a été vérifié avec succès`,
+      "success",
+      "/admin/users",
+    );
 
     res.json({
       success: true,
@@ -197,6 +220,15 @@ router.delete("/users/:id", async (req: AuthRequest, res: Response) => {
     // Finally delete the user
     await query("DELETE FROM users WHERE id = $1", [id]);
 
+    // Créer une notification pour l'administrateur
+    await createNotification(
+      req.user!.id,
+      "Utilisateur supprimé",
+      `L'utilisateur a été supprimé avec succès`,
+      "warning",
+      "/admin/users",
+    );
+
     res.json({ success: true, message: "Utilisateur supprimé" });
   } catch (error) {
     console.error("Erreur suppression utilisateur:", error);
@@ -242,6 +274,24 @@ router.post(
         `INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_active, is_verified, created_at, updated_at)
          VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, true, NOW(), NOW()) RETURNING id, email, first_name, last_name, phone, role, created_at`,
         [email, password, firstName, lastName, phone || null, role],
+      );
+
+      // Créer une notification pour le nouvel utilisateur
+      await createNotification(
+        result.rows[0].id,
+        "Bienvenue sur KaayJob",
+        `Votre compte a été créé avec succès. Votre rôle: ${role || "CLIENT"}`,
+        "success",
+        role === "PRESTATAIRE" ? "/prestataire/dashboard" : "/client/dashboard",
+      );
+
+      // Créer une notification pour l'administrateur
+      await createNotification(
+        req.user!.id,
+        "Utilisateur créé",
+        `${firstName} ${lastName} (${email}) a été créé avec succès`,
+        "success",
+        "/admin/users",
       );
 
       res.status(201).json({
@@ -343,8 +393,18 @@ router.put(
       params.push(id);
 
       const result = await query(
-        `UPDATE users SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING id, email, first_name, last_name, phone, role, is_active, created_at`,
+        `UPDATE users SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING id, email, first_name, last_name, phone, role, is_active, created_at`,
         params,
+      );
+
+      // Créer une notification pour l'administrateur
+      const userName = `${result.rows[0].first_name} ${result.rows[0].last_name}`;
+      await createNotification(
+        req.user!.id,
+        "Utilisateur mis à jour",
+        `${userName} a été mis à jour avec succès`,
+        "info",
+        "/admin/users",
       );
 
       res.json({
@@ -363,36 +423,43 @@ router.put(
 router.get("/services", async (req: AuthRequest, res: Response) => {
   try {
     const { page = 1, limit = 20, category } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const offset = (pageNum - 1) * limitNum;
+
+    console.log("Admin services query - page:", pageNum, "limit:", limitNum);
+
+    // Test simple - d'abord juste sélectionner les services
+    let testResult;
+    try {
+      testResult = await query("SELECT COUNT(*) as cnt FROM services");
+      console.log("Services count:", testResult.rows[0].cnt);
+    } catch (err: any) {
+      console.error("Erreur table services:", err.message);
+      return res.status(500).json({ 
+        success: false, 
+        message: "Erreur: table services inexistante ou erreur de connexion",
+        detail: err.message 
+      });
+    }
 
     let whereClause = "1=1";
     const params: any[] = [];
-    let paramIndex = 1;
 
     if (category) {
-      whereClause += ` AND s.category_id = $${paramIndex}`;
+      whereClause += ` AND category_id = $1`;
       params.push(category);
-      paramIndex++;
     }
 
     const countResult = await query(
-      `SELECT COUNT(*) as count FROM services s WHERE ${whereClause}`,
+      `SELECT COUNT(*) as count FROM services WHERE ${whereClause}`,
       params,
     );
 
-    // LIMIT et OFFSET utilisent des placeholders paramétrés dynamiques
-    const limitParamIndex = paramIndex;
-    const offsetParamIndex = paramIndex + 1;
-
+    // Query plus simple sans les jointures pour le debug
     const result = await query(
-      `SELECT s.*, c.name as category_name, u.first_name, u.last_name
-       FROM services s
-       LEFT JOIN categories c ON s.category_id = c.id
-       LEFT JOIN users u ON s.provider_id = u.id
-       WHERE ${whereClause}
-       ORDER BY s.created_at DESC
-       LIMIT ${limitParamIndex} OFFSET ${offsetParamIndex}`,
-      [...params, Number(limit), offset],
+      `SELECT * FROM services WHERE ${whereClause} ORDER BY created_at DESC LIMIT ${limitNum} OFFSET ${offset}`,
+      params,
     );
 
     res.json({
@@ -404,9 +471,9 @@ router.get("/services", async (req: AuthRequest, res: Response) => {
         total: parseInt(countResult.rows[0].count),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur liste services:", error);
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
   }
 });
 
@@ -482,8 +549,34 @@ router.put(
       params.push(id);
 
       const result = await query(
-        `UPDATE services SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        `UPDATE services SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING *`,
         params,
+      );
+
+      // Récupérer le provider du service
+      const serviceResult = await query(
+        "SELECT provider_id, name FROM services WHERE id = $1",
+        [id],
+      );
+
+      // Notifier le prestataire
+      if (serviceResult.rows[0]?.provider_id) {
+        await createNotification(
+          serviceResult.rows[0].provider_id,
+          "Service mis à jour",
+          `Votre service "${serviceResult.rows[0].name}" a été mis à jour par l'administrateur`,
+          "info",
+          "/prestataire/services",
+        );
+      }
+
+      // Créer une notification pour l'administrateur
+      await createNotification(
+        req.user!.id,
+        "Service mis à jour",
+        `Le service a été mis à jour avec succès`,
+        "info",
+        "/admin/services",
       );
 
       res.json({
@@ -504,7 +597,10 @@ router.delete("/services/:id", async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     // Vérifier si le service existe
-    const existing = await query("SELECT id FROM services WHERE id = $1", [id]);
+    const existing = await query(
+      "SELECT id, name FROM services WHERE id = $1",
+      [id],
+    );
     if (existing.rows.length === 0) {
       return res
         .status(404)
@@ -525,6 +621,32 @@ router.delete("/services/:id", async (req: AuthRequest, res: Response) => {
     }
 
     await query("DELETE FROM services WHERE id = $1", [id]);
+
+    // Récupérer le provider du service pour la notification
+    const serviceResult = await query(
+      "SELECT provider_id, name FROM services WHERE id = $1",
+      [id],
+    );
+
+    // Notifier le prestataire
+    if (serviceResult.rows[0]?.provider_id) {
+      await createNotification(
+        serviceResult.rows[0].provider_id,
+        "Service supprimé",
+        `Votre service "${serviceResult.rows[0].name}" a été supprimé par l'administrateur`,
+        "warning",
+        "/prestataire/services",
+      );
+    }
+
+    // Créer une notification pour l'administrateur
+    await createNotification(
+      req.user!.id,
+      "Service supprimé",
+      `Le service "${existing.rows[0].name}" a été supprimé avec succès`,
+      "warning",
+      "/admin/services",
+    );
 
     res.json({ success: true, message: "Service supprimé" });
   } catch (error) {
@@ -681,9 +803,57 @@ router.put(
       params.push(id);
 
       const result = await query(
-        `UPDATE bookings SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        `UPDATE bookings SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING *`,
         params,
       );
+
+      // Créer une notification si le statut a changé
+      if (status) {
+        const booking = await query(
+          `SELECT b.*, u.first_name as client_first_name, u.last_name as client_last_name,
+                  s.name as service_name, p.first_name as provider_first_name, p.last_name as provider_last_name
+           FROM bookings b
+           JOIN users u ON b.client_id = u.id
+           JOIN services s ON b.service_id = s.id
+           JOIN users p ON s.provider_id = p.id
+           WHERE b.id = $1`,
+          [id],
+        );
+
+        const statusMessages: { [key: string]: string } = {
+          CONFIRMED: "confirmée",
+          COMPLETED: "terminée",
+          CANCELLED: "annulée",
+          PENDING: "en attente",
+        };
+
+        // Notifier le client
+        await createNotification(
+          booking.rows[0].client_id,
+          "Statut de réservationmis à jour",
+          `Votre réservation pour "${booking.rows[0].service_name}" a été ${statusMessages[status] || "mise à jour"} par l'administrateur`,
+          status === "CANCELLED" ? "error" : "success",
+          "/client/bookings",
+        );
+
+        // Notifier le prestataire
+        await createNotification(
+          booking.rows[0].provider_id,
+          "Réservation mise à jour",
+          `La réservation pour "${booking.rows[0].service_name}" a été ${statusMessages[status] || "mise à jour"} par l'administrateur`,
+          status === "CANCELLED" ? "error" : "success",
+          "/prestataire/bookings",
+        );
+
+        // Notifier l'administrateur
+        await createNotification(
+          req.user!.id,
+          "Réservation mise à jour",
+          `La réservation #${id.slice(0, 8)} a été ${statusMessages[status] || "mise à jour"}`,
+          status === "CANCELLED" ? "error" : "success",
+          "/admin/bookings",
+        );
+      }
 
       res.json({
         success: true,
@@ -772,6 +942,15 @@ router.post(
         [name, description, icon, image || null],
       );
 
+      // Créer une notification pour l'administrateur
+      await createNotification(
+        req.user!.id,
+        "Catégorie créée",
+        `La catégorie "${name}" a été créée avec succès`,
+        "success",
+        "/admin/categories",
+      );
+
       res.status(201).json({
         success: true,
         message: "Catégorie créée",
@@ -854,8 +1033,17 @@ router.put(
       params.push(id);
 
       const result = await query(
-        `UPDATE categories SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        `UPDATE categories SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING *`,
         params,
+      );
+
+      // Créer une notification pour l'administrateur
+      await createNotification(
+        req.user!.id,
+        "Catégorie mise à jour",
+        `La catégorie a été mise à jour avec succès`,
+        "info",
+        "/admin/categories",
       );
 
       res.json({
@@ -876,7 +1064,7 @@ router.delete("/categories/:id", async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     // Vérifier si la catégorie existe
-    const existing = await query("SELECT id FROM categories WHERE id = $1", [
+    const existing = await query("SELECT name FROM categories WHERE id = $1", [
       id,
     ]);
     if (existing.rows.length === 0) {
@@ -899,6 +1087,15 @@ router.delete("/categories/:id", async (req: AuthRequest, res: Response) => {
     }
 
     await query("DELETE FROM categories WHERE id = $1", [id]);
+
+    // Créer une notification pour l'administrateur
+    await createNotification(
+      req.user!.id,
+      "Catégorie supprimée",
+      `La catégorie "${existing.rows[0].name}" a été supprimée avec succès`,
+      "warning",
+      "/admin/categories",
+    );
 
     res.json({ success: true, message: "Catégorie supprimée" });
   } catch (error) {
@@ -1015,6 +1212,53 @@ router.get("/analytics", async (req: AuthRequest, res: Response) => {
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 });
+
+// POST /api/admin/notifications - Créer une notification pour un utilisateur
+router.post(
+  "/notifications",
+  [
+    body("userId").notEmpty().withMessage("ID utilisateur requis"),
+    body("title").notEmpty().withMessage("Titre requis"),
+    body("message").notEmpty().withMessage("Message requis"),
+    body("type")
+      .optional()
+      .isIn(["success", "error", "info", "warning"])
+      .withMessage("Type invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { userId, title, message, type, link } = req.body;
+
+      // Vérifier si l'utilisateur existe
+      const userExists = await query("SELECT id FROM users WHERE id = $1", [
+        userId,
+      ]);
+      if (userExists.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Utilisateur non trouvé" });
+      }
+
+      // Créer la notification
+      await query(
+        "INSERT INTO notifications (id, user_id, title, message, type, link, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())",
+        [userId, title, message, type || "info", link || null],
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Notification créée",
+      });
+    } catch (error) {
+      console.error("Erreur création notification:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
 
 export default router;
 module.exports = router;

@@ -235,3 +235,18 @@ model Subscription {
 
   @@map("subscriptions")
 }
+
+// Modèle Notification
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  type      String   @default("info") // success, error, warning, info
+  read      Boolean  @default(false)
+  link      String? // Lien optionnel vers une page
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("notifications")
+}

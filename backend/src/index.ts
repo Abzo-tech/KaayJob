@@ -18,6 +18,7 @@ import categoriesRoutes from "./routes/categories";
 import servicesRoutes from "./routes/services";
 import reviewsRoutes from "./routes/reviews";
 import adminRoutes from "./routes/admin";
+import notificationsRoutes from "./routes/notifications";
 
 import { testConnection } from "./config/database";
 import { prisma } from "./config/prisma";
@@ -26,9 +27,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-}));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,12 +50,16 @@ app.use(
 );
 
 // Servir les fichiers statiques (images) avec CORS
-app.use("/images", (req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  next();
-}, express.static(path.join(__dirname, "../public/images")));
+app.use(
+  "/images",
+  (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    next();
+  },
+  express.static(path.join(__dirname, "../public/images")),
+);
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -62,6 +69,7 @@ app.use("/api/categories", categoriesRoutes);
 app.use("/api/services", servicesRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Health check
 app.get("/api/health", async (req, res) => {

@@ -39,6 +39,7 @@ import {
 } from "../ui/dialog";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { useNotifications } from "../../contexts/NotificationContext";
 
 export function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +47,7 @@ export function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { fetchNotifications } = useNotifications();
 
   // Modal states
   const [viewUser, setViewUser] = useState<any>(null);
@@ -158,6 +160,8 @@ export function AdminUsers() {
       await api.put(`/admin/users/${userId}/verify`);
       toast.success("Prestataire vérifié avec succès !");
       loadUsers();
+      // Petit délai pour laisser le temps au backend de créer la notification
+      setTimeout(() => fetchNotifications(), 500);
     } catch (error: any) {
       console.error("Erreur vérification:", error);
       toast.error(error.message || "Erreur lors de la vérification");
@@ -172,6 +176,8 @@ export function AdminUsers() {
       await api.delete(`/admin/users/${userId}`);
       toast.success("Utilisateur supprimé avec succès!");
       loadUsers();
+      // Petit délai pour laisser le temps au backend de créer la notification
+      setTimeout(() => fetchNotifications(), 500);
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la suppression");
     } finally {
@@ -201,6 +207,8 @@ export function AdminUsers() {
         role: "CLIENT",
       });
       loadUsers();
+      // Petit délai pour laisser le temps au backend de créer la notification
+      setTimeout(() => fetchNotifications(), 500);
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la création");
     } finally {

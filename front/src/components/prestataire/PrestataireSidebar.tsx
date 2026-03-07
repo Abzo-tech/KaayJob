@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../ui/button";
+import { NotificationDropdown } from "../common/NotificationDropdown";
 
 interface PrestataireSidebarProps {
   currentPage: string;
@@ -53,18 +54,21 @@ export function PrestataireSidebar({
           isOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0 lg:w-64 w-64`}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-6 border-b border-blue-800">
-          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-            <span className="text-[#000080] font-bold text-xl">K</span>
+        {/* Logo & Notifications */}
+        <div className="flex items-center justify-between px-6 py-6 border-b border-blue-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+              <span className="text-[#000080] font-bold text-xl">K</span>
+            </div>
+            <div>
+              <span className="text-xl font-bold">KaayJob</span>
+              <p className="text-xs text-blue-300 flex items-center gap-1">
+                <Crown size={12} className="text-yellow-400" />
+                Espace Prestataire
+              </p>
+            </div>
           </div>
-          <div>
-            <span className="text-xl font-bold">KaayJob</span>
-            <p className="text-xs text-blue-300 flex items-center gap-1">
-              <Crown size={12} className="text-yellow-400" />
-              Espace Prestataire
-            </p>
-          </div>
+          <NotificationDropdown />
         </div>
 
         {/* Menu Items */}

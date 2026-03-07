@@ -2,6 +2,7 @@ import { Button } from "./ui/button";
 import { Logo } from "./Logo";
 import { Menu, X, Bell, Home, Phone, User, LogOut } from "lucide-react";
 import { useState } from "react";
+import { NotificationDropdown } from "./common/NotificationDropdown";
 
 interface User {
   id: string;
@@ -25,7 +26,6 @@ export function Header({
   onLogout,
 }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [notificationCount] = useState(3);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
@@ -111,18 +111,8 @@ export function Header({
                   </span>
                 </button>
 
-                {/* Notification Bell */}
-                <button
-                  className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Notifications"
-                >
-                  <Bell size={20} className="text-gray-700" />
-                  {notificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                      {notificationCount}
-                    </span>
-                  )}
-                </button>
+                {/* Notification Bell with Dropdown */}
+                <NotificationDropdown variant="light" />
 
                 {/* Logout Button */}
                 <button

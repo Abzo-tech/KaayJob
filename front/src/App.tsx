@@ -10,6 +10,8 @@ import { CheckoutPage } from "./components/client/CheckoutPage";
 import { UserDashboard } from "./components/client/UserDashboard";
 import { ContactPage } from "./components/client/ContactPage";
 import { api, AuthResponse, User } from "./lib/api";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { Toaster } from "./components/ui/sonner";
 
 // Admin imports
 import { AdminSidebar } from "./components/admin/AdminSidebar";
@@ -267,17 +269,20 @@ export default function App() {
   const isPrestatairePage = currentPage.startsWith("prestataire-");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hide Header on admin, prestataire, and login pages */}
-      {!isAdminPage && !isPrestatairePage && !isLoginPage && (
-        <Header
-          currentPage={currentPage}
-          onNavigate={handleNavigate}
-          user={user}
-          onLogout={handleLogout}
-        />
-      )}
-      {renderCurrentPage()}
-    </div>
+    <NotificationProvider>
+      <Toaster />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hide Header on admin, prestataire, and login pages */}
+        {!isAdminPage && !isPrestatairePage && !isLoginPage && (
+          <Header
+            currentPage={currentPage}
+            onNavigate={handleNavigate}
+            user={user}
+            onLogout={handleLogout}
+          />
+        )}
+        {renderCurrentPage()}
+      </div>
+    </NotificationProvider>
   );
 }
