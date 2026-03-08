@@ -10,6 +10,8 @@ import {
   Star,
   Users,
   Loader2,
+  RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -44,6 +46,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { api } from "../../lib/api";
+import { toast } from "sonner";
 
 // Plans d'abonnement
 const plans = [
@@ -181,6 +184,50 @@ export function AdminSubscriptions() {
       const plan = plans.find((p) => p.id === sub.plan);
       return acc + (plan?.price || 0);
     }, 0);
+  };
+
+  const handleRenew = async (id: string) => {
+    try {
+      const response = await api.put(`/admin/subscriptions/${id}/renew`, { duration: 1 });
+      if (response.success) {
+        toast.success("Abonnement renouvelé avec succès");
+        // Refresh the list
+        const fetchSubscriptions = async () => {
+          const response = await api.get("/admin/subscriptions");
+          if (response.success) {
+            setSubscriptions(response.data || []);
+          }
+        };
+        fetchSubscriptions();
+      } else {
+        toast.error(response.message || "Erreur lors du renouvellement");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur de connexion");
+    }
+  };
+
+  const handleCancel = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir annuler cet abonnement ?")) return;
+    
+    try {
+      const response = await api.delete(`/admin/subscriptions/${id}`);
+      if (response.success) {
+        toast.success("Abonnement annulé avec succès");
+        // Refresh the list
+        const fetchSubscriptions = async () => {
+          const response = await api.get("/admin/subscriptions");
+          if (response.success) {
+            setSubscriptions(response.data || []);
+          }
+        };
+        fetchSubscriptions();
+      } else {
+        toast.error(response.message || "Erreur lors de l'annulation");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur de connexion");
+    }
   };
 
   if (loading) {
@@ -389,12 +436,12 @@ export function AdminSubscriptions() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Voir le profil</DropdownMenuItem>
-                          <DropdownMenuItem>
-                            Modifier l'abonnement
+                          <DropdownMenuItem onClick={() => handleRenew(sub.id)}>
+                            <RefreshCw size={14} className="mr-2" />
+                            Renouveler
                           </DropdownMenuItem>
-                          <DropdownMenuItem>Envoyer un rappel</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleCancel(sub.id)}>
+                            <Trash2 size={14} className="mr-2" />
                             Annuler l'abonnement
                           </DropdownMenuItem>
                         </DropdownMenuContent>

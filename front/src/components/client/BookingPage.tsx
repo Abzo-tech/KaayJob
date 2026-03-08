@@ -68,7 +68,7 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
   const [provider, setProvider] = useState<Provider | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const providerId = params.providerId;
   const serviceId = params.serviceId;
 
@@ -251,8 +251,8 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
       const bookingData = {
         providerId: providerId,
         serviceId: formData.serviceId,
-        bookingDate: date?.toISOString().split("T")[0],
-        bookingTime: formData.time,
+        date: date?.toISOString().split("T")[0],
+        time: formData.time,
         duration: parseInt(formData.duration),
         address: formData.address,
         city: formData.city,
@@ -292,7 +292,7 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
 
   // Get selected service
   const selectedService = provider?.services?.find(
-    (s) => s.id === formData.serviceId
+    (s) => s.id === formData.serviceId,
   );
 
   // Calculate total price
@@ -330,7 +330,9 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
     return (
       <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-500 mb-4">{error || "Prestataire non trouvé"}</p>
+          <p className="text-red-500 mb-4">
+            {error || "Prestataire non trouvé"}
+          </p>
           <Button onClick={() => onNavigate("categories")}>
             Retour aux catégories
           </Button>
@@ -396,7 +398,12 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
                             value={service.id}
                             className="text-base"
                           >
-                            {service.name} - {service.priceType === "quote" ? "Sur devis" : service.priceType === "fixed" ? `${service.price}€` : `À partir de ${service.price}€/h`}
+                            {service.name} -{" "}
+                            {service.priceType === "quote"
+                              ? "Sur devis"
+                              : service.priceType === "fixed"
+                                ? `${service.price}€`
+                                : `À partir de ${service.price}€/h`}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -467,8 +474,8 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
                       </SelectTrigger>
                       <SelectContent>
                         {DURATION_OPTIONS.map((option) => (
-                          <SelectItem 
-                            key={option.value} 
+                          <SelectItem
+                            key={option.value}
                             value={option.value}
                             className="text-base"
                           >
@@ -574,9 +581,15 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
               time={formData.time}
               address={formData.address}
               duration={formData.duration}
-              hourlyRate={selectedService?.priceType === "fixed" ? calculateTotal() : provider.hourlyRate || 25}
+              hourlyRate={
+                selectedService?.priceType === "fixed"
+                  ? calculateTotal()
+                  : provider.hourlyRate || 25
+              }
               onSubmit={handleSubmit}
-              onBack={() => onNavigate("service-detail", { providerId: providerId })}
+              onBack={() =>
+                onNavigate("service-detail", { providerId: providerId })
+              }
               isSubmitting={isSubmitting}
               showSuccess={showSuccess}
               disabled={

@@ -27,6 +27,7 @@ const menuItems = [
   },
   { id: "prestataire-services", label: "Mes services", icon: Briefcase },
   { id: "prestataire-bookings", label: "Réservations", icon: Calendar },
+  { id: "prestataire-subscription", label: "Abonnement", icon: Crown },
   { id: "prestataire-profile", label: "Mon profil", icon: User },
   { id: "prestataire-settings", label: "Paramètres", icon: Settings },
 ];
@@ -68,7 +69,7 @@ export function PrestataireSidebar({
               </p>
             </div>
           </div>
-          <NotificationDropdown />
+          <NotificationDropdown align="right" />
         </div>
 
         {/* Menu Items */}

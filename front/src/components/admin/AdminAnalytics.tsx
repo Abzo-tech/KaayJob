@@ -7,24 +7,30 @@ import {
   DollarSign,
   Star,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { api } from "../../lib/api";
 
 export function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<any>(null);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
+        setError(null);
         const response = await api.get("/admin/analytics");
         if (response.success) {
           setAnalytics(response.data);
+        } else {
+          setError(response.message || "Erreur lors du chargement des données");
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erreur chargement analytiques:", err);
+        setError(err.message || "Erreur de connexion au serveur");
       } finally {
         setLoading(false);
       }
@@ -41,71 +47,114 @@ export function AdminAnalytics() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-6 lg:p-8 lg:ml-64 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   // Default data if API returns empty
-  const monthlyData = analytics?.monthly?.length > 0 
-    ? analytics.monthly.map((m: any) => ({
-        month: m.month,
-        bookings: parseInt(m.bookings) || 0,
-        revenue: parseFloat(m.revenue) || 0
-      }))
-    : [
-        { month: "Jan", bookings: 120, revenue: 1800000 },
-        { month: "Fév", bookings: 145, revenue: 2175000 },
-        { month: "Mar", bookings: 168, revenue: 2520000 },
-        { month: "Avr", bookings: 156, revenue: 2340000 },
-        { month: "Mai", bookings: 189, revenue: 2835000 },
-        { month: "Juin", bookings: 210, revenue: 3150000 },
-      ];
+  const monthlyData =
+    analytics?.monthly?.length > 0
+      ? analytics.monthly.map((m: any) => ({
+          month: m.month,
+          bookings: parseInt(m.bookings) || 0,
+          revenue: parseFloat(m.revenue) || 0,
+        }))
+      : [
+          { month: "Jan", bookings: 120, revenue: 1800000 },
+          { month: "Fév", bookings: 145, revenue: 2175000 },
+          { month: "Mar", bookings: 168, revenue: 2520000 },
+          { month: "Avr", bookings: 156, revenue: 2340000 },
+          { month: "Mai", bookings: 189, revenue: 2835000 },
+          { month: "Juin", bookings: 210, revenue: 3150000 },
+        ];
 
-  const topProviders = analytics?.topProviders?.length > 0
-    ? analytics.topProviders.map((p: any) => ({
-        name: `${p.first_name} ${p.last_name}`,
-        bookings: parseInt(p.bookings) || 0,
-        revenue: parseFloat(p.revenue) || 0,
-        rating: parseFloat(p.rating) || 0
-      }))
-    : [
-        { name: "Aliou Kanté", bookings: 156, revenue: 2340000, rating: 4.9 },
-        { name: "Fatou Sow", bookings: 142, revenue: 1136000, rating: 4.7 },
-        { name: "Mariama Bah", bookings: 98, revenue: 1176000, rating: 4.8 },
-        { name: "Aminata Touré", bookings: 87, revenue: 870000, rating: 4.6 },
-        { name: "Ousmane Faye", bookings: 76, revenue: 760000, rating: 4.5 },
-      ];
+  const topProviders =
+    analytics?.topProviders?.length > 0
+      ? analytics.topProviders.map((p: any) => ({
+          name: `${p.first_name} ${p.last_name}`,
+          bookings: parseInt(p.bookings) || 0,
+          revenue: parseFloat(p.revenue) || 0,
+          rating: parseFloat(p.rating) || 0,
+        }))
+      : [
+          { name: "Aliou Kanté", bookings: 156, revenue: 2340000, rating: 4.9 },
+          { name: "Fatou Sow", bookings: 142, revenue: 1136000, rating: 4.7 },
+          { name: "Mariama Bah", bookings: 98, revenue: 1176000, rating: 4.8 },
+          { name: "Aminata Touré", bookings: 87, revenue: 870000, rating: 4.6 },
+          { name: "Ousmane Faye", bookings: 76, revenue: 760000, rating: 4.5 },
+        ];
 
-  const serviceCategories = analytics?.categories?.length > 0
-    ? analytics.categories.slice(0, 5).map((c: any, i: number) => ({
-        name: c.name,
-        count: parseInt(c.service_count) || 0,
-        percentage: 20 - (i * 4)
-      }))
-    : [
-        { name: "Technologie", count: 25, percentage: 28 },
-        { name: "Maison", count: 22, percentage: 25 },
-        { name: "Éducation", count: 18, percentage: 20 },
-        { name: "Beauté", count: 15, percentage: 17 },
-        { name: "Bâtiment", count: 9, percentage: 10 },
-      ];
+  const serviceCategories =
+    analytics?.categories?.length > 0
+      ? analytics.categories.slice(0, 5).map((c: any, i: number) => ({
+          name: c.name,
+          count: parseInt(c.service_count) || 0,
+          percentage: 20 - i * 4,
+        }))
+      : [
+          { name: "Technologie", count: 25, percentage: 28 },
+          { name: "Maison", count: 22, percentage: 25 },
+          { name: "Éducation", count: 18, percentage: 20 },
+          { name: "Beauté", count: 15, percentage: 17 },
+          { name: "Bâtiment", count: 9, percentage: 10 },
+        ];
 
-  const recentActivity = analytics?.activity?.length > 0
-    ? analytics.activity.map((a: any) => ({
-        type: a.type,
-        message: a.message,
-        time: "Récent"
-      }))
-    : [
-        { type: "nouveau_service", message: "Nouveau service ajouté", time: "Il y a 2h" },
-        { type: "nouveau_prestataire", message: "Nouveau prestataire inscrit", time: "Il y a 4h" },
-        { type: "reservation", message: "Nouvelle réservation", time: "Il y a 5h" },
-        { type: "avis", message: "Nouvel avis reçu", time: "Il y a 1 jour" },
-        { type: "reservation", message: "Réservation terminée", time: "Il y a 1 jour" },
-      ];
+  const recentActivity =
+    analytics?.activity?.length > 0
+      ? analytics.activity.map((a: any) => ({
+          type: a.type,
+          message: a.message,
+          time: a.time
+            ? new Date(a.time).toLocaleDateString("fr-FR")
+            : "Récent",
+        }))
+      : [
+          {
+            type: "nouveau_service",
+            message: "Nouveau service ajouté",
+            time: "Il y a 2h",
+          },
+          {
+            type: "nouveau_prestataire",
+            message: "Nouveau prestataire inscrit",
+            time: "Il y a 4h",
+          },
+          {
+            type: "reservation",
+            message: "Nouvelle réservation",
+            time: "Il y a 5h",
+          },
+          { type: "avis", message: "Nouvel avis reçu", time: "Il y a 1 jour" },
+          {
+            type: "reservation",
+            message: "Réservation terminée",
+            time: "Il y a 1 jour",
+          },
+        ];
 
   const maxBookings = Math.max(...monthlyData.map((d: any) => d.bookings), 1);
-  const totalBookings = monthlyData.reduce((acc: number, m: any) => acc + m.bookings, 0);
-  const totalRevenue = monthlyData.reduce((acc: number, m: any) => acc + m.revenue, 0);
-  const avgRating = topProviders.length > 0 
-    ? (topProviders.reduce((acc: number, p: any) => acc + p.rating, 0) / topProviders.length).toFixed(1)
-    : "4.7";
+  const totalBookings = monthlyData.reduce(
+    (acc: number, m: any) => acc + m.bookings,
+    0,
+  );
+  const totalRevenue = monthlyData.reduce(
+    (acc: number, m: any) => acc + m.revenue,
+    0,
+  );
+  const avgRating =
+    topProviders.length > 0
+      ? (
+          topProviders.reduce((acc: number, p: any) => acc + p.rating, 0) /
+          topProviders.length
+        ).toFixed(1)
+      : "4.7";
 
   return (
     <div className="p-6 lg:p-8 lg:ml-64">
@@ -140,7 +189,9 @@ export function AdminAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-green-100">Revenus totaux</p>
-                <p className="text-3xl font-bold">{(totalRevenue / 1000000).toFixed(1)}M</p>
+                <p className="text-3xl font-bold">
+                  {(totalRevenue / 1000000).toFixed(1)}M
+                </p>
                 <p className="text-sm text-green-100 flex items-center mt-1">
                   <TrendingUp size={14} className="mr-1" /> +22% ce mois
                 </p>
@@ -253,14 +304,17 @@ export function AdminAnalytics() {
                     <div>
                       <p className="font-medium">{provider.name}</p>
                       <p className="text-sm text-gray-500">
-                        {provider.bookings} réservation{provider.bookings !== 1 ? 's' : ''}
+                        {provider.bookings} réservation
+                        {provider.bookings !== 1 ? "s" : ""}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="flex items-center gap-1 text-yellow-500">
                       <Star size={14} className="fill-current" />
-                      <span className="font-medium">{provider.rating.toFixed(1)}</span>
+                      <span className="font-medium">
+                        {provider.rating.toFixed(1)}
+                      </span>
                     </div>
                   </div>
                 </div>

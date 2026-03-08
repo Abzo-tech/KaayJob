@@ -30,9 +30,12 @@ export function ServiceCategoriesPage({
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(params.search || "");
   const [location, setLocation] = useState("Dakar, Sénégal");
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Fetch categories from API
   useEffect(() => {
@@ -55,8 +58,39 @@ export function ServiceCategoriesPage({
     fetchCategories();
   }, []);
 
-  const handleSearch = (query: string) => {
+  // Search when searchQuery changes (from URL params)
+  useEffect(() => {
+    if (params.search) {
+      handleSearch(params.search);
+    }
+  }, [params.search]);
+
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredCategories(categories);
+      setShowSearchResults(false);
+      setSearchResults([]);
+      return;
+    }
+
+    // Search services from API
+    setIsSearching(true);
+    setShowSearchResults(true);
+    try {
+      const response = await api.get(
+        `/services?search=${encodeURIComponent(query)}&limit=10`,
+      );
+      if (response.success && response.data) {
+        setSearchResults(response.data);
+      }
+    } catch (err) {
+      console.error("Erreur recherche services:", err);
+    } finally {
+      setIsSearching(false);
+    }
+
+    // Also filter categories locally
     const filtered = categories.filter(
       (cat) =>
         cat.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -82,29 +116,46 @@ export function ServiceCategoriesPage({
   const getCategoryImage = (category: Category) => {
     if (category.image) {
       // If it's a local image (starts with /images/), prepend the API URL
-      if (category.image.startsWith('/images/')) {
+      if (category.image.startsWith("/images/")) {
         return `http://localhost:3001${category.image}`;
       }
       return category.image;
     }
     // Default images based on category name (in French from API)
     const defaultImages: Record<string, string> = {
-      "Plomberie": "https://i.pinimg.com/736x/4d/3d/a8/4d3da898a7f0383572935a16f1e6df3a.jpg",
-      "Électricité": "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400&q=80",
-      "Peinture": "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=400&q=80",
-      "Ménage": "https://i.pinimg.com/736x/f5/91/96/f5919604d5cec192bbd064132a2f6d4b.jpg",
-      "Jardinage": "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80",
-      "Cuisine": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&q=80",
-      "Déménagement": "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=400&q=80",
-      "Bricolage": "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80",
-      "Maçon": "https://images.unsplash.com/photo-1518729571365-8a8642109cab?w=400&q=80",
-      "Menuisier bois": "https://images.unsplash.com/photo-1618842676088-c4d48a6a7c9d?w=400&q=80",
-      "Menuisier métallique": "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&q=80",
-      "Éducation": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80",
-      "Réparation": "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&q=80",
-      "Mécanique": "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=400&q=80",
+      Plomberie:
+        "https://i.pinimg.com/736x/4d/3d/a8/4d3da898a7f0383572935a16f1e6df3a.jpg",
+      Électricité:
+        "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400&q=80",
+      Peinture:
+        "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=400&q=80",
+      Ménage:
+        "https://i.pinimg.com/736x/f5/91/96/f5919604d5cec192bbd064132a2f6d4b.jpg",
+      Jardinage:
+        "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80",
+      Cuisine:
+        "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&q=80",
+      Déménagement:
+        "https://images.unsplash.com/photo-1600518464441-9154a4dea21b?w=400&q=80",
+      Bricolage:
+        "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80",
+      Maçon:
+        "https://images.unsplash.com/photo-1518729571365-8a8642109cab?w=400&q=80",
+      "Menuisier bois":
+        "https://images.unsplash.com/photo-1618842676088-c4d48a6a7c9d?w=400&q=80",
+      "Menuisier métallique":
+        "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400&q=80",
+      Éducation:
+        "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80",
+      Réparation:
+        "https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=400&q=80",
+      Mécanique:
+        "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=400&q=80",
     };
-    return defaultImages[category.name] || "https://i.pinimg.com/736x/cc/35/ba/cc35baaadabca6dd0d5fceca0260363d.jpg";
+    return (
+      defaultImages[category.name] ||
+      "https://i.pinimg.com/736x/cc/35/ba/cc35baaadabca6dd0d5fceca0260363d.jpg"
+    );
   };
 
   if (loading) {
@@ -123,9 +174,7 @@ export function ServiceCategoriesPage({
       <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>
-            Réessayer
-          </Button>
+          <Button onClick={() => window.location.reload()}>Réessayer</Button>
         </div>
       </div>
     );
@@ -164,6 +213,9 @@ export function ServiceCategoriesPage({
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
               />
+              {isSearching && (
+                <Loader2 className="w-5 h-5 animate-spin text-[#000080]" />
+              )}
             </div>
 
             {/* Location */}
@@ -181,6 +233,53 @@ export function ServiceCategoriesPage({
           </div>
         </div>
       </section>
+
+      {/* Search Results Section */}
+      {showSearchResults && searchResults.length > 0 && (
+        <section className="py-8 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-2xl font-bold text-[#000080] mb-6">
+              Résultats de recherche pour "{searchQuery}"
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {searchResults.map((service: any) => (
+                <div
+                  key={service.id}
+                  className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() =>
+                    onNavigate("service-detail", { id: service.id })
+                  }
+                >
+                  <h3 className="font-bold text-gray-900">{service.name}</h3>
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                    {service.description}
+                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-[#000080] font-bold">
+                      {service.price} XOF
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {service.category?.name}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => {
+                setShowSearchResults(false);
+                setSearchResults([]);
+                setSearchQuery("");
+                setFilteredCategories(categories);
+              }}
+            >
+              Voir toutes les catégories
+            </Button>
+          </div>
+        </section>
+      )}
 
       {/* Categories Grid */}
       <section className="py-16">
@@ -205,7 +304,12 @@ export function ServiceCategoriesPage({
                   key={category.id}
                   className="group relative rounded-3xl overflow-hidden shadow-xl bg-white cursor-pointer animate-fade-in-up transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
                   style={{ animationDelay: `${index * 0.08}s` }}
-                  onClick={() => onNavigate("service-providers", { categoryId: category.id, categoryName: category.name })}
+                  onClick={() =>
+                    onNavigate("service-providers", {
+                      categoryId: category.id,
+                      categoryName: category.name,
+                    })
+                  }
                 >
                   <div className="relative h-56 w-full overflow-hidden">
                     <img
@@ -237,7 +341,10 @@ export function ServiceCategoriesPage({
                         className="bg-gradient-to-r from-[#000080] to-[#001a99] hover:from-[#001a99] hover:to-[#000080] text-white shadow-lg px-5 py-2 rounded-xl text-base font-semibold transition-all duration-300"
                         onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
-                          onNavigate("service-providers", { categoryId: category.id, categoryName: category.name });
+                          onNavigate("service-providers", {
+                            categoryId: category.id,
+                            categoryName: category.name,
+                          });
                         }}
                       >
                         Voir les Prestataires

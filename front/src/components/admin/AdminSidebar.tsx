@@ -68,7 +68,7 @@ export function AdminSidebar({
               <p className="text-xs text-blue-300">Administration</p>
             </div>
           </div>
-          <NotificationDropdown />
+          <NotificationDropdown align="right" />
         </div>
 
         {/* Menu Items */}

@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
-import { 
-  HeroSection, 
-  CategoryCard, 
-  ProviderCard,
-  Loading 
-} from "../common";
+import { HeroSection, CategoryCard, ProviderCard, Loading } from "../common";
 import { ArrowRight, Star } from "lucide-react";
 import { Button } from "../ui/button";
 
@@ -86,11 +81,7 @@ const footerSections = [
   },
   {
     title: "Légal",
-    links: [
-      "Conditions",
-      "Politique de Confidentialité",
-      "Cookies",
-    ],
+    links: ["Conditions", "Politique de Confidentialité", "Cookies"],
   },
 ];
 
@@ -168,7 +159,12 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <HeroSection
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        onSearch={() => onNavigate("categories")}
+        onSearch={() =>
+          onNavigate(
+            "categories",
+            searchQuery ? { search: searchQuery } : undefined,
+          )
+        }
       />
 
       {/* Services Section with Images */}
@@ -199,12 +195,16 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   name={category.name}
                   image={category.image}
                   description={category.description}
-                  onClick={() => onNavigate(`service-providers?category=${category.id}`)}
+                  onClick={() =>
+                    onNavigate(`service-providers?category=${category.id}`)
+                  }
                   index={index}
                 />
               ))
             ) : (
-              <p className="text-center col-span-3 text-gray-500">Aucune catégorie disponible</p>
+              <p className="text-center col-span-3 text-gray-500">
+                Aucune catégorie disponible
+              </p>
             )}
           </div>
         </div>
@@ -229,7 +229,11 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 <ProviderCard
                   key={provider.id}
                   id={provider.id}
-                  firstName={provider.user?.firstName || provider.specialty || "Prestataire"}
+                  firstName={
+                    provider.user?.firstName ||
+                    provider.specialty ||
+                    "Prestataire"
+                  }
                   lastName={provider.user?.lastName || ""}
                   specialty={provider.specialty}
                   rating={provider.rating || 0}

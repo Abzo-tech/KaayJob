@@ -1,386 +1,516 @@
 import { useState, useEffect } from "react";
-import { User, Mail, Phone, MapPin, Camera, Star, Save } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Badge } from "../ui/badge";
-import { validateFormField } from "../../lib/validations";
-import { toast } from "sonner";
+import { Textarea } from "../ui/textarea";
+import {
+  Calendar,
+  MapPin,
+  Star,
+  Settings,
+  Briefcase,
+  Clock,
+  Image,
+  CreditCard,
+  FileText,
+  Loader2,
+} from "lucide-react";
 import { api } from "../../lib/api";
+import { toast } from "sonner";
 
 export function PrestataireProfile() {
+  const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState({
+  const [user, setUser] = useState<any>(null);
+
+  // Profile form state
+  const [profileData, setProfileData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
-    address: "",
     bio: "",
+    specialization: "",
+    address: "",
+    zone: "",
   });
 
-  // États pour les erreurs de validation
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-
-  // Charger les données utilisateur au montage
   useEffect(() => {
-    const loadUserData = async () => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
       try {
-        const userData = localStorage.getItem("user");
-        if (userData) {
-          const user = JSON.parse(userData);
-          setFormData({
-            firstName: user.firstName || "",
-            lastName: user.lastName || "",
-            email: user.email || "",
-            phone: user.phone || "",
-            address: user.address || "",
-            bio: user.bio || "",
-          });
-        }
-      } catch (error) {
-        console.error("Erreur chargement profil:", error);
-      } finally {
-        setIsLoading(false);
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setProfileData({
+          firstName: parsedUser.firstName || "",
+          lastName: parsedUser.lastName || "",
+          email: parsedUser.email || "",
+          phone: parsedUser.phone || "",
+          bio: parsedUser.bio || "",
+          specialization: parsedUser.specialization || "",
+          address: parsedUser.address || "",
+          zone: parsedUser.zone || "",
+        });
+      } catch (e) {
+        console.error("Error parsing user data:", e);
       }
-    };
-
-    loadUserData();
+    }
+    setIsLoading(false);
   }, []);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-
-    // Validation en temps réel
-    if (touched[field]) {
-      validateFieldRealTime(field, value);
-    }
-  };
-
-  // Validation en temps réel d'un champ
-  const validateFieldRealTime = (field: string, value: string): boolean => {
-    let error: string | null = null;
-
-    switch (field) {
-      case "email":
-        error = validateFormField(value, "email", "Email");
-        break;
-      case "phone":
-        error = validateFormField(value, "phone", "Téléphone");
-        break;
-      case "firstName":
-      case "lastName":
-        error = validateFormField(
-          value,
-          "name",
-          field === "firstName" ? "Prénom" : "Nom",
-        );
-        break;
-      case "address":
-        error = validateFormField(value, "address", "Adresse");
-        break;
-    }
-
-    setErrors((prev) => ({ ...prev, [field]: error || "" }));
-    return !error;
-  };
-
-  // Gestion de la perte de focus
-  const handleBlur = (field: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    validateFieldRealTime(field, formData[field as keyof typeof formData]);
-  };
-
-  // Valider le formulaire complet
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-
-    const firstNameError = validateFormField(
-      formData.firstName,
-      "name",
-      "Prénom",
-    );
-    if (firstNameError) {
-      newErrors.firstName = firstNameError;
-      isValid = false;
-    }
-
-    const lastNameError = validateFormField(formData.lastName, "name", "Nom");
-    if (lastNameError) {
-      newErrors.lastName = lastNameError;
-      isValid = false;
-    }
-
-    const emailError = validateFormField(formData.email, "email", "Email");
-    if (emailError) {
-      newErrors.email = emailError;
-      isValid = false;
-    }
-
-    const phoneError = validateFormField(formData.phone, "phone", "Téléphone");
-    if (phoneError) {
-      newErrors.phone = phoneError;
-      isValid = false;
-    }
-
-    const addressError = validateFormField(
-      formData.address,
-      "address",
-      "Adresse",
-    );
-    if (addressError) {
-      newErrors.address = addressError;
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    setTouched({
-      firstName: true,
-      lastName: true,
-      email: true,
-      phone: true,
-      address: true,
-      bio: true,
-    });
-
-    return isValid;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error("Veuillez corriger les erreurs dans le formulaire");
-      return;
-    }
-
+  const handleSaveProfile = async () => {
     setIsSaving(true);
-
     try {
-      // Appel API pour mettre à jour le profil
-      const response = await api.put<{ success: boolean; data: any }>(
-        "/auth/profile",
-        {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-        }
-      );
-
-      if (response.success) {
-        // Mettre à jour les données dans localStorage
-        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-        const updatedUser = {
-          ...currentUser,
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          phone: formData.phone,
-        };
+      const response = await api.put("/auth/profile", profileData);
+      if (response.data?.success) {
+        const updatedUser = { ...user, ...profileData };
         localStorage.setItem("user", JSON.stringify(updatedUser));
-
-        toast.success("Profil mis à jour avec succès !");
+        setUser(updatedUser);
+        toast.success("Profil mis à jour avec succès!");
+      } else {
+        toast.error(response.data?.message || "Erreur lors de la mise à jour");
       }
     } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la mise à jour du profil");
+      console.error("Error updating profile:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Erreur lors de la mise à jour du profil",
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
-  return (
-    <div className="p-6 lg:p-8 lg:ml-64">
-      {/* En-tête */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#000080]">Mon profil</h1>
-        <p className="text-gray-500 mt-1">
-          Gérez vos informations personnelles
-        </p>
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <p className="text-gray-600">Chargement...</p>
+        </div>
       </div>
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Photo de profil */}
-        <Card className="lg:row-span-2">
-          <CardHeader>
-            <CardTitle>Photo de profil</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <div className="w-40 h-40 bg-[#000080] rounded-full flex items-center justify-center text-white text-5xl font-bold mb-4">
-              AK
-            </div>
-            <Button variant="outline" className="w-full">
-              <Camera size={16} className="mr-2" />
-              Changer la photo
-            </Button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              JPG, PNG ou GIF. Max 2MB
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Informations personnelles */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Informations personnelles</CardTitle>
-            <CardDescription>
-              Ces informations seront visibles par les clients
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="firstName">Prénom *</Label>
-                  <Input
-                    id="firstName"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      handleInputChange("firstName", e.target.value)
-                    }
-                    onBlur={() => handleBlur("firstName")}
-                    className={
-                      errors.firstName && touched.firstName
-                        ? "border-red-500"
-                        : ""
-                    }
-                  />
-                  {errors.firstName && touched.firstName && (
-                    <p className="text-red-500 text-sm">{errors.firstName}</p>
-                  )}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="lastName">Nom *</Label>
-                  <Input
-                    id="lastName"
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      handleInputChange("lastName", e.target.value)
-                    }
-                    onBlur={() => handleBlur("lastName")}
-                    className={
-                      errors.lastName && touched.lastName
-                        ? "border-red-500"
-                        : ""
-                    }
-                  />
-                  {errors.lastName && touched.lastName && (
-                    <p className="text-red-500 text-sm">{errors.lastName}</p>
-                  )}
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  onBlur={() => handleBlur("email")}
-                  className={
-                    errors.email && touched.email ? "border-red-500" : ""
+  return (
+    <div className="min-h-screen bg-gray-50 pt-16">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Avatar className="w-20 h-20">
+                <AvatarImage
+                  src={
+                    user?.firstName
+                      ? `https://ui-avatars.com/api/?name=${user.firstName}&background=random`
+                      : ""
                   }
+                  alt={user?.firstName}
                 />
-                {errors.email && touched.email && (
-                  <p className="text-red-500 text-sm">{errors.email}</p>
-                )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Téléphone *</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange("phone", e.target.value)}
-                  onBlur={() => handleBlur("phone")}
-                  className={
-                    errors.phone && touched.phone ? "border-red-500" : ""
-                  }
-                />
-                {errors.phone && touched.phone && (
-                  <p className="text-red-500 text-sm">{errors.phone}</p>
-                )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="address">Adresse *</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  onBlur={() => handleBlur("address")}
-                  className={
-                    errors.address && touched.address ? "border-red-500" : ""
-                  }
-                />
-                {errors.address && touched.address && (
-                  <p className="text-red-500 text-sm">{errors.address}</p>
-                )}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="bio">Biographie</Label>
-                <textarea
-                  id="bio"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={formData.bio}
-                  onChange={(e) => handleInputChange("bio", e.target.value)}
-                  maxLength={500}
-                />
-                <p className="text-xs text-gray-500 text-right">
-                  {formData.bio.length}/500
+                <AvatarFallback className="text-2xl">
+                  {user?.firstName?.[0] || "P"}
+                  {user?.lastName?.[0] || ""}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {user?.firstName} {user?.lastName}
+                </h1>
+                <p className="text-gray-600">
+                  {profileData.specialization || "Spécialisation non définie"}
                 </p>
+                <div className="flex items-center mt-1">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className="w-4 h-4 text-yellow-400 fill-current"
+                      />
+                    ))}
+                  </div>
+                  <span className="ml-2 text-sm text-gray-600">(4.8)</span>
+                </div>
               </div>
-              <Button type="submit" className="bg-[#000080] hover:bg-blue-900" disabled={isSaving}>
-                <Save size={16} className="mr-2" />
-                {isSaving ? "Enregistrement..." : "Enregistrer"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            </div>
+            <Badge className="bg-green-100 text-green-800">Vérifié</Badge>
+          </div>
+        </div>
 
-        {/* Badge et Abonnement */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Mon abonnement</CardTitle>
-            <CardDescription>
-              Statut de votre abonnement Premium
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Star className="text-white fill-current" size={24} />
-                </div>
-                <div>
-                  <p className="font-bold text-lg">Plan Premium</p>
-                  <p className="text-sm text-gray-600">
-                    Expire le 15 Mars 2024
-                  </p>
-                </div>
-              </div>
-              <Badge className="bg-green-100 text-green-800">Actif</Badge>
+        {/* Profile Tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
+          <TabsList className="grid w-full grid-cols-4 h-12">
+            <TabsTrigger value="profile" className="text-base">
+              <Settings className="w-5 h-5 mr-2" />
+              Profil
+            </TabsTrigger>
+            <TabsTrigger value="services" className="text-base">
+              <Briefcase className="w-5 h-5 mr-2" />
+              Services
+            </TabsTrigger>
+            <TabsTrigger value="availability" className="text-base">
+              <Clock className="w-5 h-5 mr-2" />
+              Disponibilité
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="text-base">
+              <FileText className="w-5 h-5 mr-2" />
+              Documents
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-white border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle>Informations Personnelles</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="firstName">Prénom</Label>
+                      <Input
+                        id="firstName"
+                        value={profileData.firstName}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            firstName: e.target.value,
+                          })
+                        }
+                        className="mt-2"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Nom</Label>
+                      <Input
+                        id="lastName"
+                        value={profileData.lastName}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            lastName: e.target.value,
+                          })
+                        }
+                        className="mt-2"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          email: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Téléphone</Label>
+                    <Input
+                      id="phone"
+                      value={profileData.phone}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          phone: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="specialization">Spécialisation</Label>
+                    <Input
+                      id="specialization"
+                      value={profileData.specialization}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          specialization: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                      placeholder="Ex: Plombier, Électricien..."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="bio">Biographie</Label>
+                    <Textarea
+                      id="bio"
+                      value={profileData.bio}
+                      onChange={(e) =>
+                        setProfileData({ ...profileData, bio: e.target.value })
+                      }
+                      className="mt-2"
+                      rows={4}
+                      placeholder="Décrivez votre expérience et vos compétences..."
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle>Zone de Service</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="address">Adresse</Label>
+                    <Input
+                      id="address"
+                      value={profileData.address}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          address: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                      placeholder="Votre adresse complète"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="zone">Zone de couverture</Label>
+                    <Input
+                      id="zone"
+                      value={profileData.zone}
+                      onChange={(e) =>
+                        setProfileData({ ...profileData, zone: e.target.value })
+                      }
+                      className="mt-2"
+                      placeholder="Ex: Dakar, Plateau, Yoff..."
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-5 h-5 text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      Rayon de service: 20km
+                    </span>
+                  </div>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    Modifier la zone
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
-            <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium">Vos privilèges :</p>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>✓ Services illimités</li>
-                <li>✓ Badge VIP sur votre profil</li>
-                <li>✓ Visibilité prioritaire</li>
-                <li>✓ Support prioritaire</li>
-              </ul>
+            <div className="mt-6 flex justify-end">
+              <Button
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  "Enregistrer les modifications"
+                )}
+              </Button>
             </div>
-            <Button variant="outline" className="w-full mt-4">
-              Voir les plans disponibles
-            </Button>
-          </CardContent>
-        </Card>
+          </TabsContent>
+
+          {/* Services Tab */}
+          <TabsContent value="services">
+            <div className="space-y-6">
+              <Card className="bg-white border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle>Mes Services</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="border rounded-lg p-4">
+                        <h3 className="font-semibold">
+                          Réparation de plomberie
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Débouchage, réparation de fuite, installation
+                        </p>
+                        <p className="text-lg font-bold text-green-600 mt-2">
+                          25,000 XOF
+                        </p>
+                      </div>
+                      <div className="border rounded-lg p-4">
+                        <h3 className="font-semibold">
+                          Installation sanitaire
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          WC, douche, évier
+                        </p>
+                        <p className="text-lg font-bold text-green-600 mt-2">
+                          50,000 XOF
+                        </p>
+                      </div>
+                    </div>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                      Ajouter un nouveau service
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle>Portfolio / Travaux Réalisés</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="border rounded-lg p-4 text-center">
+                      <Image className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm font-medium">
+                        Réparation salle de bain
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Dakar, Plateau - 2024
+                      </p>
+                    </div>
+                    <div className="border rounded-lg p-4 text-center">
+                      <Image className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm font-medium">
+                        Installation cuisine
+                      </p>
+                      <p className="text-xs text-gray-600">Yoff - 2024</p>
+                    </div>
+                    <div className="border rounded-lg p-4 text-center">
+                      <Image className="w-12 h-12 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm font-medium">Débouchage urgent</p>
+                      <p className="text-xs text-gray-600">Mermoz - 2024</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full mt-4">
+                    <Image className="w-4 h-4 mr-2" />
+                    Ajouter une réalisation
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Availability Tab */}
+          <TabsContent value="availability">
+            <Card className="bg-white border-0 shadow-md">
+              <CardHeader>
+                <CardTitle>Calendrier de Disponibilité</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-7 gap-2">
+                    {["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"].map(
+                      (day) => (
+                        <div
+                          key={day}
+                          className="text-center p-2 border rounded"
+                        >
+                          <p className="font-medium">{day}</p>
+                          <p className="text-sm text-green-600">Disponible</p>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                  <div className="mt-4">
+                    <h3 className="font-semibold mb-2">Horaires</h3>
+                    <p className="text-sm text-gray-600">
+                      Lundi - Vendredi: 8h00 - 18h00
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Samedi: 9h00 - 16h00
+                    </p>
+                    <p className="text-sm text-gray-600">Dimanche: Fermé</p>
+                  </div>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    Modifier les horaires
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-white border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle>Coordonnées Bancaires</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Nom de la banque</Label>
+                    <Input className="mt-2" placeholder="Ex: CBAO, BICIS..." />
+                  </div>
+                  <div>
+                    <Label>Numéro de compte</Label>
+                    <Input
+                      className="mt-2"
+                      placeholder="Numéro de compte bancaire"
+                    />
+                  </div>
+                  <div>
+                    <Label>Titulaire du compte</Label>
+                    <Input
+                      className="mt-2"
+                      value={`${profileData.firstName} ${profileData.lastName}`}
+                      disabled
+                    />
+                  </div>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Enregistrer
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white border-0 shadow-md">
+                <CardHeader>
+                  <CardTitle>Documents</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 border rounded">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="w-5 h-5 text-gray-500" />
+                        <span>Carte d'identité</span>
+                      </div>
+                      <Badge className="bg-green-100 text-green-800">
+                        Validé
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between p-3 border rounded">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="w-5 h-5 text-gray-500" />
+                        <span>Certificat de qualification</span>
+                      </div>
+                      <Badge className="bg-yellow-100 text-yellow-800">
+                        En attente
+                      </Badge>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    Télécharger un document
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -15,8 +15,10 @@ import {
 
 export function NotificationDropdown({
   variant = "dark",
+  align = "left",
 }: {
   variant?: "light" | "dark";
+  align?: "left" | "right";
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -148,7 +150,11 @@ export function NotificationDropdown({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute left-full ml-2 top-0 w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden">
+        <div
+          className={`absolute top-0 w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden ${
+            align === "right" ? "left-full ml-2" : "-left-72"
+          }`}
+        >
           {/* En-tête moderne */}
           <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#000080] to-blue-600">
             <div className="flex items-center gap-2">

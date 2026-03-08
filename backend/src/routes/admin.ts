@@ -1196,15 +1196,354 @@ router.get("/payments", async (req: AuthRequest, res: Response) => {
 // GET /api/admin/subscriptions - Liste des abonnements
 router.get("/subscriptions", async (req: AuthRequest, res: Response) => {
   try {
-    const result = await query(`
-      SELECT s.*, u.email, u.first_name, u.last_name
-      FROM subscriptions s
-      JOIN users u ON s.user_id = u.id
-      ORDER BY s.created_at DESC
-    `);
-    res.json({ success: true, data: result.rows });
+    const { page = 1, limit = 20, status, plan } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    let whereClause = "1=1";
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (status) {
+      whereClause += ` AND s.status = ${paramIndex}`;
+      params.push(status);
+      paramIndex++;
+    }
+
+    if (plan) {
+      whereClause += ` AND s.plan = ${paramIndex}`;
+      params.push(plan);
+      paramIndex++;
+    }
+
+    const countResult = await query(
+      `SELECT COUNT(*) as count FROM subscriptions s WHERE ${whereClause}`,
+      params,
+    );
+
+    const result = await query(
+      `SELECT s.*, u.email, u.first_name, u.last_name
+       FROM subscriptions s
+       JOIN users u ON s.user_id = u.id
+       WHERE ${whereClause}
+       ORDER BY s.created_at DESC
+       LIMIT ${paramIndex} OFFSET ${paramIndex + 1}`,
+      [...params, Number(limit), offset],
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total: parseInt(countResult.rows[0].count),
+      },
+    });
   } catch (error) {
     console.error("Erreur liste abonnements:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+// POST /api/admin/subscriptions - Créer un abonnement
+router.post(
+  "/subscriptions",
+  [
+    body("userId").notEmpty().withMessage("ID utilisateur requis"),
+    body("plan")
+      .notEmpty()
+      .withMessage("Plan requis")
+      .isIn(["gratuit", "premium", "pro"])
+      .withMessage("Plan invalide"),
+    body("duration")
+      .optional()
+      .isInt({ min: 1 })
+      .withMessage("Durée invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { userId, plan, duration } = req.body;
+
+      // Vérifier si l'utilisateur existe
+      const userExists = await query("SELECT id, role FROM users WHERE id = $1", [
+        userId,
+      ]);
+      if (userExists.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Utilisateur non trouvé" });
+      }
+
+      // Vérifier si l'utilisateur est un prestataire
+      if (userExists.rows[0].role !== "PRESTATAIRE") {
+        return res.status(400).json({
+          success: false,
+          message: "Seuls les prestataires peuvent avoir un abonnement",
+        });
+      }
+
+      // Calculer les dates
+      const startDate = new Date();
+      let endDate = new Date();
+      
+      if (plan === "gratuit") {
+        // Pour le plan gratuit, pas de date d'expiration
+        endDate = new Date("2099-12-31");
+      } else {
+        const months = duration || 1;
+        endDate.setMonth(endDate.getMonth() + months);
+      }
+
+      // Vérifier si un abonnement existe déjà
+      const existingSub = await query(
+        "SELECT id FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1",
+        [userId],
+      );
+
+      let result;
+      if (existingSub.rows.length > 0) {
+        // Mettre à jour l'abonnement existant
+        result = await query(
+          `UPDATE subscriptions 
+           SET plan = $1, status = 'active', start_date = $2, end_date = $3
+           WHERE id = $4 
+           RETURNING *`,
+          [plan, startDate, endDate, existingSub.rows[0].id],
+        );
+      } else {
+        // Créer un nouvel abonnement
+        result = await query(
+          `INSERT INTO subscriptions (id, user_id, plan, status, start_date, end_date, created_at)
+           VALUES (gen_random_uuid(), $1, $2, 'active', $3, $4, NOW())
+           RETURNING *`,
+          [userId, plan, startDate, endDate],
+        );
+      }
+
+      // Créer une notification pour le prestataire
+      await createNotification(
+        userId,
+        "Nouvel abonnement",
+        `Votre abonnement ${plan.toUpperCase()} a été activé avec succès`,
+        "success",
+        "/prestataire/abonnement",
+      );
+
+      // Créer une notification pour l'admin
+      await createNotification(
+        req.user!.id,
+        "Abonnement créé",
+        `Un abonnement ${plan.toUpperCase()} a été créé pour un prestataire`,
+        "success",
+        "/admin/subscriptions",
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Abonnement créé avec succès",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur création abonnement:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// PUT /api/admin/subscriptions/:id - Mettre à jour un abonnement
+router.put(
+  "/subscriptions/:id",
+  [
+    body("plan")
+      .optional()
+      .isIn(["gratuit", "premium", "pro"])
+      .withMessage("Plan invalide"),
+    body("status")
+      .optional()
+      .isIn(["active", "expired", "cancelled", "pending"])
+      .withMessage("Statut invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { id } = req.params;
+      const { plan, status } = req.body;
+
+      // Vérifier si l'abonnement existe
+      const existing = await query(
+        "SELECT s.*, u.first_name, u.last_name FROM subscriptions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        [id],
+      );
+      if (existing.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Abonnement non trouvé" });
+      }
+
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (plan) {
+        updates.push(`plan = ${paramIndex++}`);
+        params.push(plan);
+      }
+      if (status) {
+        updates.push(`status = ${paramIndex++}`);
+        params.push(status);
+      }
+
+      if (updates.length === 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Aucune donnée à mettre à jour" });
+      }
+
+      params.push(id);
+
+      const result = await query(
+        `UPDATE subscriptions SET ${updates.join(", ")} WHERE id = ${paramIndex} RETURNING *`,
+        params,
+      );
+
+      // Notifier le prestataire si le statut a changé
+      if (status && status !== existing.rows[0].status) {
+        const statusMessages: { [key: string]: string } = {
+          active: "activé",
+          expired: "expiré",
+          cancelled: "annulé",
+          pending: "en attente",
+        };
+        await createNotification(
+          existing.rows[0].user_id,
+          "Abonnement mis à jour",
+          `Votre abonnement a été ${statusMessages[status]}`,
+          status === "cancelled" ? "warning" : "info",
+          "/prestataire/abonnement",
+        );
+      }
+
+      res.json({
+        success: true,
+        message: "Abonnement mis à jour",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur mise à jour abonnement:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// PUT /api/admin/subscriptions/:id/renew - Renouveler un abonnement
+router.put(
+  "/subscriptions/:id/renew",
+  [
+    body("duration")
+      .optional()
+      .isInt({ min: 1, max: 12 })
+      .withMessage("Durée invalide (1-12 mois)"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { id } = req.params;
+      const { duration = 1 } = req.body;
+
+      // Vérifier si l'abonnement existe
+      const existing = await query(
+        "SELECT s.*, u.first_name, u.last_name FROM subscriptions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+        [id],
+      );
+      if (existing.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Abonnement non trouvé" });
+      }
+
+      const sub = existing.rows[0];
+      
+      // Calculer la nouvelle date de fin
+      let newEndDate = new Date(sub.end_date);
+      if (newEndDate < new Date()) {
+        // Si expiré, démarrer à partir d'aujourd'hui
+        newEndDate = new Date();
+      }
+      newEndDate.setMonth(newEndDate.getMonth() + Number(duration));
+
+      const result = await query(
+        `UPDATE subscriptions 
+         SET status = 'active', end_date = $1
+         WHERE id = $2 
+         RETURNING *`,
+        [newEndDate, id],
+      );
+
+      // Notifier le prestataire
+      await createNotification(
+        sub.user_id,
+        "Abonnement renouvelé",
+        `Votre abonnement a été renouvelé pour ${duration} mois`,
+        "success",
+        "/prestataire/abonnement",
+      );
+
+      res.json({
+        success: true,
+        message: "Abonnement renouvelé avec succès",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur renouvellement:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// DELETE /api/admin/subscriptions/:id - Annuler un abonnement
+router.delete("/subscriptions/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier si l'abonnement existe
+    const existing = await query(
+      "SELECT s.*, u.first_name, u.last_name FROM subscriptions s JOIN users u ON s.user_id = u.id WHERE s.id = $1",
+      [id],
+    );
+    if (existing.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Abonnement non trouvé" });
+    }
+
+    // Mettre à jour le statut au lieu de supprimer
+    await query(
+      "UPDATE subscriptions SET status = 'cancelled' WHERE id = $1",
+      [id],
+    );
+
+    // Notifier le prestataire
+    await createNotification(
+      existing.rows[0].user_id,
+      "Abonnement annulé",
+      "Votre abonnement a été annulé par l'administrateur",
+      "error",
+      "/prestataire/abonnement",
+    );
+
+    res.json({ success: true, message: "Abonnement annulé" });
+  } catch (error) {
+    console.error("Erreur annulation abonnement:", error);
     res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 });
@@ -1212,70 +1551,158 @@ router.get("/subscriptions", async (req: AuthRequest, res: Response) => {
 // GET /api/admin/analytics - Données analytiques
 router.get("/analytics", async (req: AuthRequest, res: Response) => {
   try {
-    // Monthly bookings
-    const monthlyResult = await query(`
-      SELECT 
-        TO_CHAR(created_at, 'Mon') as month,
-        COUNT(*) as bookings,
-        COALESCE(SUM(total_amount), 0) as revenue
-      FROM bookings
-      WHERE created_at >= NOW() - INTERVAL '6 months'
-      GROUP BY TO_CHAR(created_at, 'MM'), TO_CHAR(created_at, 'Mon')
-      ORDER BY TO_CHAR(created_at, 'MM')
-    `);
+    // Monthly bookings - Using Prisma
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    // Get all bookings from the last 6 months
+    const bookings = await prisma.booking.findMany({
+      where: {
+        createdAt: { gte: sixMonthsAgo }
+      },
+      select: {
+        createdAt: true,
+        totalAmount: true,
+        status: true
+      }
+    });
+    
+    // Group by month
+    const monthlyMap = new Map<string, { bookings: number; revenue: number }>();
+    const months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    
+    for (let i = 0; i < 6; i++) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - (5 - i));
+      const monthKey = months[d.getMonth()];
+      monthlyMap.set(monthKey, { bookings: 0, revenue: 0 });
+    }
+    
+    bookings.forEach(booking => {
+      const monthKey = months[booking.createdAt.getMonth()];
+      const current = monthlyMap.get(monthKey);
+      if (current) {
+        current.bookings += 1;
+        if (booking.status === 'COMPLETED') {
+          current.revenue += Number(booking.totalAmount) || 0;
+        }
+      }
+    });
+    
+    const monthly = Array.from(monthlyMap.entries()).map(([month, data]) => ({
+      month,
+      bookings: data.bookings,
+      revenue: data.revenue
+    }));
 
-    // Top providers
-    const topProvidersResult = await query(`
-      SELECT 
-        u.first_name, u.last_name,
-        COUNT(b.id) as bookings,
-        COALESCE(SUM(b.total_amount), 0) as revenue,
-        COALESCE(AVG(pp.rating), 0) as rating
-      FROM bookings b
-      JOIN services s ON b.service_id = s.id
-      JOIN users u ON s.provider_id = u.id
-      LEFT JOIN provider_profiles pp ON u.id = pp.user_id
-      WHERE b.status = 'COMPLETED'
-      GROUP BY u.id, u.first_name, u.last_name
-      ORDER BY revenue DESC
-      LIMIT 5
-    `);
+    // Top providers - Using Prisma
+    const completedBookings = await prisma.booking.findMany({
+      where: { status: 'COMPLETED' },
+      include: {
+        service: {
+          include: {
+            provider: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Group bookings by provider
+    const providerMap = new Map<string, { firstName: string; lastName: string; bookings: number; revenue: number; rating: number }>();
+    
+    completedBookings.forEach(booking => {
+      const provider = booking.service?.provider;
+      if (provider) {
+        const providerId = provider.userId;
+        const existing = providerMap.get(providerId);
+        const revenue = Number(booking.totalAmount) || 0;
+        
+        if (existing) {
+          existing.bookings += 1;
+          existing.revenue += revenue;
+        } else {
+          providerMap.set(providerId, {
+            firstName: provider.user.firstName,
+            lastName: provider.user.lastName,
+            bookings: 1,
+            revenue: revenue,
+            rating: Number(provider.rating) || 0
+          });
+        }
+      }
+    });
+    
+    // Convert to array and sort by revenue
+    const topProviders = Array.from(providerMap.entries())
+      .map(([id, data]) => ({
+        first_name: data.firstName,
+        last_name: data.lastName,
+        bookings: data.bookings,
+        revenue: data.revenue,
+        rating: data.rating
+      }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
 
-    // Service categories
-    const categoriesResult = await query(`
-      SELECT 
-        c.name,
-        COUNT(s.id) as service_count
-      FROM categories c
-      LEFT JOIN services s ON s.category_id = c.id
-      GROUP BY c.id, c.name
-      ORDER BY service_count DESC
-    `);
+    // Service categories - Using Prisma
+    const categories = await prisma.category.findMany({
+      include: {
+        _count: {
+          select: { services: true }
+        }
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+    
+    const serviceCategories = categories.map(c => ({
+      name: c.name,
+      service_count: c._count.services
+    }));
 
-    // Recent activity
-    const activityResult = await query(`
-      SELECT 
-        'booking' as type,
-        CONCAT(u.first_name, ' ', u.last_name) as message,
-        created_at as time
-      FROM bookings
-      JOIN users u ON bookings.client_id = u.id
-      ORDER BY created_at DESC
-      LIMIT 5
-    `);
+    // Recent activity - Get recent bookings
+    const recentBookings = await prisma.booking.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      include: {
+        client: {
+          select: {
+            firstName: true,
+            lastName: true
+          }
+        }
+      }
+    });
+    
+    const activity = recentBookings.map(b => ({
+      type: 'booking',
+      message: `${b.client.firstName} ${b.client.lastName}`,
+      time: b.createdAt
+    }));
 
     res.json({
       success: true,
       data: {
-        monthly: monthlyResult.rows,
-        topProviders: topProvidersResult.rows,
-        categories: categoriesResult.rows,
-        activity: activityResult.rows,
+        monthly,
+        topProviders,
+        categories: serviceCategories,
+        activity
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erreur analytiques:", error);
-    res.status(500).json({ success: false, message: "Erreur serveur" });
+    res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
   }
 });
 
