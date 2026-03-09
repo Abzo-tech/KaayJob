@@ -1,0 +1,58 @@
+# ===================================================================
+# Ingress Kubernetes pour KaayJob
+# ===================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kaayjob-ingress
+  namespace: kaayjob
+  annotations:
+    # Pour AWS EKS - utiliser alb.ingress.kubernetes.io
+    # Pour GKE - utiliser kubernetes.io/ingress.class: nginx
+    # Pour AKS - utiliser kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+spec:
+  ingressClassName: nginx
+  rules:
+    # Remplacer par votre domaine
+    - host: kaayjob.example.com
+      http:
+        paths:
+          # Frontend
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80
+          # Backend API
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 3000
+---
+# ===================================================================
+# Alternative: Service sans Ingress (NodePort)
+# ===================================================================
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: frontend-nodeport
+#   namespace: kaayjob
+# spec:
+#   type: NodePort
+#   ports:
+#     - port: 80
+#       targetPort: 80
+#       nodePort: 30080
+#       protocol: TCP
+#       name: http
+#   selector:
+#     app: frontend
+#     component: web

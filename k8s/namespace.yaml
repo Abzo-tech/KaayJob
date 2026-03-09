@@ -1,0 +1,10 @@
+# ===================================================================
+# Namespace Kubernetes pour KaayJob
+# ===================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kaayjob
+  labels:
+    app.kubernetes.io/name: kaayjob
+    app.kubernetes.io/component: namespace

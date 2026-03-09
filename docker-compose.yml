@@ -1,0 +1,93 @@
+# ===================================================================
+# Docker Compose - KaayJob
+# Services: PostgreSQL, Backend, Frontend (Nginx)
+# ===================================================================
+
+services:
+  # ===================================================================
+  # Base de données PostgreSQL
+  # ===================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: kaayjob-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-kaayjob}
+    ports:
+      - "${DB_PORT:-5434}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kaayjob-network
+
+  # ===================================================================
+  # Backend API (Node.js + Express)
+  # ===================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: kaayjob-backend
+    restart: always
+    ports:
+      - "${BACKEND_PORT:-3002}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-kaayjob}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-kaayjob}
+      - FRONTEND_URL=http://frontend:80
+      - JWT_SECRET=${JWT_SECRET:-kaayjob-super-secret-key-change-in-production-2024}
+      - JWT_EXPIRES_IN=7d
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - kaayjob-network
+    volumes:
+      - backend-uploads:/app/uploads
+
+  # ===================================================================
+  # Frontend (React + Vite + Nginx)
+  # ===================================================================
+  frontend:
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+    container_name: kaayjob-frontend
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    environment:
+      - VITE_API_URL=http://backend:3000
+    depends_on:
+      - backend
+    networks:
+      - kaayjob-network
+
+# ===================================================================
+# Volumes persistants
+# ===================================================================
+volumes:
+  postgres_data:
+    driver: local
+  backend-uploads:
+    driver: local
+
+# ===================================================================
+# Réseau Docker
+# ===================================================================
+networks:
+  kaayjob-network:
+    driver: bridge

@@ -2,7 +2,8 @@
 // Utilise des UUIDs pour les IDs
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -225,13 +226,15 @@ model VerificationRequest {
 
 // Modèle Abonnement
 model Subscription {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  plan      String
-  status    String   @default("active")
-  startDate DateTime @map("start_date")
-  endDate   DateTime @map("end_date")
-  createdAt DateTime @default(now()) @map("created_at")
+  id                 String            @id @default(uuid())
+  userId             String            @map("user_id")
+  plan               String
+  status             String            @default("active")
+  startDate          DateTime          @map("start_date")
+  endDate            DateTime          @map("end_date")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionPlanId String?
 
   @@map("subscriptions")
 }
@@ -249,6 +252,9 @@ model SubscriptionPlan {
   displayOrder Int      @default(0) @map("display_order")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  subscriptions Subscription[]
 
   @@map("subscription_plans")
 }

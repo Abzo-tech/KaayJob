@@ -1,0 +1,21 @@
+# ===================================================================
+# Kustomization pour KaayJob
+# ===================================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: kaayjob
+
+resources:
+  - namespace.yaml
+  - secrets.yaml
+  - configmap.yaml
+  - postgres.yaml
+  - backend.yaml
+  - frontend.yaml
+  - ingress.yaml
+
+# Configurations communes
+commonLabels:
+  app.kubernetes.io/name: kaayjob
+  app.kubernetes.io/version: "1.0.0"

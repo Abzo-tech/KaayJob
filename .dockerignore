@@ -1,0 +1,51 @@
+# ===================================================================
+# Docker Ignore - KaayJob
+# Fichiers et répertoires à exclure du build Docker
+# ===================================================================
+
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+npm-debug.log.*
+*.log
+
+# TypeScript
+*.tsbuildinfo
+dist
+.cache
+
+# Frontend build
+front/build
+front/node_modules
+
+# Backend
+backend/node_modules
+backend/dist
+backend/.env
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tests
+coverage
+.nyc_output
+
+# Documentation
+*.md
+!README.md
+
+# Divers
+.env.local
+.env.*.local
+*.pem
