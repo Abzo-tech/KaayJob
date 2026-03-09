@@ -12,6 +12,8 @@ import {
   Loader2,
   RefreshCw,
   Trash2,
+  Edit2,
+  Save,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -45,82 +47,70 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
+import { Label } from "../ui/label";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 
-// Plans d'abonnement
-const plans = [
-  {
-    id: "gratuit",
-    name: "Gratuit",
-    price: 0,
-    duration: "Indéfinie",
-    features: [
-      "5 services maximum",
-      "Visibilité standard",
-      "Support par email",
-    ],
-    color: "bg-gray-100",
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    price: 9900,
-    duration: "1 mois",
-    features: [
-      "Services illimités",
-      "Badge VIP",
-      "Visibilité prioritaire",
-      "Support prioritaire",
-      "Statistiques avancées",
-    ],
-    color: "bg-yellow-100",
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: 24900,
-    duration: "1 mois",
-    features: [
-      "Tout Premium",
-      "Publication en premier",
-      "Badge Pro",
-      "Formation exclusive",
-      "Gestion équipe",
-    ],
-    color: "bg-purple-100",
-  },
-];
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price: number;
+  duration: number;
+  features: string[];
+  isActive: boolean;
+  displayOrder: number;
+}
 
 export function AdminSubscriptions() {
   const [loading, setLoading] = useState(true);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [planForm, setPlanForm] = useState({
+    name: "",
+    description: "",
+    price: 0,
+    duration: 30,
+    features: "",
+    isActive: true,
+  });
 
   useEffect(() => {
-    const fetchSubscriptions = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/admin/subscriptions");
-        if (response.success) {
-          setSubscriptions(response.data || []);
+        const [subsResponse, plansResponse] = await Promise.all([
+          api.get("/admin/subscriptions"),
+          api.get("/admin/subscription-plans"),
+        ]);
+        if (subsResponse.success) {
+          setSubscriptions(subsResponse.data || []);
+        }
+        if (plansResponse.success) {
+          setPlans(plansResponse.data || []);
         }
       } catch (err) {
-        console.error("Erreur chargement abonnements:", err);
+        console.error("Erreur chargement données:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSubscriptions();
+    fetchData();
   }, []);
 
   const filteredSubscriptions = subscriptions.filter((sub: any) => {
-    const providerName = `${sub.first_name || ''} ${sub.last_name || ''}`.toLowerCase();
-    const matchesSearch = providerName.includes(searchTerm.toLowerCase()) ||
-      (sub.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const providerName =
+      `${sub.first_name || ""} ${sub.last_name || ""}`.toLowerCase();
+    const matchesSearch =
+      providerName.includes(searchTerm.toLowerCase()) ||
+      (sub.email || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPlan = planFilter === "all" || sub.plan === planFilter;
     return matchesSearch && matchesPlan;
   });
@@ -154,23 +144,24 @@ export function AdminSubscriptions() {
   };
 
   const getPlanBadge = (plan: string) => {
+    const planData = plans.find((p) => p.slug === plan);
     switch (plan) {
       case "pro":
         return (
           <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 flex items-center gap-1">
-            <Star size={12} /> Pro
+            <Star size={12} /> {planData?.name || "Pro"}
           </Badge>
         );
       case "premium":
         return (
           <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 flex items-center gap-1">
-            <Crown size={12} /> Premium
+            <Crown size={12} /> {planData?.name || "Premium"}
           </Badge>
         );
       default:
         return (
           <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
-            Gratuit
+            {planData?.name || "Gratuit"}
           </Badge>
         );
     }
@@ -178,27 +169,28 @@ export function AdminSubscriptions() {
 
   const getTotalRevenue = () => {
     const premiumSubs = filteredSubscriptions.filter(
-      (s: any) => s.plan !== "gratuit" && s.plan !== "free" && (s.status === "active" || s.status === "actif")
+      (s: any) =>
+        s.plan !== "gratuit" &&
+        s.plan !== "free" &&
+        (s.status === "active" || s.status === "actif"),
     );
     return premiumSubs.reduce((acc: number, sub: any) => {
-      const plan = plans.find((p) => p.id === sub.plan);
+      const plan = plans.find((p) => p.slug === sub.plan);
       return acc + (plan?.price || 0);
     }, 0);
   };
 
   const handleRenew = async (id: string) => {
     try {
-      const response = await api.put(`/admin/subscriptions/${id}/renew`, { duration: 1 });
+      const response = await api.put(`/admin/subscriptions/${id}/renew`, {
+        duration: 1,
+      });
       if (response.success) {
         toast.success("Abonnement renouvelé avec succès");
-        // Refresh the list
-        const fetchSubscriptions = async () => {
-          const response = await api.get("/admin/subscriptions");
-          if (response.success) {
-            setSubscriptions(response.data || []);
-          }
-        };
-        fetchSubscriptions();
+        const subsResponse = await api.get("/admin/subscriptions");
+        if (subsResponse.success) {
+          setSubscriptions(subsResponse.data || []);
+        }
       } else {
         toast.error(response.message || "Erreur lors du renouvellement");
       }
@@ -209,21 +201,107 @@ export function AdminSubscriptions() {
 
   const handleCancel = async (id: string) => {
     if (!confirm("Êtes-vous sûr de vouloir annuler cet abonnement ?")) return;
-    
+
     try {
       const response = await api.delete(`/admin/subscriptions/${id}`);
       if (response.success) {
         toast.success("Abonnement annulé avec succès");
-        // Refresh the list
-        const fetchSubscriptions = async () => {
-          const response = await api.get("/admin/subscriptions");
-          if (response.success) {
-            setSubscriptions(response.data || []);
-          }
-        };
-        fetchSubscriptions();
+        const subsResponse = await api.get("/admin/subscriptions");
+        if (subsResponse.success) {
+          setSubscriptions(subsResponse.data || []);
+        }
       } else {
         toast.error(response.message || "Erreur lors de l'annulation");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur de connexion");
+    }
+  };
+
+  // Fonctions de gestion des plans
+  const handleCreatePlan = () => {
+    setEditingPlan(null);
+    setPlanForm({
+      name: "",
+      description: "",
+      price: 0,
+      duration: 30,
+      features: "",
+      isActive: true,
+    });
+    setIsEditing(true);
+  };
+
+  const handleEditPlan = (plan: SubscriptionPlan) => {
+    setEditingPlan(plan);
+    setPlanForm({
+      name: plan.name,
+      description: plan.description || "",
+      price: plan.price,
+      duration: plan.duration,
+      features: plan.features.join("\n"),
+      isActive: plan.isActive,
+    });
+    setIsEditing(true);
+  };
+
+  const handleSavePlan = async () => {
+    try {
+      const featuresArray = planForm.features
+        .split("\n")
+        .map((f) => f.trim())
+        .filter((f) => f);
+
+      const planData = {
+        name: planForm.name,
+        description: planForm.description || null,
+        price: planForm.price,
+        duration: planForm.duration,
+        features: featuresArray,
+        isActive: planForm.isActive,
+      };
+
+      let response;
+      if (editingPlan) {
+        response = await api.put(
+          `/admin/subscription-plans/${editingPlan.id}`,
+          planData,
+        );
+      } else {
+        response = await api.post("/admin/subscription-plans", planData);
+      }
+
+      if (response.success) {
+        toast.success(
+          editingPlan ? "Plan mis à jour" : "Plan créé avec succès",
+        );
+        const plansResponse = await api.get("/admin/subscription-plans");
+        if (plansResponse.success) {
+          setPlans(plansResponse.data || []);
+        }
+        setIsEditing(false);
+        setIsPlanDialogOpen(false);
+      } else {
+        toast.error(response.message || "Erreur lors de l'enregistrement");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur de connexion");
+    }
+  };
+
+  const handleDeletePlan = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer ce plan ?")) return;
+
+    try {
+      const response = await api.delete(`/admin/subscription-plans/${id}`);
+      if (response.success) {
+        toast.success("Plan supprimé");
+        const plansResponse = await api.get("/admin/subscription-plans");
+        if (plansResponse.success) {
+          setPlans(plansResponse.data || []);
+        }
+      } else {
+        toast.error(response.message || "Erreur lors de la suppression");
       }
     } catch (err: any) {
       toast.error(err.message || "Erreur de connexion");
@@ -239,10 +317,12 @@ export function AdminSubscriptions() {
   }
 
   const premiumCount = filteredSubscriptions.filter(
-    (s: any) => s.plan === "premium" && (s.status === "active" || s.status === "actif")
+    (s: any) =>
+      s.plan === "premium" && (s.status === "active" || s.status === "actif"),
   ).length;
   const proCount = filteredSubscriptions.filter(
-    (s: any) => s.plan === "pro" && (s.status === "active" || s.status === "actif")
+    (s: any) =>
+      s.plan === "pro" && (s.status === "active" || s.status === "actif"),
   ).length;
 
   return (
@@ -276,7 +356,9 @@ export function AdminSubscriptions() {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Total prestataires</p>
-                <p className="text-2xl font-bold">{filteredSubscriptions.length}</p>
+                <p className="text-2xl font-bold">
+                  {filteredSubscriptions.length}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -408,10 +490,14 @@ export function AdminSubscriptions() {
                     <TableCell>{getPlanBadge(sub.plan)}</TableCell>
                     <TableCell>{getStatusBadge(sub.status)}</TableCell>
                     <TableCell>
-                      {sub.start_date ? new Date(sub.start_date).toLocaleDateString() : '-'}
+                      {sub.start_date
+                        ? new Date(sub.start_date).toLocaleDateString()
+                        : "-"}
                     </TableCell>
                     <TableCell>
-                      {sub.end_date ? new Date(sub.end_date).toLocaleDateString() : 'Illimitée'}
+                      {sub.end_date
+                        ? new Date(sub.end_date).toLocaleDateString()
+                        : "Illimitée"}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -440,7 +526,10 @@ export function AdminSubscriptions() {
                             <RefreshCw size={14} className="mr-2" />
                             Renouveler
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleCancel(sub.id)}>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleCancel(sub.id)}
+                          >
                             <Trash2 size={14} className="mr-2" />
                             Annuler l'abonnement
                           </DropdownMenuItem>
@@ -457,54 +546,225 @@ export function AdminSubscriptions() {
 
       {/* Dialog pour gérer les plans */}
       <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Gérer les plans d'abonnement</DialogTitle>
             <DialogDescription>
               Configurez les plans d'abonnement pour les prestataires
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-            {plans.map((plan) => (
-              <Card
-                key={plan.id}
-                className={
-                  plan.id === "pro" ? "border-purple-500 border-2" : ""
-                }
+
+          {!isEditing ? (
+            <>
+              {/* Liste des plans avec options de modification */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                {plans.map((plan) => (
+                  <Card
+                    key={plan.id}
+                    className={
+                      plan.slug === "pro"
+                        ? "border-purple-500 border-2"
+                        : !plan.isActive
+                          ? "opacity-60"
+                          : ""
+                    }
+                  >
+                    <CardHeader
+                      className={`${
+                        plan.slug === "pro"
+                          ? "bg-purple-100"
+                          : plan.slug === "premium"
+                            ? "bg-yellow-100"
+                            : "bg-gray-100"
+                      } rounded-t-lg`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          {plan.slug === "pro" && (
+                            <Star size={20} className="text-purple-600" />
+                          )}
+                          {plan.slug === "premium" && (
+                            <Crown size={20} className="text-yellow-600" />
+                          )}
+                          {plan.name}
+                        </CardTitle>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleEditPlan(plan)}
+                          >
+                            <Edit2 size={14} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                            onClick={() => handleDeletePlan(plan.id)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                      <CardDescription>
+                        {plan.duration > 0
+                          ? `${plan.duration} jours`
+                          : "Illimité"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-4">
+                      <p className="text-3xl font-bold">
+                        {plan.price === 0
+                          ? "Gratuit"
+                          : `${plan.price.toLocaleString()} CFA`}
+                      </p>
+                      <ul className="mt-4 space-y-2">
+                        {(plan.features as string[]).map((feature, index) => (
+                          <li
+                            key={index}
+                            className="flex items-center gap-2 text-sm"
+                          >
+                            <Check size={16} className="text-green-500" />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                      {!plan.isActive && (
+                        <Badge className="mt-4 bg-red-100 text-red-800">
+                          Inactif
+                        </Badge>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Bouton pour créer un nouveau plan */}
+              <Button
+                className="mt-4 w-full"
+                variant="outline"
+                onClick={handleCreatePlan}
               >
-                <CardHeader className={`${plan.color} rounded-t-lg`}>
-                  <CardTitle className="flex items-center gap-2">
-                    {plan.id === "pro" && (
-                      <Star size={20} className="text-purple-600" />
-                    )}
-                    {plan.id === "premium" && (
-                      <Crown size={20} className="text-yellow-600" />
-                    )}
-                    {plan.name}
-                  </CardTitle>
-                  <CardDescription>{plan.duration}</CardDescription>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  <p className="text-3xl font-bold">
-                    {plan.price === 0
-                      ? "Gratuit"
-                      : `${plan.price.toLocaleString()} CFA`}
-                  </p>
-                  <ul className="mt-4 space-y-2">
-                    {plan.features.map((feature, index) => (
-                      <li
-                        key={index}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <Check size={16} className="text-green-500" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                <Plus size={18} className="mr-2" />
+                Créer un nouveau plan
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* Formulaire de création/modification de plan */}
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label htmlFor="planName">Nom du plan</Label>
+                  <Input
+                    id="planName"
+                    value={planForm.name}
+                    onChange={(e) =>
+                      setPlanForm({ ...planForm, name: e.target.value })
+                    }
+                    placeholder="Ex: Premium"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="planDescription">Description</Label>
+                  <Input
+                    id="planDescription"
+                    value={planForm.description}
+                    onChange={(e) =>
+                      setPlanForm({ ...planForm, description: e.target.value })
+                    }
+                    placeholder="Description courte..."
+                    className="mt-1"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="planPrice">Prix (CFA)</Label>
+                    <Input
+                      id="planPrice"
+                      type="number"
+                      value={planForm.price}
+                      onChange={(e) =>
+                        setPlanForm({
+                          ...planForm,
+                          price: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="planDuration">Durée (jours)</Label>
+                    <Input
+                      id="planDuration"
+                      type="number"
+                      value={planForm.duration}
+                      onChange={(e) =>
+                        setPlanForm({
+                          ...planForm,
+                          duration: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="planFeatures">
+                    Fonctionnalités (une par ligne)
+                  </Label>
+                  <textarea
+                    id="planFeatures"
+                    value={planForm.features}
+                    onChange={(e) =>
+                      setPlanForm({ ...planForm, features: e.target.value })
+                    }
+                    placeholder="Service illimité&#10;Badge VIP&#10;Support prioritaire"
+                    className="mt-1 w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#000080]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="planActive"
+                    checked={planForm.isActive}
+                    onChange={(e) =>
+                      setPlanForm({
+                        ...planForm,
+                        isActive: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4"
+                  />
+                  <Label htmlFor="planActive" className="cursor-pointer">
+                    Plan actif
+                  </Label>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleSavePlan}
+                  className="flex-1 bg-[#000080] hover:bg-blue-900"
+                >
+                  <Save size={18} className="mr-2" />
+                  Enregistrer
+                </Button>
+              </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

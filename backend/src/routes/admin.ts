@@ -1548,6 +1548,203 @@ router.delete("/subscriptions/:id", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// ==================== GESTION DES PLANS D'ABONNEMENT ====================
+
+// GET /api/admin/subscription-plans - Liste des plans d'abonnement
+router.get("/subscription-plans", async (req: AuthRequest, res: Response) => {
+  try {
+    const plans = await prisma.subscriptionPlan.findMany({
+      orderBy: { displayOrder: "asc" },
+    });
+    
+    res.json({ success: true, data: plans });
+  } catch (error: any) {
+    console.error("Erreur liste plans:", error);
+    // Si la table n'existe pas encore, retourner les plans par défaut
+    if (error.code === "42P01") {
+      const defaultPlans = [
+        { id: "1", name: "Gratuit", slug: "gratuit", price: 0, duration: 0, features: ["5 services maximum", "Visibilité standard", "Support par email"], isActive: true, displayOrder: 0 },
+        { id: "2", name: "Premium", slug: "premium", price: 9900, duration: 30, features: ["Services illimités", "Badge VIP", "Visibilité prioritaire", "Support prioritaire", "Statistiques avancées"], isActive: true, displayOrder: 1 },
+        { id: "3", name: "Pro", slug: "pro", price: 24900, duration: 30, features: ["Tout Premium", "Publication en premier", "Badge Pro", "Formation exclusive", "Gestion équipe"], isActive: true, displayOrder: 2 },
+      ];
+      return res.json({ success: true, data: defaultPlans });
+    }
+    res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
+  }
+});
+
+// POST /api/admin/subscription-plans - Créer un plan
+router.post(
+  "/subscription-plans",
+  [
+    body("name").notEmpty().withMessage("Nom requis").isLength({ max: 50 }),
+    body("price").isNumeric().withMessage("Prix requis"),
+    body("duration").isInt({ min: 0 }).withMessage("Durée invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { name, description, price, duration, features, isActive, displayOrder } = req.body;
+
+      // Créer le slug à partir du nom
+      const slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+      // Compter les plans existants pour l'ordre d'affichage
+      const count = await prisma.subscriptionPlan.count();
+
+      const result = await prisma.subscriptionPlan.create({
+        data: {
+          name,
+          slug,
+          description: description || null,
+          price: parseFloat(price),
+          duration: duration || 30,
+          features: features || [],
+          isActive: isActive !== false,
+          displayOrder: displayOrder ?? count,
+        },
+      });
+
+      // Créer une notification pour l'admin
+      await createNotification(
+        req.user!.id,
+        "Plan créé",
+        `Le plan "${name}" a été créé avec succès`,
+        "success",
+        "/admin/subscriptions",
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Plan créé avec succès",
+        data: result,
+      });
+    } catch (error: any) {
+      console.error("Erreur création plan:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
+    }
+  },
+);
+
+// PUT /api/admin/subscription-plans/:id - Mettre à jour un plan
+router.put(
+  "/subscription-plans/:id",
+  [
+    body("name").optional().notEmpty().withMessage("Nom requis"),
+    body("price").optional().isNumeric().withMessage("Prix invalide"),
+    body("duration").optional().isInt({ min: 0 }).withMessage("Durée invalide"),
+  ],
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty())
+        return res.status(400).json({ success: false, errors: errors.array() });
+
+      const { id } = req.params;
+      const { name, description, price, duration, features, isActive, displayOrder } = req.body;
+
+      // Vérifier si le plan existe
+      const existing = await prisma.subscriptionPlan.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Plan non trouvé" });
+      }
+
+      // Préparer les données de mise à jour
+      const updateData: any = {};
+      if (name) {
+        updateData.name = name;
+        updateData.slug = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+      }
+      if (description !== undefined) updateData.description = description;
+      if (price !== undefined) updateData.price = parseFloat(price);
+      if (duration !== undefined) updateData.duration = duration;
+      if (features !== undefined) updateData.features = features;
+      if (isActive !== undefined) updateData.isActive = isActive;
+      if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
+
+      const result = await prisma.subscriptionPlan.update({
+        where: { id },
+        data: updateData,
+      });
+
+      // Créer une notification pour l'admin
+      await createNotification(
+        req.user!.id,
+        "Plan mis à jour",
+        `Le plan "${result.name}" a été mis à jour`,
+        "info",
+        "/admin/subscriptions",
+      );
+
+      res.json({
+        success: true,
+        message: "Plan mis à jour",
+        data: result,
+      });
+    } catch (error: any) {
+      console.error("Erreur mise à jour plan:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
+    }
+  },
+);
+
+// DELETE /api/admin/subscription-plans/:id - Supprimer un plan
+router.delete("/subscription-plans/:id", async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier si le plan existe
+    const existing = await prisma.subscriptionPlan.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { subscriptions: true },
+        },
+      },
+    });
+
+    if (!existing) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Plan non trouvé" });
+    }
+
+    // Vérifier si des abonnements utilisent ce plan
+    if (existing._count.subscriptions > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Impossible de supprimer ce plan car des abonnements l'utilisent",
+      });
+    }
+
+    await prisma.subscriptionPlan.delete({
+      where: { id },
+    });
+
+    // Créer une notification pour l'admin
+    await createNotification(
+      req.user!.id,
+      "Plan supprimé",
+      `Le plan "${existing.name}" a été supprimé`,
+      "warning",
+      "/admin/subscriptions",
+    );
+
+    res.json({ success: true, message: "Plan supprimé" });
+  } catch (error: any) {
+    console.error("Erreur suppression plan:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur", detail: error.message });
+  }
+});
+
 // GET /api/admin/analytics - Données analytiques
 router.get("/analytics", async (req: AuthRequest, res: Response) => {
   try {

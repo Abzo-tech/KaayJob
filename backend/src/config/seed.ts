@@ -14,28 +14,28 @@ async function seed() {
     // ============================================
     // 1. CRÉER L'ADMIN
     // ============================================
-    const adminEmail = "admin@kaayjob.sn";
+    const adminEmail = "aboubakr.dieng@kaayjob.sn";
     const existingAdmin = await prisma.user.findUnique({
       where: { email: adminEmail },
     });
 
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash("Admin123", 12);
+      const hashedPassword = await bcrypt.hash("Passer123", 12);
       await prisma.user.create({
         data: {
           email: adminEmail,
           password: hashedPassword,
-          firstName: "Admin",
-          lastName: "KaayJob",
-          phone: "+221770000000",
+          firstName: "Aboubakr",
+          lastName: "Dieng",
+          phone: "+221770000001",
           role: "ADMIN",
           isActive: true,
           isVerified: true,
         },
       });
       console.log("✅ Admin créé:");
-      console.log("   Email: admin@kaayjob.sn");
-      console.log("   Mot de passe: Admin123");
+      console.log("   Email: aboubakr.dieng@kaayjob.sn");
+      console.log("   Mot de passe: Passer123");
     } else {
       console.log("ℹ️ Admin déjà existant");
     }
@@ -44,61 +44,65 @@ async function seed() {
     // 2. CRÉER DES CATÉGORIES
     // ============================================
     const categories = [
-      { 
-        name: "Ménage", 
-        slug: "menage", 
+      {
+        name: "Ménage",
+        slug: "menage",
         description: "Services de nettoyage domestique",
         icon: "🧹",
-        image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800",
-        displayOrder: 1
+        image:
+          "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800",
+        displayOrder: 1,
       },
-      { 
-        name: "Bricolage", 
-        slug: "bricolage", 
+      {
+        name: "Bricolage",
+        slug: "bricolage",
         description: "Travaux de réparation et petit bricolage",
         icon: "🔧",
-        image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=800",
-        displayOrder: 3
+        image:
+          "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=800",
+        displayOrder: 3,
       },
-      { 
-        name: "Électricité", 
-        slug: "electricite", 
+      {
+        name: "Électricité",
+        slug: "electricite",
         description: "Services électriques et installation",
         icon: "💡",
-        image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800",
-        displayOrder: 4
+        image:
+          "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800",
+        displayOrder: 4,
       },
-      { 
-        name: "Plomberie", 
-        slug: "plomberie", 
+      {
+        name: "Plomberie",
+        slug: "plomberie",
         description: "Réparation plomberie et installation",
         icon: "🚿",
         image: "/images/plomberie.png",
-        displayOrder: 5
+        displayOrder: 5,
       },
-      { 
-        name: "Peinture", 
-        slug: "peinture", 
+      {
+        name: "Peinture",
+        slug: "peinture",
         description: "Travaux de peinture intérieure et extérieure",
         icon: "🎨",
-        image: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800",
-        displayOrder: 6
+        image:
+          "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800",
+        displayOrder: 6,
       },
-      { 
-        name: "Déménagement", 
-        slug: "demangement", 
+      {
+        name: "Déménagement",
+        slug: "demangement",
         description: "Aide au déménagement et transport",
         icon: "📦",
         image: "/images/Demenagement.png",
-        displayOrder: 7
+        displayOrder: 7,
       },
-      { 
-        name: "Réparation", 
-        slug: "reparation", 
+      {
+        name: "Réparation",
+        slug: "reparation",
         description: "Services de réparation et maintenance",
         icon: "🔩",
         image: "/images/Reparation.png",
-        displayOrder: 8
+        displayOrder: 8,
       },
       {
         name: "Maçon",
@@ -106,7 +110,7 @@ async function seed() {
         description: "Travaux de construction et maçonnerie",
         icon: "🧱",
         image: "/images/maçon.png",
-        displayOrder: 9
+        displayOrder: 9,
       },
       {
         name: "Menuisier bois",
@@ -114,7 +118,7 @@ async function seed() {
         description: "Travail du bois et fabrication de meubles",
         icon: "🪵",
         image: "/images/menuiserie.png",
-        displayOrder: 10
+        displayOrder: 10,
       },
       {
         name: "Menuisier métallique",
@@ -122,7 +126,7 @@ async function seed() {
         description: "Travail du métal et ferronnerie",
         icon: "⚙️",
         image: "/images/metalique.png",
-        displayOrder: 11
+        displayOrder: 11,
       },
       {
         name: "Éducation",
@@ -130,7 +134,7 @@ async function seed() {
         description: "Cours à domicile et soutien scolaire",
         icon: "📚",
         image: "/images/education.png",
-        displayOrder: 12
+        displayOrder: 12,
       },
       {
         name: "Mécanique",
@@ -138,7 +142,7 @@ async function seed() {
         description: "Services de mécanique automobile",
         icon: "🔧",
         image: "/images/mecanique.png",
-        displayOrder: 13
+        displayOrder: 13,
       },
       {
         name: "Cuisine",
@@ -146,7 +150,7 @@ async function seed() {
         description: "Services de cuisine et préparation de repas",
         icon: "🍳",
         image: "/images/cuisine.png",
-        displayOrder: 14
+        displayOrder: 14,
       },
     ];
 
@@ -304,7 +308,7 @@ async function seed() {
     const createdProviders = [];
     for (const p of providers) {
       const hashedPassword = await bcrypt.hash("Password123!", 12);
-      
+
       const user = await prisma.user.upsert({
         where: { email: p.email },
         update: {},
@@ -339,7 +343,7 @@ async function seed() {
           isVerified: true,
         },
       });
-      
+
       // Stocker userId du prestataire car c'est ce qui est utilisé dans Service.providerId
       createdProviders.push({ user, profile, userId: user.id });
     }
@@ -350,60 +354,270 @@ async function seed() {
     // ============================================
     const servicesData = [
       // Services Plomberie (Ahmed)
-      { providerIndex: 0, categoryIndex: 3, name: "Réparation de fuite", description: "Détection et réparation de fuites d'eau", price: 5000, duration: 60 },
-      { providerIndex: 0, categoryIndex: 3, name: "Débouchage canalisation", description: "Débouchage de WC, lavabo, évier", price: 8000, duration: 90 },
-      { providerIndex: 0, categoryIndex: 3, name: "Installation sanitaires", description: "Pose de lavabo, WC, baignoire", price: 25000, duration: 180 },
-      
+      {
+        providerIndex: 0,
+        categoryIndex: 3,
+        name: "Réparation de fuite",
+        description: "Détection et réparation de fuites d'eau",
+        price: 5000,
+        duration: 60,
+      },
+      {
+        providerIndex: 0,
+        categoryIndex: 3,
+        name: "Débouchage canalisation",
+        description: "Débouchage de WC, lavabo, évier",
+        price: 8000,
+        duration: 90,
+      },
+      {
+        providerIndex: 0,
+        categoryIndex: 3,
+        name: "Installation sanitaires",
+        description: "Pose de lavabo, WC, baignoire",
+        price: 25000,
+        duration: 180,
+      },
+
       // Services Ménage (Marie)
-      { providerIndex: 1, categoryIndex: 0, name: "Nettoyage maison", description: "Nettoyage complet domicile", price: 10000, duration: 120 },
-      { providerIndex: 1, categoryIndex: 0, name: "Nettoyage bureau", description: "Nettoyage de locaux professionnels", price: 15000, duration: 120 },
-      { providerIndex: 1, categoryIndex: 0, name: "Nettoyage fin de bail", description: "Nettoyage approfondi pour départ locataire", price: 30000, duration: 240 },
+      {
+        providerIndex: 1,
+        categoryIndex: 0,
+        name: "Nettoyage maison",
+        description: "Nettoyage complet domicile",
+        price: 10000,
+        duration: 120,
+      },
+      {
+        providerIndex: 1,
+        categoryIndex: 0,
+        name: "Nettoyage bureau",
+        description: "Nettoyage de locaux professionnels",
+        price: 15000,
+        duration: 120,
+      },
+      {
+        providerIndex: 1,
+        categoryIndex: 0,
+        name: "Nettoyage fin de bail",
+        description: "Nettoyage approfondi pour départ locataire",
+        price: 30000,
+        duration: 240,
+      },
 
       // Services Électricité (Ibrahim)
-      { providerIndex: 2, categoryIndex: 2, name: "Dépannage électrique", description: "Intervention rapide pour panne électrique", price: 10000, duration: 60 },
-      { providerIndex: 2, categoryIndex: 2, name: "Installation prise", description: "Pose de prises électriques", price: 5000, duration: 30 },
-      { providerIndex: 2, categoryIndex: 2, name: "Mise aux normes", description: "Mise aux normes du tableau électrique", price: 50000, duration: 360 },
+      {
+        providerIndex: 2,
+        categoryIndex: 2,
+        name: "Dépannage électrique",
+        description: "Intervention rapide pour panne électrique",
+        price: 10000,
+        duration: 60,
+      },
+      {
+        providerIndex: 2,
+        categoryIndex: 2,
+        name: "Installation prise",
+        description: "Pose de prises électriques",
+        price: 5000,
+        duration: 30,
+      },
+      {
+        providerIndex: 2,
+        categoryIndex: 2,
+        name: "Mise aux normes",
+        description: "Mise aux normes du tableau électrique",
+        price: 50000,
+        duration: 360,
+      },
 
       // Services Bricolage (Ousseynou)
-      { providerIndex: 3, categoryIndex: 1, name: "Montage meubles", description: "Montage de meubles IKEA et autres", price: 5000, duration: 45 },
-      { providerIndex: 3, categoryIndex: 1, name: "Petite réparation", description: "Réparations diverses à domicile", price: 3000, duration: 30 },
-      { providerIndex: 3, categoryIndex: 1, name: "Pose étagère", description: "Installation d'étagères et rangements", price: 4000, duration: 30 },
+      {
+        providerIndex: 3,
+        categoryIndex: 1,
+        name: "Montage meubles",
+        description: "Montage de meubles IKEA et autres",
+        price: 5000,
+        duration: 45,
+      },
+      {
+        providerIndex: 3,
+        categoryIndex: 1,
+        name: "Petite réparation",
+        description: "Réparations diverses à domicile",
+        price: 3000,
+        duration: 30,
+      },
+      {
+        providerIndex: 3,
+        categoryIndex: 1,
+        name: "Pose étagère",
+        description: "Installation d'étagères et rangements",
+        price: 4000,
+        duration: 30,
+      },
 
       // Services Maçon (Moussa)
-      { providerIndex: 4, categoryIndex: 7, name: "Construction mur", description: "Construction de murs en briques ou parpaings", price: 25000, duration: 240 },
-      { providerIndex: 4, categoryIndex: 7, name: "Rénovation maçonnerie", description: "Réparation et réfection de maçonnerie", price: 20000, duration: 180 },
-      { providerIndex: 4, categoryIndex: 7, name: "Dallage", description: "Pose de dallage extérieur ou intérieur", price: 30000, duration: 300 },
+      {
+        providerIndex: 4,
+        categoryIndex: 7,
+        name: "Construction mur",
+        description: "Construction de murs en briques ou parpaings",
+        price: 25000,
+        duration: 240,
+      },
+      {
+        providerIndex: 4,
+        categoryIndex: 7,
+        name: "Rénovation maçonnerie",
+        description: "Réparation et réfection de maçonnerie",
+        price: 20000,
+        duration: 180,
+      },
+      {
+        providerIndex: 4,
+        categoryIndex: 7,
+        name: "Dallage",
+        description: "Pose de dallage extérieur ou intérieur",
+        price: 30000,
+        duration: 300,
+      },
 
       // Services Menuisier bois (Ali)
-      { providerIndex: 5, categoryIndex: 8, name: "Fabrication meuble", description: "Meuble sur mesure en bois", price: 45000, duration: 480 },
-      { providerIndex: 5, categoryIndex: 8, name: "Pose porte", description: "Installation de portes intérieures et extérieures", price: 15000, duration: 120 },
-      { providerIndex: 5, categoryIndex: 8, name: "Pose fenêtre", description: "Pose de fenêtres en bois", price: 20000, duration: 180 },
+      {
+        providerIndex: 5,
+        categoryIndex: 8,
+        name: "Fabrication meuble",
+        description: "Meuble sur mesure en bois",
+        price: 45000,
+        duration: 480,
+      },
+      {
+        providerIndex: 5,
+        categoryIndex: 8,
+        name: "Pose porte",
+        description: "Installation de portes intérieures et extérieures",
+        price: 15000,
+        duration: 120,
+      },
+      {
+        providerIndex: 5,
+        categoryIndex: 8,
+        name: "Pose fenêtre",
+        description: "Pose de fenêtres en bois",
+        price: 20000,
+        duration: 180,
+      },
 
       // Services Menuisier métallique (Youssoufa)
-      { providerIndex: 6, categoryIndex: 9, name: "Portail métallique", description: "Fabrication et pose de portail", price: 80000, duration: 360 },
-      { providerIndex: 6, categoryIndex: 9, name: "Grille de sécurité", description: "Installation de grilles aux fenêtres", price: 25000, duration: 180 },
-      { providerIndex: 6, categoryIndex: 9, name: "Rambarde escalier", description: "Pose de rambarde ou garde-corps", price: 35000, duration: 240 },
+      {
+        providerIndex: 6,
+        categoryIndex: 9,
+        name: "Portail métallique",
+        description: "Fabrication et pose de portail",
+        price: 80000,
+        duration: 360,
+      },
+      {
+        providerIndex: 6,
+        categoryIndex: 9,
+        name: "Grille de sécurité",
+        description: "Installation de grilles aux fenêtres",
+        price: 25000,
+        duration: 180,
+      },
+      {
+        providerIndex: 6,
+        categoryIndex: 9,
+        name: "Rambarde escalier",
+        description: "Pose de rambarde ou garde-corps",
+        price: 35000,
+        duration: 240,
+      },
 
       // Services Réparation (Mamadou)
-      { providerIndex: 7, categoryIndex: 6, name: "Réparation electroménager", description: "Réparation d'appareils électroménagers", price: 8000, duration: 60 },
-      { providerIndex: 7, categoryIndex: 6, name: "Réparation meubles", description: "Réparation et restauration de meubles", price: 5000, duration: 45 },
-      { providerIndex: 7, categoryIndex: 6, name: "Maintenance équipements", description: "Entretien et maintenance d'équipements", price: 6000, duration: 45 },
+      {
+        providerIndex: 7,
+        categoryIndex: 6,
+        name: "Réparation electroménager",
+        description: "Réparation d'appareils électroménagers",
+        price: 8000,
+        duration: 60,
+      },
+      {
+        providerIndex: 7,
+        categoryIndex: 6,
+        name: "Réparation meubles",
+        description: "Réparation et restauration de meubles",
+        price: 5000,
+        duration: 45,
+      },
+      {
+        providerIndex: 7,
+        categoryIndex: 6,
+        name: "Maintenance équipements",
+        description: "Entretien et maintenance d'équipements",
+        price: 6000,
+        duration: 45,
+      },
 
       // Services Femme de ménage (Fatou)
-      { providerIndex: 8, categoryIndex: 0, name: "Nettoyage quotidien", description: "Nettoyage quotidien du domicile", price: 8000, duration: 120 },
-      { providerIndex: 8, categoryIndex: 0, name: "Repassage", description: "Service de repassage à domicile", price: 5000, duration: 90 },
-      { providerIndex: 8, categoryIndex: 0, name: "Grand nettoyage", description: "Nettoyage complet et approfondi", price: 20000, duration: 240 },
+      {
+        providerIndex: 8,
+        categoryIndex: 0,
+        name: "Nettoyage quotidien",
+        description: "Nettoyage quotidien du domicile",
+        price: 8000,
+        duration: 120,
+      },
+      {
+        providerIndex: 8,
+        categoryIndex: 0,
+        name: "Repassage",
+        description: "Service de repassage à domicile",
+        price: 5000,
+        duration: 90,
+      },
+      {
+        providerIndex: 8,
+        categoryIndex: 0,
+        name: "Grand nettoyage",
+        description: "Nettoyage complet et approfondi",
+        price: 20000,
+        duration: 240,
+      },
 
       // Services Éducation (Samba)
-      { providerIndex: 9, categoryIndex: 10, name: "Cours de Maths", description: "Cours particuliers de mathématiques", price: 10000, duration: 60 },
-      { providerIndex: 9, categoryIndex: 10, name: "Cours de Physique", description: "Cours particuliers de physique", price: 10000, duration: 60 },
-      { providerIndex: 9, categoryIndex: 10, name: "Soutien scolaire", description: "Aide aux devoirs et soutien scolaire", price: 8000, duration: 60 },
+      {
+        providerIndex: 9,
+        categoryIndex: 10,
+        name: "Cours de Maths",
+        description: "Cours particuliers de mathématiques",
+        price: 10000,
+        duration: 60,
+      },
+      {
+        providerIndex: 9,
+        categoryIndex: 10,
+        name: "Cours de Physique",
+        description: "Cours particuliers de physique",
+        price: 10000,
+        duration: 60,
+      },
+      {
+        providerIndex: 9,
+        categoryIndex: 10,
+        name: "Soutien scolaire",
+        description: "Aide aux devoirs et soutien scolaire",
+        price: 8000,
+        duration: 60,
+      },
     ];
 
     for (const s of servicesData) {
       const provider = createdProviders[s.providerIndex];
       const category = createdCategories[s.categoryIndex];
-      
+
       // Service.providerId doit correspondre à ProviderProfile.userId
       await prisma.service.create({
         data: {
@@ -424,15 +638,30 @@ async function seed() {
     // 5. CRÉER DES CLIENTS (3)
     // ============================================
     const clients = [
-      { email: "client1@email.com", firstName: "Pierre", lastName: "Dupont", phone: "+221771234580" },
-      { email: "client2@email.com", firstName: "Sophie", lastName: "Martin", phone: "+221771234581" },
-      { email: "client3@email.com", firstName: "Jean", lastName: "Bernard", phone: "+221771234582" },
+      {
+        email: "client1@email.com",
+        firstName: "Pierre",
+        lastName: "Dupont",
+        phone: "+221771234580",
+      },
+      {
+        email: "client2@email.com",
+        firstName: "Sophie",
+        lastName: "Martin",
+        phone: "+221771234581",
+      },
+      {
+        email: "client3@email.com",
+        firstName: "Jean",
+        lastName: "Bernard",
+        phone: "+221771234582",
+      },
     ];
 
     const createdClients = [];
     for (const c of clients) {
       const hashedPassword = await bcrypt.hash("Password123!", 12);
-      
+
       const user = await prisma.user.upsert({
         where: { email: c.email },
         update: {},
@@ -455,7 +684,7 @@ async function seed() {
     // 6. CRÉER DES RÉSERVATIONS
     // ============================================
     const allServices = await prisma.service.findMany({
-      include: { provider: true }
+      include: { provider: true },
     });
 
     const bookingsData = [
@@ -470,10 +699,10 @@ async function seed() {
     for (const b of bookingsData) {
       const client = createdClients[b.clientIndex];
       const service = allServices[b.serviceIndex];
-      
+
       const bookingDate = new Date();
       bookingDate.setDate(bookingDate.getDate() + b.daysAgo);
-      
+
       await prisma.booking.create({
         data: {
           clientId: client.id,
@@ -498,34 +727,53 @@ async function seed() {
     // ============================================
     const completedBookings = await prisma.booking.findMany({
       where: { status: "COMPLETED" },
-      include: { 
+      include: {
         service: {
-          include: { provider: true }
+          include: { provider: true },
         },
-        client: true
-      }
+        client: true,
+      },
     });
 
     const reviewsData = [
-      { bookingIndex: 0, rating: 5, comment: "Excellent travail, très professionnel et ponctuel. Je recommande!" },
-      { bookingIndex: 1, rating: 4, comment: "Très bon service, légèrement en retard mais travail bien fait." },
-      { bookingIndex: 2, rating: 5, comment: "Service impeccable, Electricien très compétent. Je referai appel." },
+      {
+        bookingIndex: 0,
+        rating: 5,
+        comment:
+          "Excellent travail, très professionnel et ponctuel. Je recommande!",
+      },
+      {
+        bookingIndex: 1,
+        rating: 4,
+        comment:
+          "Très bon service, légèrement en retard mais travail bien fait.",
+      },
+      {
+        bookingIndex: 2,
+        rating: 5,
+        comment:
+          "Service impeccable, Electricien très compétent. Je referai appel.",
+      },
     ];
 
-    for (let i = 0; i < reviewsData.length && i < completedBookings.length; i++) {
+    for (
+      let i = 0;
+      i < reviewsData.length && i < completedBookings.length;
+      i++
+    ) {
       const booking = completedBookings[i];
       const review = reviewsData[i];
-      
+
       // Vérifier si un avis existe déjà pour cette réservation
       const existingReview = await prisma.review.findUnique({
         where: { bookingId: booking.id },
       });
-      
+
       if (existingReview) continue; // Skip si déjà existant
-      
+
       // Le providerId dans Review fait référence à ProviderProfile.id
       const providerId = booking.service.provider.id;
-      
+
       await prisma.review.create({
         data: {
           bookingId: booking.id,
@@ -546,20 +794,20 @@ async function seed() {
     console.log("\n=========================================");
     console.log("🌿 DONNÉES DE TEST CRÉÉES AVEC SUCCÈS!");
     console.log("=========================================\n");
-    
+
     console.log("📧 COMPTES UTILISATEURS:");
     console.log("------------------------");
     console.log("ADMIN:");
-    console.log("  Email: admin@kaayjob.sn");
-    console.log("  Mot de passe: Admin123\n");
-    
+    console.log("  Email: aboubakr.dieng@kaayjob.sn");
+    console.log("  Mot de passe: Passer123\n");
+
     console.log("PRESTATAIRES:");
     for (const p of providers) {
       console.log(`  ${p.businessName}`);
       console.log(`  Email: ${p.email} | Mot de passe: Password123!`);
     }
     console.log();
-    
+
     console.log("CLIENTS:");
     for (const c of clients) {
       console.log(`  ${c.firstName} ${c.lastName}`);
@@ -572,7 +820,6 @@ async function seed() {
     console.log("2. Connexion Prestataire → Services, Réservations");
     console.log("3. Connexion Client → Réserver service, Laisser avis");
     console.log("\n✅ Seed terminé!");
-    
   } catch (error) {
     console.error("❌ Erreur:", error);
   } finally {
