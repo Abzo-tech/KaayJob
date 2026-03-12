@@ -1,10 +1,13 @@
 /**
  * Configuration API pour KaayJob
  * Point central pour les appels au backend
- * Utilise le proxy Vite (/api -> backend)
+ * Utilise le proxy Vite (/api -> backend) en local
+ * Utilise VITE_API_URL en production (Vercel)
  */
 
-const API_BASE_URL = "/api";
+// En production (Vercel), utiliser l'URL du backend Render
+// En local, utiliser le proxy /api
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 /**
  * headers par défaut pour les requêtes
@@ -31,7 +34,9 @@ const handleResponse = async (response: Response): Promise<any> => {
   if (!response.ok) {
     // Gérer les erreurs de validation
     if (data.errors && Array.isArray(data.errors)) {
-      const errorMessages = data.errors.map((e: any) => e.msg || e.message).join(", ");
+      const errorMessages = data.errors
+        .map((e: any) => e.msg || e.message)
+        .join(", ");
       throw new Error(errorMessages || "Une erreur de validation est survenue");
     }
     throw new Error(data.message || "Une erreur est survenue");

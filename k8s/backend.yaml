@@ -22,7 +22,8 @@ spec:
         - name: backend
           # Remplacer par votre image Docker Hub ou registry
           # image: votre-dockerhub-username/kaayjob-backend:latest
-          image: kaayjob_backend:latest
+          image: kaayjob-backend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
               name: http

@@ -1,189 +1,152 @@
-# ===================================================================
+# Guide de Déploiement - KaayJob
 
-# Guide de déploiement KaayJob - VPS (le plus simple)
+## Déploiement en ligne (Vercel + Render)
 
-# ===================================================================
-
-## Prérequis
-
-Vous avez besoin d'un serveur VPS. Voici quelques options abordables:
-
-| Provider         | Prix approximatif | Lien                     |
-| ---------------- | ----------------- | ------------------------ |
-| **Hetzner**      | ~5€/mois          | https://hetzner.cloud    |
-| **DigitalOcean** | ~6$/mois          | https://digitalocean.com |
-| **OVH**          | ~5€/mois          | https://ovh.com          |
+Ce guide explique comment déployer l'application KaayJob sur Vercel (Frontend) et Render (Backend).
 
 ---
 
-## ÉTAPE 1: Commander un serveur VPS
+## Étape 1: Prérequis
 
-1. Créez un compte sur Hetzner, DigitalOcean ou OVH
-2. Commandez un VPS avec:
-   - **CPU**: 2 vCPU minimum
-   - **RAM**: 2 GB minimum
-   - **Stockage**: 25 GB SSD
-   - **OS**: Ubuntu 22.04 LTS
-
-3. Notez l'adresse IP de votre serveur
+1. Créer un compte sur [Render.com](https://render.com) (gratuit)
+2. Créer un compte sur [Vercel.com](https://vercel.com) (gratuit)
+3. Installer le CLI Render: `npm install -g render-deploy`
+4. Installer Vercel CLI: `npm install -g vercel`
 
 ---
 
-## ÉTAPE 2: Se connecter au serveur
+## Étape 2: Déployer le Backend sur Render
 
-Ouvrez un terminal et connectez-vous:
+### Option A: Déploiement automatique avec render.yaml
 
-```bash
-ssh root@ADRESSE_IP_VOTRE_SERVER
+1. Pousser le code sur GitHub/GitLab
+2. Se connecter à [Render Dashboard](https://dashboard.render.com)
+3. Cliquer "New +" → "Blueprint"
+4. Connecter votre repository
+5. Sélectionner le fichier `render.yaml`
+6. Cliquer "Apply"
+
+### Option B: Déploiement manuel
+
+1. Se rendre sur [Render Dashboard](https://dashboard.render.com)
+2. Cliquer "New +" → "Web Service"
+3. Connecter votre repository GitHub
+4. Configurer:
+   - **Name**: kaayjob-backend
+   - **Environment**: Docker
+   - **Dockerfile Path**: `backend/Dockerfile.render`
+   - **Docker Command**: `sh -c "npx prisma migrate deploy && node dist/index.js"`
+5. Cliquer "Create Web Service"
+
+### Configuration des Variables d'environnement sur Render
+
+Dans le dashboard Render, ajouter ces variables:
+
+```
+DATABASE_URL=postgresql://user:password@host:5432/kaayjob
+NODE_ENV=production
+PORT=3000
+JWT_SECRET=votre-secret-jwt-tres-securise
+ALLOWED_ORIGINS=https://kaayjob.vercel.app
+FRONTEND_URL=https://kaayjob.vercel.app
 ```
 
-Remplacez `ADRESSE_IP_VOTRE_SERVER` par l'IP de votre VPS.
+**Note**: Render crée automatiquement la base de données PostgreSQL. La variable `DATABASE_URL` sera automatiquement définie par Render.
 
 ---
 
-## ÉTAPE 3: Installer Docker
+## Étape 3: Déployer le Frontend sur Vercel
 
-Exécutez ces commandes sur le serveur:
-
-```bash
-# Mettre à jour le système
-apt update && apt upgrade -y
-
-# Installer Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-
-# Ajouter votre utilisateur au groupe docker
-usermod -aG docker votre_nom_utilisateur
-
-# Installer Docker Compose
-apt install docker-compose -y
-
-# Vérifier l'installation
-docker --version
-docker-compose --version
-```
+1. Se rendre sur [Vercel Dashboard](https://vercel.com/dashboard)
+2. Cliquer "Add New..." → "Project"
+3. Importer votre repository GitHub
+4. Configurer:
+   - **Framework Preset**: Vite
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+5. Dans "Environment Variables", ajouter:
+   ```
+   VITE_API_URL=https://kaayjob-backend.onrender.com
+   ```
+6. Cliquer "Deploy"
 
 ---
 
-## ÉTAPE 4: Transférer les fichiers du projet
+## Étape 4: Configurer les переменations finales
 
-Sur votre machine locale, exécutez:
+Une fois le backend déployé:
 
-```bash
-# Créer un dossier pour le projet sur le serveur
-scp -r . root@ADRESSE_IP_VOTRE_SERVER:/root/kaayjob/
-```
-
-Ou utilisez un client FTP comme FileZilla.
-
----
-
-## ÉTAPE 5: Configurer les variables d'environnement
-
-Sur le serveur, créez le fichier `.env`:
-
-```bash
-cd /root/kaayjob
-cp .env.docker .env
-nano .env
-```
-
-Modifiez les valeurs:
-
-```env
-# Ports
-DB_PORT=5432
-BACKEND_PORT=3002
-FRONTEND_PORT=8080
-
-# Base de données
-DB_NAME=kaayjob
-DB_USER=postgres
-DB_PASSWORD=VOTRE_MOT_DE_PASSE_FORT
-
-# JWT
-JWT_SECRET=VOTRE_SECRET_TRES_LONG_ET_COMPLEXE
-
-# URLs
-FRONTEND_URL=http://ADRESSE_IP_VOTRE_SERVER
-```
+1. Copier l'URL du backend (ex: `https://kaayjob-backend.onrender.com`)
+2. Sur Vercel, mettre à jour la variable d'environnement:
+   - `VITE_API_URL` = URL du backend Render
+3. Ajouter le domaine Vercel aux variables d'environnement du backend Render:
+   - `ALLOWED_ORIGINS` = `https://votre-projet.vercel.app`
 
 ---
 
-## ÉTAPE 6: Démarrer l'application
+## Étape 5: Exécuter le Seed (première fois)
 
-```bash
-cd /root/kaayjob
-docker-compose up -d
+Pour ajouter les données de test:
+
+1. Se connecter au backend via terminal:
+   ```bash
+   render ssh kaayjob-backend
+   ```
+2. Ou utiliser le service shell de Render
+3. Exécuter:
+   ```bash
+   DATABASE_URL="votre-connection-string" npx prisma db push
+   node dist/config/seed.js
+   ```
+
+---
+
+## Comptes de test (après seed)
+
 ```
+ADMIN:
+  Email: admin@kaayjob.sn
+  Mot de passe: Admin123
 
-Vérifiez que tout fonctionne:
+PRESTATAIRES:
+  Email: ahmed.plombier@email.com | Mot de passe: Password123!
 
-```bash
-docker-compose ps
-docker-compose logs -f
+CLIENTS:
+  Email: client1@email.com | Mot de passe: Password123!
 ```
 
 ---
 
-## ÉTAPE 7: Accéder à l'application
+## Structure des fichiers de déploiement
 
-- **Frontend**: http://ADRESSE_IP_VOTRE_SERVER:8080
-- **Backend API**: http://ADRESSE_IP_VOTRE_SERVER:3002/api
-
----
-
-## Configuration HTTPS (SSL) - Optionnel mais recommandé
-
-Pour ajouter SSL avec Let's Encrypt:
-
-```bash
-# Installer Certbot
-apt install certbot python3-certbot-nginx -y
-
-# Obtenir le certificat
-certbot --nginx -d votre-domaine.com -d www.votre-domaine.com
-
-# Suivez les instructions à l'écran
+```
+kaayjob/
+├── backend/
+│   ├── Dockerfile          # Pour Docker local
+│   ├── Dockerfile.render   # Pour Render
+│   └── ...
+├── front/
+│   ├── vercel.json        # Configuration Vercel
+│   └── ...
+├── render.yaml            # Blueprint Render
+└── DEPLOYMENT_GUIDE.md   # Ce fichier
 ```
 
 ---
 
-## Commandes utiles
+## Dépannage
 
-```bash
-# Arrêter l'application
-docker-compose down
+### CORS errors
 
-# Redémarrer l'application
-docker-compose restart
+- Vérifier que `ALLOWED_ORIGINS` inclut le domaine Vercel
+- Vérifier que `VITE_API_URL` est correcte sur Vercel
 
-# Voir les logs
-docker-compose logs -f backend
+### Database connection errors
 
-# Mettre à jour l'application
-git pull
-docker-compose build
-docker-compose up -d
-```
+- Vérifier que `DATABASE_URL` est correcte
+- Vérifier que les migrations ont été exécutées
 
----
+### Build errors
 
-## Résumé des étapes
-
-```
-1. Commander VPS (Hetzner/DigitalOcean/OVH)
-   ↓
-2. Se connecter en SSH
-   ↓
-3. Installer Docker + Docker Compose
-   ↓
-4. Transférer les fichiers (scp)
-   ↓
-5. Configurer .env
-   ↓
-6. docker-compose up -d
-   ↓
-7. ✅ Application en ligne!
-```
+- Vérifier que `npm run build` fonctionne localement
+- Vérifier les logs sur le dashboard Render/Vercel

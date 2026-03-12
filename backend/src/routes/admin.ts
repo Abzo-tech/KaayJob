@@ -1204,13 +1204,13 @@ router.get("/subscriptions", async (req: AuthRequest, res: Response) => {
     let paramIndex = 1;
 
     if (status) {
-      whereClause += ` AND s.status = ${paramIndex}`;
+      whereClause += ` AND s.status = $${paramIndex}`;
       params.push(status);
       paramIndex++;
     }
 
     if (plan) {
-      whereClause += ` AND s.plan = ${paramIndex}`;
+      whereClause += ` AND s.plan = $${paramIndex}`;
       params.push(plan);
       paramIndex++;
     }
@@ -1220,13 +1220,16 @@ router.get("/subscriptions", async (req: AuthRequest, res: Response) => {
       params,
     );
 
+    const limitParamIndex = paramIndex;
+    const offsetParamIndex = paramIndex + 1;
+
     const result = await query(
       `SELECT s.*, u.email, u.first_name, u.last_name
        FROM subscriptions s
        JOIN users u ON s.user_id = u.id
        WHERE ${whereClause}
        ORDER BY s.created_at DESC
-       LIMIT ${paramIndex} OFFSET ${paramIndex + 1}`,
+       LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`,
       [...params, Number(limit), offset],
     );
 

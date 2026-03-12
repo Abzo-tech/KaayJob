@@ -1,7 +1,7 @@
 #!/bin/sh
 # ===================================================================
 # Docker Entrypoint - KaayJob Backend
-# Attend que la base de données soit prête puis lance les migrations
+# Attend que la base de données soit prête puis lance le serveur
 # ===================================================================
 
 echo "🐳 Backend Docker - Démarrage..."
@@ -28,13 +28,8 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     exit 1
 fi
 
-# Exécuter les migrations Prisma
-echo "📦 Exécution des migrations Prisma..."
-npx prisma migrate deploy || echo "⚠️ Migrations déjà appliquées ou aucune migration à exécuter"
-
-# Générer le client Prisma
-echo "🔧 Génération du client Prisma..."
-npx prisma generate
+# Les migrations et la génération du client Prisma sont déjà faites au moment du build
+# Pas besoin de les refaire au démarrage
 
 echo "🚀 Lancement du serveur backend..."
 exec "$@"

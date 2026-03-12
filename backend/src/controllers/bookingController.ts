@@ -47,13 +47,12 @@ export class BookingController {
       let where: any = {};
 
       // Filter by role
-      if (user.role === "CLIENT") {
+      if (user.role === "CLIENT" || user.role === "client") {
         where.clientId = user.id;
-      } else if (user.role === "PRESTATAIRE") {
+      } else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+        // Service.providerId references ProviderProfile.userId
         where.service = {
-          provider: {
-            userId: user.id,
-          },
+          providerId: user.id,
         };
       }
       // Admin sees all
@@ -163,17 +162,17 @@ export class BookingController {
       }
 
       // Check access rights
-      if (user.role === "CLIENT" && booking.clientId !== user.id) {
-        res.status(403).json({ success: false, message: "Accès refusé" });
-        return;
-      }
-
-      if (user.role === "PRESTATAIRE") {
-        const provider = await prisma.providerProfile.findUnique({
-          where: { userId: user.id },
+      if (user.role === "CLIENT" || user.role === "client") {
+        if (booking.clientId !== user.id) {
+          res.status(403).json({ success: false, message: "Accès refusé" });
+          return;
+        }
+      } else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+        // Service.providerId references ProviderProfile.userId, so we need to compare with user.id
+        const service = await prisma.service.findUnique({
+          where: { id: booking.serviceId },
         });
-
-        if (provider && booking.service?.provider?.id !== provider.id) {
+        if (service?.providerId !== user.id) {
           res.status(403).json({ success: false, message: "Accès refusé" });
           return;
         }
@@ -305,17 +304,17 @@ export class BookingController {
       }
 
       // Check access
-      if (user.role === "CLIENT" && booking.clientId !== user.id) {
-        res.status(403).json({ success: false, message: "Accès refusé" });
-        return;
-      }
-
-      if (user.role === "PRESTATAIRE") {
-        const provider = await prisma.providerProfile.findUnique({
-          where: { userId: user.id },
+      if (user.role === "CLIENT" || user.role === "client") {
+        if (booking.clientId !== user.id) {
+          res.status(403).json({ success: false, message: "Accès refusé" });
+          return;
+        }
+      } else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+        // Service.providerId references ProviderProfile.userId
+        const service = await prisma.service.findUnique({
+          where: { id: booking.serviceId },
         });
-
-        if (provider && booking.service?.providerId !== provider.id) {
+        if (service?.providerId !== user.id) {
           res.status(403).json({ success: false, message: "Accès refusé" });
           return;
         }

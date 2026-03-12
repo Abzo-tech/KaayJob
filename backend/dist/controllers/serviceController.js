@@ -151,7 +151,7 @@ class ServiceController {
             }
             const service = await prisma_1.prisma.service.create({
                 data: {
-                    providerId: providerProfile.id, // Use ProviderProfile.id, not user.id
+                    providerId: providerProfile.userId, // Use ProviderProfile.userId (not id) as per schema
                     categoryId,
                     name,
                     description,
@@ -196,7 +196,7 @@ class ServiceController {
                 res.status(403).json({ success: false, message: "Accès refusé" });
                 return;
             }
-            if (existing.providerId !== providerProfileForUpdate.id && user.role !== "admin" && user.role !== "ADMIN") {
+            if (existing.providerId !== providerProfileForUpdate.userId && user.role !== "admin" && user.role !== "ADMIN") {
                 res.status(403).json({ success: false, message: "Accès refusé" });
                 return;
             }
@@ -252,7 +252,7 @@ class ServiceController {
                 res.status(403).json({ success: false, message: "Accès refusé" });
                 return;
             }
-            if (existing.providerId !== providerProfileForDelete.id && user.role !== "admin" && user.role !== "ADMIN") {
+            if (existing.providerId !== providerProfileForDelete.userId && user.role !== "admin" && user.role !== "ADMIN") {
                 res.status(403).json({ success: false, message: "Accès refusé" });
                 return;
             }

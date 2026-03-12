@@ -18,7 +18,7 @@ RUN npm ci
 COPY front/ .
 
 # Variable d'environnement pour le build
-ENV VITE_API_URL=http://localhost:3000
+ENV VITE_API_URL=/api
 ENV VITE_APP_NAME=KaayJob
 
 # Builder l'application

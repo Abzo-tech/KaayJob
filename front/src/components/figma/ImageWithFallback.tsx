@@ -3,9 +3,6 @@ import React, { useState } from 'react'
 const ERROR_IMG_SRC =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg=='
 
-// API base URL for local images
-const API_BASE_URL = 'http://localhost:3001';
-
 // Default fallback images for categories without images
 const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
   'bricolage': 'https://images.unsplash.com/photo-1581235720704-06d3acfcb36f?w=800',
@@ -34,11 +31,9 @@ export function ImageWithFallback(props: React.ImgHTMLAttributes<HTMLImageElemen
   const { src, alt, style, className, ...rest } = props
 
   // If src is null, undefined, or empty, use a default image based on alt text
-  // If src starts with /images/, prepend the API base URL
+  // Use relative path for local images
   let effectiveSrc = !src ? getDefaultImage(alt) : src;
-  if (effectiveSrc.startsWith('/images/')) {
-    effectiveSrc = `${API_BASE_URL}${effectiveSrc}`;
-  }
+  // Local images starting with /images/ are served from the same origin
 
   function getDefaultImage(categoryName?: string): string {
     if (!categoryName) return ERROR_IMG_SRC

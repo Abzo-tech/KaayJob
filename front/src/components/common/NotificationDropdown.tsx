@@ -16,9 +16,11 @@ import {
 export function NotificationDropdown({
   variant = "dark",
   align = "left",
+  isSidebar = false,
 }: {
   variant?: "light" | "dark";
   align?: "left" | "right";
+  isSidebar?: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -151,8 +153,12 @@ export function NotificationDropdown({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className={`absolute top-0 w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden ${
-            align === "right" ? "left-full ml-2" : "-left-72"
+          className={`absolute w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-[9999] overflow-visible ${
+            isSidebar
+              ? "top-full mt-2 left-0"
+              : align === "right"
+                ? "left-full ml-2 top-0"
+                : "-left-72 top-0"
           }`}
         >
           {/* En-tête moderne */}

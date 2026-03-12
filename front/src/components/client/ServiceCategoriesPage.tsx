@@ -115,9 +115,9 @@ export function ServiceCategoriesPage({
   // Helper to get category image or default
   const getCategoryImage = (category: Category) => {
     if (category.image) {
-      // If it's a local image (starts with /images/), prepend the API URL
+      // If it's a local image (starts with /images/), use relative URL
       if (category.image.startsWith("/images/")) {
-        return `http://localhost:3001${category.image}`;
+        return category.image;
       }
       return category.image;
     }

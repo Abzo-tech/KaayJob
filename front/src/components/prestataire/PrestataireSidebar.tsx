@@ -56,7 +56,7 @@ export function PrestataireSidebar({
         } lg:translate-x-0 lg:w-64 w-64`}
       >
         {/* Logo & Notifications */}
-        <div className="flex items-center justify-between px-6 py-6 border-b border-blue-800">
+        <div className="flex items-center justify-between px-6 py-6 border-b border-blue-800 overflow-visible">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
               <span className="text-[#000080] font-bold text-xl">K</span>
@@ -69,7 +69,9 @@ export function PrestataireSidebar({
               </p>
             </div>
           </div>
-          <NotificationDropdown align="right" />
+          <div className="overflow-visible">
+            <NotificationDropdown isSidebar />
+          </div>
         </div>
 
         {/* Menu Items */}

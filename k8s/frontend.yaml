@@ -22,7 +22,8 @@ spec:
         - name: frontend
           # Remplacer par votre image Docker Hub ou registry
           # image: votre-dockerhub-username/kaayjob-frontend:latest
-          image: kaayjob_frontend:latest
+          image: kaayjob-frontend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
               name: http

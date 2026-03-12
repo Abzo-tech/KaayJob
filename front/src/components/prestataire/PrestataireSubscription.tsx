@@ -73,7 +73,7 @@ export function PrestataireSubscription() {
         setLoading(true);
         const [subResponse, plansResponse] = await Promise.all([
           api.get("/providers/me/subscription"),
-          api.get("/admin/subscription-plans"),
+          api.get("/providers/subscription/plans"),
         ]);
         if (subResponse.success) {
           setCurrentSubscription(subResponse.data);

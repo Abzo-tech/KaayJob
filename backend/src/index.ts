@@ -36,15 +36,21 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS - Allow frontend
-app.use(
-  cors({
-    origin: [
+// CORS - Allow frontend (configurable via env var)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : [
       "http://localhost:5173",
       "http://127.0.0.1:5173",
       "http://localhost:3000",
       "http://127.0.0.1:3000",
-    ],
+      "http://localhost:8888",
+      "http://127.0.0.1:8888",
+    ];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
     credentials: true,
   }),
 );

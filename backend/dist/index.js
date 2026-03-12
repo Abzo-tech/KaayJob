@@ -32,14 +32,19 @@ app.use((0, helmet_1.default)({
 app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-// CORS - Allow frontend
-app.use((0, cors_1.default)({
-    origin: [
+// CORS - Allow frontend (configurable via env var)
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",")
+    : [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-    ],
+        "http://localhost:8888",
+        "http://127.0.0.1:8888",
+    ];
+app.use((0, cors_1.default)({
+    origin: allowedOrigins,
     credentials: true,
 }));
 // Servir les fichiers statiques (images) avec CORS

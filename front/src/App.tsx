@@ -44,9 +44,18 @@ export default function App() {
     if (token && userData) {
       try {
         const user = JSON.parse(userData);
-        // Si une page a été sauvegardée et que l'utilisateur est connecté, la restaurer
+        // Vérifier si une page a été sauvegardée ET si elle est appropriée pour le rôle actuel
         if (savedPage) {
-          return savedPage;
+          const isAdminPage = savedPage.startsWith("admin-");
+          const isPrestatairePage = savedPage.startsWith("prestataire-");
+          
+          // Ne restaurer que les pages appropriées au rôle
+          if (user.role === "admin" && isAdminPage) {
+            return savedPage;
+          } else if (user.role === "prestataire" && isPrestatairePage) {
+            return savedPage;
+          }
+          // Sinon, rediriger vers le dashboard par défaut selon le rôle
         }
         // Sinon, rediriger vers le dashboard approprié selon le rôle
         if (user.role === "admin") {

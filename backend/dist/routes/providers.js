@@ -14,6 +14,7 @@ const providerController_1 = __importDefault(require("../controllers/providerCon
 const auth_1 = require("../middleware/auth");
 const validations_1 = require("../validations");
 const database_1 = require("../config/database");
+const prisma_1 = require("../config/prisma");
 const router = (0, express_1.Router)();
 // GET /api/providers - Liste des prestataires (public)
 router.get("/", async (req, res) => {
@@ -97,11 +98,7 @@ router.get("/me/subscription", auth_1.authenticate, async (req, res) => {
 });
 // POST /api/providers/me/subscription/subscribe - Souscrire à un abonnement
 router.post("/me/subscription/subscribe", auth_1.authenticate, [
-    (0, express_validator_1.body)("plan")
-        .notEmpty()
-        .withMessage("Plan requis")
-        .isIn(["gratuit", "premium", "pro"])
-        .withMessage("Plan invalide: gratuit, premium ou pro"),
+    (0, express_validator_1.body)("plan").notEmpty().withMessage("Plan requis"),
     (0, express_validator_1.body)("duration")
         .optional()
         .isInt({ min: 1, max: 12 })
@@ -113,7 +110,7 @@ router.post("/me/subscription/subscribe", auth_1.authenticate, [
             return res.status(400).json({ success: false, errors: errors.array() });
         }
         const userId = req.user.id;
-        const { plan, duration = 1 } = req.body;
+        const { plan: planSlug, duration = 1, paymentMethod, phoneNumber, } = req.body;
         // Vérifier si l'utilisateur est un prestataire
         const userResult = await (0, database_1.query)("SELECT id, role FROM users WHERE id = $1", [userId]);
         if (userResult.rows.length === 0) {
@@ -127,29 +124,80 @@ router.post("/me/subscription/subscribe", auth_1.authenticate, [
                 message: "Seuls les prestataires peuvent s'abonner",
             });
         }
+        // Récupérer le plan depuis la base de données
+        let planPrice = 0;
+        let planDuration = 30;
+        try {
+            const planData = await prisma_1.prisma.subscriptionPlan.findUnique({
+                where: { slug: planSlug },
+            });
+            if (planData) {
+                planPrice = Number(planData.price);
+                planDuration = planData.duration;
+            }
+        }
+        catch (e) {
+            // Fallback vers les plans par défaut
+            const defaultPrices = {
+                gratuit: 0,
+                premium: 9900,
+                pro: 24900,
+            };
+            planPrice = defaultPrices[planSlug] || 0;
+        }
+        // Déterminer le statut de l'abonnement
+        // Pour les plans gratuits, activer directement
+        // Pour les plans payants, exiger une confirmation de paiement
+        let subscriptionStatus = "active";
+        if (planPrice > 0) {
+            // Dans un vrai système, vérifier ici le paiement auprès du provider
+            // Pour l'instant, on simule que le paiement est réussi si la méthode est fournie
+            if (!paymentMethod) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Méthode de paiement requise pour les abonnements payants",
+                });
+            }
+            // Le paiement est considéré comme réussi (simulation)
+            subscriptionStatus = "active";
+        }
         // Calculer les dates
         const startDate = new Date();
         const endDate = new Date();
-        endDate.setMonth(endDate.getMonth() + Number(duration));
+        endDate.setDate(endDate.getDate() + planDuration);
         // Vérifier si un abonnement existe déjà
         const existingSub = await (0, database_1.query)("SELECT id FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1", [userId]);
         let result;
         if (existingSub.rows.length > 0) {
             // Mettre à jour l'abonnement existant
             result = await (0, database_1.query)(`UPDATE subscriptions 
-           SET plan = $1, status = 'active', start_date = $2, end_date = $3
-           WHERE id = $4 
-           RETURNING *`, [plan, startDate, endDate, existingSub.rows[0].id]);
+           SET plan = $1, status = $2, start_date = $3, end_date = $4
+           WHERE id = $5 
+           RETURNING *`, [
+                planSlug,
+                subscriptionStatus,
+                startDate,
+                endDate,
+                existingSub.rows[0].id,
+            ]);
         }
         else {
             // Créer un nouvel abonnement
             result = await (0, database_1.query)(`INSERT INTO subscriptions (id, user_id, plan, status, start_date, end_date, created_at)
-           VALUES (gen_random_uuid(), $1, $2, 'active', $3, $4, NOW())
-           RETURNING *`, [userId, plan, startDate, endDate]);
+           VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())
+           RETURNING *`, [userId, planSlug, subscriptionStatus, startDate, endDate]);
         }
+        // Enregistrer le paiement si fourni
+        if (planPrice > 0 && paymentMethod) {
+            await (0, database_1.query)(`INSERT INTO payments (id, user_id, amount, payment_method, status, created_at)
+           VALUES (gen_random_uuid(), $1, $2, $3, 'PAID', NOW())`, [userId, planPrice, paymentMethod]);
+        }
+        const message = planPrice > 0
+            ? `Paiement réussi ! Abonnement ${planSlug.toUpperCase()} activé`
+            : `Abonnement ${planSlug.toUpperCase()} activé avec succès`;
         res.status(201).json({
             success: true,
-            message: `Abonnement ${plan.toUpperCase()} activé avec succès`,
+            message,
             data: result.rows[0],
         });
     }
@@ -200,10 +248,39 @@ const subscriptionPlans = [
 ];
 // GET /api/providers/subscription/plans - Liste des plans disponibles
 router.get("/subscription/plans", async (req, res) => {
-    res.json({
-        success: true,
-        data: subscriptionPlans,
-    });
+    try {
+        // Essayer de récupérer les plans depuis la base de données
+        const plans = await prisma_1.prisma.subscriptionPlan.findMany({
+            where: { isActive: true },
+            orderBy: { displayOrder: "asc" },
+        });
+        if (plans.length > 0) {
+            // Transformer les données pour le format attendu
+            const formattedPlans = plans.map((p) => ({
+                id: p.slug,
+                name: p.name,
+                price: p.price,
+                duration: p.duration > 0 ? `${p.duration} jours` : "Indéfinie",
+                features: p.features || [],
+            }));
+            return res.json({
+                success: true,
+                data: formattedPlans,
+            });
+        }
+        // Fallback vers les plans par défaut
+        res.json({
+            success: true,
+            data: subscriptionPlans,
+        });
+    }
+    catch (error) {
+        console.error("Erreur récupération plans:", error);
+        res.json({
+            success: true,
+            data: subscriptionPlans,
+        });
+    }
 });
 exports.default = router;
 //# sourceMappingURL=providers.js.map
