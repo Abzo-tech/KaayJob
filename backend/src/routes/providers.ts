@@ -281,24 +281,29 @@ router.post(
   },
 );
 
-// Plans d'abonnement disponibles
+// Plans d'abonnement disponibles (fallback)
 const subscriptionPlans = [
   {
-    id: "gratuit",
+    id: "1",
+    slug: "gratuit",
     name: "Gratuit",
+    description: "Plan gratuit avec fonctionnalités de base",
     price: 0,
-    duration: "Indéfinie",
+    duration: 0,
     features: [
       "5 services maximum",
       "Visibilité standard",
       "Support par email",
     ],
+    isActive: true,
   },
   {
-    id: "premium",
+    id: "2",
+    slug: "premium",
     name: "Premium",
+    description: "Plan premium avec plus de visibilité",
     price: 9900,
-    duration: "1 mois",
+    duration: 30,
     features: [
       "Services illimités",
       "Badge VIP",
@@ -306,12 +311,15 @@ const subscriptionPlans = [
       "Support prioritaire",
       "Statistiques avancées",
     ],
+    isActive: true,
   },
   {
-    id: "pro",
+    id: "3",
+    slug: "pro",
     name: "Pro",
+    description: "Plan professionnel avec toutes les fonctionnalités",
     price: 24900,
-    duration: "1 mois",
+    duration: 30,
     features: [
       "Tout Premium",
       "Publication en premier",
@@ -319,6 +327,7 @@ const subscriptionPlans = [
       "Formation exclusive",
       "Gestion équipe",
     ],
+    isActive: true,
   },
 ];
 
@@ -334,11 +343,14 @@ router.get("/subscription/plans", async (req: Request, res: Response) => {
     if (plans.length > 0) {
       // Transformer les données pour le format attendu
       const formattedPlans = plans.map((p: any) => ({
-        id: p.slug,
+        id: p.id,
+        slug: p.slug,
         name: p.name,
-        price: p.price,
-        duration: p.duration > 0 ? `${p.duration} jours` : "Indéfinie",
-        features: p.features || [],
+        description: p.description,
+        price: Number(p.price),
+        duration: p.duration,
+        features: typeof p.features === 'string' ? JSON.parse(p.features) : p.features || [],
+        isActive: p.isActive,
       }));
 
       return res.json({
@@ -360,5 +372,100 @@ router.get("/subscription/plans", async (req: Request, res: Response) => {
     });
   }
 });
+
+// GET /api/providers/me/subscription/history - Historique des abonnements
+router.get(
+  "/me/subscription/history",
+  authenticate,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+
+      const history = await query(
+        `SELECT s.*, sp.name as plan_name, sp.slug as plan_slug
+         FROM subscriptions s
+         LEFT JOIN subscription_plans sp ON s.plan = sp.slug
+         WHERE s.user_id = $1
+         ORDER BY s.created_at DESC
+         LIMIT 10`,
+        [userId],
+      );
+
+      res.json({
+        success: true,
+        data: history.rows,
+      });
+    } catch (error) {
+      console.error("Erreur historique:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// POST /api/providers/me/subscription/cancel - Annuler l'abonnement
+router.post(
+  "/me/subscription/cancel",
+  authenticate,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+
+      // Mettre à jour le statut de l'abonnement
+      const result = await query(
+        `UPDATE subscriptions 
+         SET status = 'cancelled', updated_at = NOW()
+         WHERE user_id = $1 AND status = 'active'
+         RETURNING *`,
+        [userId],
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Aucun abonnement actif à annuler",
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Abonnement annulé avec succès",
+        data: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Erreur annulation:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// GET /api/providers/me/payments - Historique des paiements
+router.get(
+  "/me/payments",
+  authenticate,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+
+      const payments = await query(
+        `SELECT p.*, s.name as service_name
+         FROM payments p
+         LEFT JOIN bookings b ON p.booking_id = b.id
+         LEFT JOIN services s ON b.service_id = s.id
+         WHERE p.user_id = $1
+         ORDER BY p.created_at DESC
+         LIMIT 20`,
+        [userId],
+      );
+
+      res.json({
+        success: true,
+        data: payments.rows,
+      });
+    } catch (error) {
+      console.error("Erreur paiements:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
 
 export default router;

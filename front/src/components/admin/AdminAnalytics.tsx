@@ -66,14 +66,7 @@ export function AdminAnalytics() {
           bookings: parseInt(m.bookings) || 0,
           revenue: parseFloat(m.revenue) || 0,
         }))
-      : [
-          { month: "Jan", bookings: 120, revenue: 1800000 },
-          { month: "Fév", bookings: 145, revenue: 2175000 },
-          { month: "Mar", bookings: 168, revenue: 2520000 },
-          { month: "Avr", bookings: 156, revenue: 2340000 },
-          { month: "Mai", bookings: 189, revenue: 2835000 },
-          { month: "Juin", bookings: 210, revenue: 3150000 },
-        ];
+      : [];
 
   const topProviders =
     analytics?.topProviders?.length > 0
@@ -83,13 +76,7 @@ export function AdminAnalytics() {
           revenue: parseFloat(p.revenue) || 0,
           rating: parseFloat(p.rating) || 0,
         }))
-      : [
-          { name: "Aliou Kanté", bookings: 156, revenue: 2340000, rating: 4.9 },
-          { name: "Fatou Sow", bookings: 142, revenue: 1136000, rating: 4.7 },
-          { name: "Mariama Bah", bookings: 98, revenue: 1176000, rating: 4.8 },
-          { name: "Aminata Touré", bookings: 87, revenue: 870000, rating: 4.6 },
-          { name: "Ousmane Faye", bookings: 76, revenue: 760000, rating: 4.5 },
-        ];
+      : [];
 
   const serviceCategories =
     analytics?.categories?.length > 0
@@ -98,13 +85,7 @@ export function AdminAnalytics() {
           count: parseInt(c.service_count) || 0,
           percentage: 20 - i * 4,
         }))
-      : [
-          { name: "Technologie", count: 25, percentage: 28 },
-          { name: "Maison", count: 22, percentage: 25 },
-          { name: "Éducation", count: 18, percentage: 20 },
-          { name: "Beauté", count: 15, percentage: 17 },
-          { name: "Bâtiment", count: 9, percentage: 10 },
-        ];
+      : [];
 
   const recentActivity =
     analytics?.activity?.length > 0
@@ -115,29 +96,7 @@ export function AdminAnalytics() {
             ? new Date(a.time).toLocaleDateString("fr-FR")
             : "Récent",
         }))
-      : [
-          {
-            type: "nouveau_service",
-            message: "Nouveau service ajouté",
-            time: "Il y a 2h",
-          },
-          {
-            type: "nouveau_prestataire",
-            message: "Nouveau prestataire inscrit",
-            time: "Il y a 4h",
-          },
-          {
-            type: "reservation",
-            message: "Nouvelle réservation",
-            time: "Il y a 5h",
-          },
-          { type: "avis", message: "Nouvel avis reçu", time: "Il y a 1 jour" },
-          {
-            type: "reservation",
-            message: "Réservation terminée",
-            time: "Il y a 1 jour",
-          },
-        ];
+      : [];
 
   const maxBookings = Math.max(...monthlyData.map((d: any) => d.bookings), 1);
   const totalBookings = monthlyData.reduce(
@@ -205,7 +164,7 @@ export function AdminAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-purple-100">Utilisateurs actifs</p>
-                <p className="text-3xl font-bold">1 248</p>
+                <p className="text-3xl font-bold">{analytics?.totalUsers || 0}</p>
                 <p className="text-sm text-purple-100 flex items-center mt-1">
                   <TrendingUp size={14} className="mr-1" /> +12% ce mois
                 </p>
@@ -221,7 +180,7 @@ export function AdminAnalytics() {
                 <p className="text-orange-100">Note moyenne</p>
                 <p className="text-3xl font-bold">{avgRating}</p>
                 <p className="text-sm text-orange-100 flex items-center mt-1">
-                  <Star size={14} className="mr-1 fill-current" /> 245 avis
+                  <Star size={14} className="mr-1 fill-current" /> {topProviders.reduce((acc: number, p: any) => acc + p.rating, 0)} avis
                 </p>
               </div>
               <Star size={40} className="text-orange-200" />

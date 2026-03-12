@@ -21,18 +21,12 @@ export function PrestataireBookings() {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const userData = localStorage.getItem("user");
-      const user = userData ? JSON.parse(userData) : null;
-
+      // Le backend filtre déjà par prestataire (providerId = user.id)
+      // Donc pas besoin de filtrer côté frontend
       const response = await api.get("/bookings");
-      // La réponse est directement dans response.data (pas response.data.data)
+      // La réponse est dans response.data (le backend retourne { success: true, data: bookings })
       const allBookings = response?.data || [];
-
-      // Filter bookings by provider - check provider.userId matches user.id
-      const myBookings = allBookings.filter(
-        (b: any) => b.service?.provider?.userId === user?.id
-      );
-      setBookings(myBookings);
+      setBookings(allBookings);
     } catch (error) {
       console.error("Erreur chargement réservations:", error);
       toast.error("Erreur lors du chargement des réservations");
@@ -84,10 +78,11 @@ export function PrestataireBookings() {
   };
 
   const filteredBookings = bookings.filter((booking) => {
-    const clientName = `${booking.client?.firstName || ""} ${booking.client?.lastName || ""}`.toLowerCase();
+    const clientName =
+      `${booking.client?.firstName || ""} ${booking.client?.lastName || ""}`.toLowerCase();
     const matchesSearch = clientName.includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || 
+      statusFilter === "all" ||
       booking.status?.toUpperCase() === statusFilter.toUpperCase();
     return matchesSearch && matchesStatus;
   });
@@ -117,9 +112,15 @@ export function PrestataireBookings() {
   };
 
   const totalBookings = bookings.length;
-  const pendingBookings = bookings.filter((b: any) => b.status === "PENDING").length;
-  const confirmedBookings = bookings.filter((b: any) => b.status === "CONFIRMED").length;
-  const completedBookings = bookings.filter((b: any) => b.status === "COMPLETED").length;
+  const pendingBookings = bookings.filter(
+    (b: any) => b.status === "PENDING",
+  ).length;
+  const confirmedBookings = bookings.filter(
+    (b: any) => b.status === "CONFIRMED",
+  ).length;
+  const completedBookings = bookings.filter(
+    (b: any) => b.status === "COMPLETED",
+  ).length;
 
   if (loading) {
     return (
@@ -151,7 +152,9 @@ export function PrestataireBookings() {
           <CardContent className="pt-6">
             <div>
               <p className="text-sm text-gray-500">En attente</p>
-              <p className="text-2xl font-bold text-yellow-600">{pendingBookings}</p>
+              <p className="text-2xl font-bold text-yellow-600">
+                {pendingBookings}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -159,7 +162,9 @@ export function PrestataireBookings() {
           <CardContent className="pt-6">
             <div>
               <p className="text-sm text-gray-500">Confirmées</p>
-              <p className="text-2xl font-bold text-green-600">{confirmedBookings}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {confirmedBookings}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -167,7 +172,9 @@ export function PrestataireBookings() {
           <CardContent className="pt-6">
             <div>
               <p className="text-sm text-gray-500">Terminées</p>
-              <p className="text-2xl font-bold text-blue-600">{completedBookings}</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {completedBookings}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -230,15 +237,19 @@ export function PrestataireBookings() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="font-semibold text-lg">
-                      {bookingItem.client?.firstName} {bookingItem.client?.lastName}
+                      {bookingItem.client?.firstName}{" "}
+                      {bookingItem.client?.lastName}
                     </h3>
                     {getStatusBadge(bookingItem.status)}
                   </div>
-                  <p className="text-gray-600">{bookingItem.service?.name || "Service"}</p>
+                  <p className="text-gray-600">
+                    {bookingItem.service?.name || "Service"}
+                  </p>
                   <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar size={14} />
-                      {formatDate(bookingItem.bookingDate)} à {bookingItem.bookingTime}
+                      {formatDate(bookingItem.bookingDate)} à{" "}
+                      {bookingItem.bookingTime}
                     </span>
                     <span className="flex items-center gap-1">
                       <Phone size={14} />
@@ -249,7 +260,7 @@ export function PrestataireBookings() {
                 <div className="flex gap-2">
                   {bookingItem.status === "PENDING" && (
                     <>
-                      <Button 
+                      <Button
                         className="bg-green-600 hover:bg-green-700"
                         onClick={() => handleConfirmBooking(bookingItem.id)}
                         disabled={actionLoading === bookingItem.id}
@@ -261,7 +272,7 @@ export function PrestataireBookings() {
                         )}
                         Accepter
                       </Button>
-                      <Button 
+                      <Button
                         variant="destructive"
                         onClick={() => handleRejectBooking(bookingItem.id)}
                         disabled={actionLoading === bookingItem.id}
@@ -276,7 +287,7 @@ export function PrestataireBookings() {
                     </>
                   )}
                   {bookingItem.status === "CONFIRMED" && (
-                    <Button 
+                    <Button
                       className="bg-blue-600 hover:bg-blue-700"
                       onClick={() => handleCompleteBooking(bookingItem.id)}
                       disabled={actionLoading === bookingItem.id}

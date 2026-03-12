@@ -306,7 +306,7 @@ export function ServiceCategoriesPage({
                   style={{ animationDelay: `${index * 0.08}s` }}
                   onClick={() =>
                     onNavigate("service-providers", {
-                      categoryId: category.id,
+                      categoryId: category.slug || category.id,
                       categoryName: category.name,
                     })
                   }
@@ -342,7 +342,7 @@ export function ServiceCategoriesPage({
                         onClick={(e: React.MouseEvent) => {
                           e.stopPropagation();
                           onNavigate("service-providers", {
-                            categoryId: category.id,
+                            categoryId: category.slug || category.id,
                             categoryName: category.name,
                           });
                         }}

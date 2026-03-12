@@ -76,7 +76,7 @@ export function BookingSummary({
         <div className="border-t pt-4 space-y-2">
           <div className="flex justify-between">
             <span>Tarif Horaire</span>
-            <span>{hourlyRate}€/h</span>
+            <span>{hourlyRate ? hourlyRate.toLocaleString() : 0} CFA/h</span>
           </div>
           <div className="flex justify-between">
             <span>Durée</span>
@@ -84,7 +84,7 @@ export function BookingSummary({
           </div>
           <div className="flex justify-between font-semibold text-lg border-t pt-2">
             <span>Total</span>
-            <span className="text-green-600">{total}€</span>
+            <span className="text-green-600">{total.toLocaleString()} CFA</span>
           </div>
         </div>
 

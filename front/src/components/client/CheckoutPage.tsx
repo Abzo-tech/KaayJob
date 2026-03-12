@@ -239,20 +239,20 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Service ({bookingDetails.duration})</span>
-                    <span>{bookingDetails.total}€</span>
+                    <span>{Number(bookingDetails.total).toLocaleString()} CFA</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Frais de Réservation</span>
-                    <span>0€</span>
+                    <span>0 CFA</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Frais de Plateforme</span>
-                    <span>0€</span>
+                    <span>0 CFA</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-semibold text-lg">
                     <span>Total</span>
-                    <span className="text-green-600">{bookingDetails.total}€</span>
+                    <span className="text-green-600">{Number(bookingDetails.total).toLocaleString()} CFA</span>
                   </div>
                 </div>
 

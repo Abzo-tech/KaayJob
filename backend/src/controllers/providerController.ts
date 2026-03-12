@@ -20,6 +20,7 @@ export class ProviderController {
         minRating,
         isAvailable,
         search,
+        category,
         page = 1,
         limit = 12,
       } = req.query as any;
@@ -56,6 +57,22 @@ export class ProviderController {
           { businessName: { contains: search, mode: "insensitive" } },
           { specialty: { contains: search, mode: "insensitive" } },
         ];
+      }
+
+      // Filter by category - providers who have services in this category
+      if (category) {
+        const categoryStr = category.toString();
+        where.services = {
+          some: {
+            category: {
+              OR: [
+                { slug: categoryStr.toLowerCase() },
+                { id: categoryStr },
+              ],
+            },
+            isActive: true,
+          },
+        };
       }
 
       const [providers, total] = await Promise.all([

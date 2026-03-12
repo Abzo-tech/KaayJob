@@ -17,6 +17,9 @@ class ServiceController {
             const skip = (Number(page) - 1) * Number(limit);
             // Construire les where conditions
             const where = { isActive: true };
+            // FILTRE: Ne montrer que les services avec un provider valide
+            // On filtre manuellement après avoir récupéré les services
+            // (car Prisma ne supporte pas facilement les filtres sur les relations)
             if (category) {
                 where.categoryId = category;
             }
@@ -36,10 +39,10 @@ class ServiceController {
                 if (maxPrice)
                     where.price.lte = Number(maxPrice);
             }
-            // Compter le total
-            const total = await prisma_1.prisma.service.count({ where });
+            // Compter le total (avant filtrage)
+            const totalBeforeFilter = await prisma_1.prisma.service.count({ where });
             // Récupérer les services
-            const services = await prisma_1.prisma.service.findMany({
+            let services = await prisma_1.prisma.service.findMany({
                 where,
                 skip,
                 take: Number(limit),
@@ -58,14 +61,20 @@ class ServiceController {
                     },
                 },
             });
+            // Filtrer les services: ne garder que ceux avec un provider valide
+            // Le provider est valide si providerId n'est pas null et correspond à un ProviderProfile existant
+            const validProviderIds = new Set((await prisma_1.prisma.providerProfile.findMany({ select: { userId: true } })).map(p => p.userId));
+            services = services.filter(s => s.providerId && validProviderIds.has(s.providerId));
+            // Recalculer le total après filtrage
+            const totalFiltered = services.length;
             res.json({
                 success: true,
                 data: services,
                 pagination: {
                     page: Number(page),
                     limit: Number(limit),
-                    total,
-                    totalPages: Math.ceil(total / Number(limit)),
+                    total: totalFiltered,
+                    totalPages: Math.ceil(totalFiltered / Number(limit)),
                 },
             });
         }

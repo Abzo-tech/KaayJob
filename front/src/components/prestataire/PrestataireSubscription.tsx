@@ -11,6 +11,9 @@ import {
   ArrowRight,
   X,
   Wallet,
+  History,
+  Receipt,
+  XCircle,
 } from "lucide-react";
 import {
   Card,
@@ -36,13 +39,29 @@ import { toast } from "sonner";
 interface SubscriptionPlan {
   id: string;
   name: string;
-  slug: string;
-  description: string | null;
+  slug?: string;
+  description?: string | null;
   price: number;
-  duration: number;
+  duration: number | string;
   features: string[];
-  isActive: boolean;
+  isActive?: boolean;
 }
+
+// Helper function to get plan slug
+const getPlanSlug = (plan: SubscriptionPlan): string => {
+  return plan.slug || plan.id || 'gratuit';
+};
+
+// Helper function to check if plan is active
+const isPlanActive = (plan: SubscriptionPlan): boolean => {
+  return plan.isActive !== false;
+};
+
+// Helper function to get duration text
+const getDurationText = (duration: number | string): string => {
+  if (typeof duration === 'string') return duration;
+  return duration > 0 ? `${duration} jours` : 'Indéfinie';
+};
 
 interface Subscription {
   plan: string;
@@ -66,20 +85,35 @@ export function PrestataireSubscription() {
   );
   const [phoneNumber, setPhoneNumber] = useState("");
   const [processingPayment, setProcessingPayment] = useState(false);
+  
+  // Nouveaux états pour les fonctionnalités supplémentaires
+  const [subscriptionHistory, setSubscriptionHistory] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showPayments, setShowPayments] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [subResponse, plansResponse] = await Promise.all([
+        const [subResponse, plansResponse, historyResponse, paymentsResponse] = await Promise.all([
           api.get("/providers/me/subscription"),
           api.get("/providers/subscription/plans"),
+          api.get("/providers/me/subscription/history"),
+          api.get("/providers/me/payments"),
         ]);
         if (subResponse.success) {
           setCurrentSubscription(subResponse.data);
         }
         if (plansResponse.success) {
           setPlans(plansResponse.data || []);
+        }
+        if (historyResponse.success) {
+          setSubscriptionHistory(historyResponse.data || []);
+        }
+        if (paymentsResponse.success) {
+          setPayments(paymentsResponse.data || []);
         }
       } catch (err) {
         console.error("Erreur chargement données:", err);
@@ -108,15 +142,16 @@ export function PrestataireSubscription() {
 
     try {
       setSubscribing(selectedPlan.id);
+      const planSlug = selectedPlan.slug || selectedPlan.id || 'gratuit';
       const response = await api.post("/providers/me/subscription/subscribe", {
-        plan: selectedPlan.slug,
+        plan: planSlug,
         duration: 1,
       });
 
       if (response.success) {
         toast.success(`Abonnement ${selectedPlan.name.toUpperCase()} activé !`);
         setCurrentSubscription({
-          plan: selectedPlan.slug,
+          plan: planSlug,
           status: "active",
         });
         setShowConfirmDialog(false);
@@ -145,8 +180,9 @@ export function PrestataireSubscription() {
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Après paiement simulé, créer l'abonnement
+      const planSlug = selectedPlan.slug || selectedPlan.id || 'gratuit';
       const response = await api.post("/providers/me/subscription/subscribe", {
-        plan: selectedPlan.slug,
+        plan: planSlug,
         duration: 1,
         paymentMethod,
         phoneNumber: paymentMethod === "mobile_money" ? phoneNumber : null,
@@ -157,7 +193,7 @@ export function PrestataireSubscription() {
           `Paiement réussi ! Abonnement ${selectedPlan.name.toUpperCase()} activé !`,
         );
         setCurrentSubscription({
-          plan: selectedPlan.slug,
+          plan: planSlug,
           status: "active",
         });
         setShowPaymentDialog(false);
@@ -188,6 +224,13 @@ export function PrestataireSubscription() {
             <AlertCircle size={12} /> Expiré
           </Badge>
         );
+      case "cancelled":
+      case "annulé":
+        return (
+          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100 flex items-center gap-1">
+            <XCircle size={12} /> Annulé
+          </Badge>
+        );
       case "pending":
         return (
           <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 flex items-center gap-1">
@@ -196,6 +239,35 @@ export function PrestataireSubscription() {
         );
       default:
         return <Badge>{status}</Badge>;
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!currentSubscription) return;
+
+    const confirmCancel = window.confirm(
+      "Êtes-vous sûr de vouloir annuler votre abonnement ? Cette action est irréversible."
+    );
+    
+    if (!confirmCancel) return;
+
+    try {
+      setCancelling(true);
+      const response = await api.post("/providers/me/subscription/cancel");
+      
+      if (response.success) {
+        toast.success("Abonnement annulé avec succès");
+        setCurrentSubscription({
+          ...currentSubscription,
+          status: "cancelled",
+        });
+      } else {
+        toast.error(response.message || "Erreur lors de l'annulation");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erreur de connexion");
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -255,14 +327,31 @@ export function PrestataireSubscription() {
                   </p>
                 )}
               </div>
-              {isPremium && (
-                <div className="flex items-center gap-2">
-                  <Crown className="text-yellow-500" size={24} />
-                  <span className="font-medium text-yellow-600">
-                    Vous êtes un membre premium !
-                  </span>
-                </div>
-              )}
+              <div className="flex flex-col gap-2">
+                {isPremium && (
+                  <div className="flex items-center gap-2">
+                    <Crown className="text-yellow-500" size={24} />
+                    <span className="font-medium text-yellow-600">
+                      Vous êtes un membre premium !
+                    </span>
+                  </div>
+                )}
+                {isActive && (
+                  <Button
+                    variant="outline"
+                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    onClick={handleCancelSubscription}
+                    disabled={cancelling}
+                  >
+                    {cancelling ? (
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                    ) : (
+                      <XCircle size={16} className="mr-2" />
+                    )}
+                    Annuler l'abonnement
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -291,16 +380,17 @@ export function PrestataireSubscription() {
       {/* Plans disponibles */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans
-          .filter((p) => p.isActive)
+          .filter((p) => isPlanActive(p))
           .map((plan) => {
-            const isCurrentPlan = currentSubscription?.plan === plan.slug;
+            const planSlug = getPlanSlug(plan);
+            const isCurrentPlan = currentSubscription?.plan === planSlug;
             const isCurrentPlanActive = isCurrentPlan && isActive;
 
             return (
               <Card
                 key={plan.id}
                 className={
-                  plan.slug === "pro"
+                  planSlug === "pro"
                     ? "border-purple-500 border-2"
                     : isCurrentPlanActive
                       ? "border-green-500 border-2"
@@ -309,24 +399,24 @@ export function PrestataireSubscription() {
               >
                 <CardHeader
                   className={`${
-                    plan.slug === "pro"
+                    planSlug === "pro"
                       ? "bg-purple-100"
-                      : plan.slug === "premium"
+                      : planSlug === "premium"
                         ? "bg-yellow-100"
                         : "bg-gray-100"
                   } rounded-t-lg`}
                 >
                   <CardTitle className="flex items-center gap-2">
-                    {plan.slug === "pro" && (
+                    {planSlug === "pro" && (
                       <Star size={20} className="text-purple-600" />
                     )}
-                    {plan.slug === "premium" && (
+                    {planSlug === "premium" && (
                       <Crown size={20} className="text-yellow-600" />
                     )}
                     {plan.name}
                   </CardTitle>
                   <CardDescription>
-                    {plan.duration > 0 ? `${plan.duration} jours` : "Indéfinie"}
+                    {getDurationText(plan.duration)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4">
@@ -358,7 +448,7 @@ export function PrestataireSubscription() {
                       <CheckCircle size={18} className="mr-2" />
                       Plan actif
                     </Button>
-                  ) : plan.slug === "gratuit" ? (
+                  ) : planSlug === "gratuit" ? (
                     <Button
                       className="w-full mt-6"
                       variant="outline"
@@ -377,7 +467,7 @@ export function PrestataireSubscription() {
                   ) : (
                     <Button
                       className={`w-full mt-6 ${
-                        plan.slug === "premium"
+                        planSlug === "premium"
                           ? "bg-yellow-500 hover:bg-yellow-600"
                           : "bg-purple-600 hover:bg-purple-700"
                       }`}
@@ -471,7 +561,7 @@ export function PrestataireSubscription() {
                   <div>
                     <h4 className="font-semibold">{selectedPlan.name}</h4>
                     <p className="text-sm text-gray-500">
-                      {selectedPlan.duration} jours
+                      {getDurationText(selectedPlan.duration)}
                     </p>
                   </div>
                   <p className="text-2xl font-bold text-[#000080]">
@@ -617,6 +707,113 @@ export function PrestataireSubscription() {
             </p>
           </div>
         </CardContent>
+      </Card>
+
+      {/* Historique des abonnements */}
+      <Card className="mt-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <History size={20} />
+            Historique des abonnements
+          </CardTitle>
+          {subscriptionHistory.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHistory(!showHistory)}
+            >
+              {showHistory ? "Masquer" : "Afficher"}
+            </Button>
+          )}
+        </CardHeader>
+        {showHistory && subscriptionHistory.length > 0 && (
+          <CardContent>
+            <div className="space-y-3">
+              {subscriptionHistory.map((item: any, index: number) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">{item.plan_name || item.plan}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(item.created_at).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                  {getStatusBadge(item.status)}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        )}
+        {subscriptionHistory.length === 0 && (
+          <CardContent>
+            <p className="text-gray-500 text-center py-4">
+              Aucun historique d'abonnement
+            </p>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Historique des paiements */}
+      <Card className="mt-8">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Receipt size={20} />
+            Historique des paiements
+          </CardTitle>
+          {payments.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPayments(!showPayments)}
+            >
+              {showPayments ? "Masquer" : "Afficher"}
+            </Button>
+          )}
+        </CardHeader>
+        {showPayments && payments.length > 0 && (
+          <CardContent>
+            <div className="space-y-3">
+              {payments.map((payment: any, index: number) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {Number(payment.amount).toLocaleString()} CFA
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {payment.payment_method === "mobile_money" ? "Mobile Money" : 
+                       payment.payment_method === "cash" ? "Espèces" : 
+                       payment.payment_method || "Non spécifié"}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(payment.created_at).toLocaleDateString("fr-FR")}
+                    </p>
+                  </div>
+                  <Badge className={
+                    payment.status === "PAID" ? "bg-green-100 text-green-800" :
+                    payment.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
+                    "bg-gray-100 text-gray-800"
+                  }>
+                    {payment.status === "PAID" ? "Payé" :
+                     payment.status === "PENDING" ? "En attente" :
+                     payment.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        )}
+        {payments.length === 0 && (
+          <CardContent>
+            <p className="text-gray-500 text-center py-4">
+              Aucun paiement enregistré
+            </p>
+          </CardContent>
+        )}
       </Card>
     </div>
   );

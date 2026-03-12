@@ -30,6 +30,10 @@ export class ServiceController {
       // Construire les where conditions
       const where: any = { isActive: true };
 
+      // FILTRE: Ne montrer que les services avec un provider valide
+      // On filtre manuellement après avoir récupéré les services
+      // (car Prisma ne supporte pas facilement les filtres sur les relations)
+
       if (category) {
         where.categoryId = category;
       }
@@ -51,11 +55,11 @@ export class ServiceController {
         if (maxPrice) where.price.lte = Number(maxPrice);
       }
 
-      // Compter le total
-      const total = await prisma.service.count({ where });
+      // Compter le total (avant filtrage)
+      const totalBeforeFilter = await prisma.service.count({ where });
 
       // Récupérer les services
-      const services = await prisma.service.findMany({
+      let services = await prisma.service.findMany({
         where,
         skip,
         take: Number(limit),
@@ -63,9 +67,15 @@ export class ServiceController {
         include: {
           category: true,
           provider: {
-            include: {
+            select: {
+              id: true,
+              userId: true,
+              rating: true,
+              totalReviews: true,
+              isVerified: true,
               user: {
                 select: {
+                  id: true,
                   firstName: true,
                   lastName: true,
                 },
@@ -75,14 +85,24 @@ export class ServiceController {
         },
       });
 
+      // Filtrer les services: ne garder que ceux avec un provider valide
+      // Le provider est valide si providerId n'est pas null et correspond à un ProviderProfile existant
+      const validProviderIds = new Set(
+        (await prisma.providerProfile.findMany({ select: { userId: true } })).map(p => p.userId)
+      );
+      services = services.filter(s => s.providerId && validProviderIds.has(s.providerId));
+
+      // Recalculer le total après filtrage
+      const totalFiltered = services.length;
+
       res.json({
         success: true,
         data: services,
         pagination: {
           page: Number(page),
           limit: Number(limit),
-          total,
-          totalPages: Math.ceil(total / Number(limit)),
+          total: totalFiltered,
+          totalPages: Math.ceil(totalFiltered / Number(limit)),
         },
       });
     } catch (error) {
@@ -103,9 +123,15 @@ export class ServiceController {
         include: {
           category: true,
           provider: {
-            include: {
+            select: {
+              id: true,
+              userId: true,
+              rating: true,
+              totalReviews: true,
+              isVerified: true,
               user: {
                 select: {
+                  id: true,
                   firstName: true,
                   lastName: true,
                   email: true,

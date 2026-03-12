@@ -50,10 +50,10 @@ export function ServiceProvidersListPage({
       try {
         setLoading(true);
         
-        // Build query string with specialty filter
+        // Build query string with category filter
         let query = "/providers?limit=50";
-        if (categoryName) {
-          query += `&specialty=${encodeURIComponent(categoryName)}`;
+        if (categoryId) {
+          query += `&category=${encodeURIComponent(categoryId)}`;
         }
         
         const response = await api.get(query);
@@ -164,7 +164,7 @@ export function ServiceProvidersListPage({
                 <Card
                   key={provider.id}
                   className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
-                  onClick={() => onNavigate("service-detail", { providerId: provider.id })}
+                  onClick={() => onNavigate("service-detail", { providerId: provider.id, categoryId })}
                 >
                   <CardContent className="p-6">
                     <div className="flex gap-4">
@@ -213,7 +213,7 @@ export function ServiceProvidersListPage({
                             {provider.hourlyRate ? (
                               <>
                                 <span className="text-2xl font-bold text-green-600">
-                                  {provider.hourlyRate}€
+                                  {Number(provider.hourlyRate).toLocaleString('fr-SN')} CFA
                                 </span>
                                 <span className="text-gray-500">/h</span>
                               </>
@@ -226,7 +226,7 @@ export function ServiceProvidersListPage({
                             className="bg-blue-600 hover:bg-blue-700"
                             onClick={(e: React.MouseEvent) => {
                               e.stopPropagation();
-                              onNavigate("service-detail", { providerId: provider.id });
+                              onNavigate("service-detail", { providerId: provider.id, categoryId });
                             }}
                           >
                             Voir le profil

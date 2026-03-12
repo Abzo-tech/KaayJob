@@ -1897,7 +1897,8 @@ router.get("/analytics", async (req: AuthRequest, res: Response) => {
         monthly,
         topProviders,
         categories: serviceCategories,
-        activity
+        activity,
+        totalUsers: (await prisma.user.count()),
       },
     });
   } catch (error: any) {

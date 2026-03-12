@@ -14,7 +14,7 @@ class ProviderController {
      */
     static async getAll(req, res) {
         try {
-            const { specialty, location, minRating, isAvailable, search, page = 1, limit = 12, } = req.query;
+            const { specialty, location, minRating, isAvailable, search, category, page = 1, limit = 12, } = req.query;
             const skip = (Number(page) - 1) * Number(limit);
             // Build where clause
             const where = {
@@ -41,6 +41,21 @@ class ProviderController {
                     { businessName: { contains: search, mode: "insensitive" } },
                     { specialty: { contains: search, mode: "insensitive" } },
                 ];
+            }
+            // Filter by category - providers who have services in this category
+            if (category) {
+                const categoryStr = category.toString();
+                where.services = {
+                    some: {
+                        category: {
+                            OR: [
+                                { slug: categoryStr.toLowerCase() },
+                                { id: categoryStr },
+                            ],
+                        },
+                        isActive: true,
+                    },
+                };
             }
             const [providers, total] = await Promise.all([
                 prisma_1.prisma.providerProfile.findMany({

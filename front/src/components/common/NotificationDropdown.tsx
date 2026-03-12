@@ -155,7 +155,7 @@ export function NotificationDropdown({
         <div
           className={`absolute w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-[9999] overflow-visible ${
             isSidebar
-              ? "top-full mt-2 left-0"
+              ? "top-full mt-2 right-0"
               : align === "right"
                 ? "left-full ml-2 top-0"
                 : "-left-72 top-0"

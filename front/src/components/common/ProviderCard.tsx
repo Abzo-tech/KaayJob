@@ -32,7 +32,7 @@ export function ProviderCard({
   const fullName = `${firstName} ${lastName}`;
   const categoryName = specialty || "Service";
   const reviews = totalReviews || 0;
-  const price = hourlyRate ? `${hourlyRate}€/h` : "Sur devis";
+  const price = hourlyRate ? `${Number(hourlyRate).toLocaleString('fr-SN')} CFA/h` : "Sur devis";
   const image = avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&crop=faces&fit=crop";
 
   return (

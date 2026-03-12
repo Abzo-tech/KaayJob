@@ -402,8 +402,8 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
                             {service.priceType === "quote"
                               ? "Sur devis"
                               : service.priceType === "fixed"
-                                ? `${service.price}€`
-                                : `À partir de ${service.price}€/h`}
+                                ? `${Number(service.price).toLocaleString("fr-SN")} CFA`
+                                : `À partir de ${Number(service.price).toLocaleString("fr-SN")} CFA/h`}
                           </SelectItem>
                         ))}
                       </SelectContent>

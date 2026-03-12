@@ -202,34 +202,31 @@ class BookingController {
                     return;
                 }
             }
-            const booking = await prisma_1.prisma.booking.create({
-                data: {
-                    clientId: user.id,
-                    serviceId,
-                    bookingDate: new Date(date),
-                    bookingTime: time,
-                    address,
-                    city,
-                    phone,
-                    notes,
-                    status: "PENDING",
-                    totalAmount: service.price,
-                },
-                include: {
-                    service: true,
-                    client: {
-                        select: {
-                            firstName: true,
-                            lastName: true,
-                            email: true,
-                        },
-                    },
-                },
-            });
-            // Notifier le prestataire de la nouvelle réservation
+            // Vérifier que le providerId existe dans la table provider_profiles
+            let validProviderId = null;
             if (service.providerId) {
-                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
+                const providerExists = await prisma_1.prisma.providerProfile.findUnique({
                     where: { id: service.providerId },
+                });
+                if (providerExists) {
+                    validProviderId = service.providerId;
+                }
+            }
+            // Ensure price is a number
+            const price = typeof service.price === 'string' ? parseFloat(service.price) : Number(service.price);
+            // Utiliser raw SQL pour insérer la réservation avec provider_id (si valide)
+            const result = validProviderId
+                ? await (0, database_1.query)(`INSERT INTO bookings (id, client_id, service_id, provider_id, booking_date, booking_time, address, city, phone, notes, status, total_amount, created_at, updated_at)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'PENDING', $10::numeric, NOW(), NOW())
+             RETURNING *`, [user.id, serviceId, validProviderId, new Date(date), time, address, city, phone, notes || null, price])
+                : await (0, database_1.query)(`INSERT INTO bookings (id, client_id, service_id, booking_date, booking_time, address, city, phone, notes, status, total_amount, created_at, updated_at)
+             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, 'PENDING', $9::numeric, NOW(), NOW())
+             RETURNING *`, [user.id, serviceId, new Date(date), time, address, city, phone, notes || null, price]);
+            const booking = result.rows[0];
+            // Notifier le prestataire de la nouvelle réservation (uniquement si provider valide)
+            if (validProviderId) {
+                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
+                    where: { id: validProviderId },
                     include: { user: true },
                 });
                 if (providerProfile) {

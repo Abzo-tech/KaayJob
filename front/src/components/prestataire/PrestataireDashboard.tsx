@@ -71,7 +71,7 @@ export function PrestataireDashboard() {
     try {
       const token = localStorage.getItem("token");
       const userData = localStorage.getItem("user");
-      
+
       if (!token) {
         setLoading(false);
         return;
@@ -85,38 +85,42 @@ export function PrestataireDashboard() {
 
       // Charger les services du prestataire
       const servicesRes = await api.get("/services");
-      // La réponse est directement dans response.data (pas response.data.data)
       const allServices = servicesRes?.data || [];
-      
-      // Filtrer les services par provider (par ID utilisateur)
+
+      // Filtrer les services par provider - utiliser provider.user.id comme dans la page des services
       const myServicesList = allServices.filter(
-        (s: any) => s.providerId === user?.id
+        (s: any) => s.provider?.user?.id === user?.id,
       );
       setMyServices(myServicesList);
 
-      // Charger les bookings
+      // Charger les bookings - le backend filtre déjà par provider
       const bookingsRes = await api.get("/bookings");
-      // La réponse est directement dans response.data (pas response.data.data)
-      const allBookings = bookingsRes?.data || [];
-      
-      // Filtrer les bookings par provider (par ID)
-      const myBookings = allBookings.filter(
-        (b: any) => b.service?.providerId === user?.id
-      );
+      const myBookings = bookingsRes?.data || [];
 
       // Calculer les statistiques
       const pending = myBookings.filter(
-        (b: any) => b.status === "PENDING" || b.status === "pending"
+        (b: any) => b.status === "PENDING" || b.status === "pending",
       ).length;
       const completed = myBookings.filter(
-        (b: any) => b.status === "COMPLETED" || b.status === "completed"
+        (b: any) => b.status === "COMPLETED" || b.status === "completed",
       ).length;
+
+      // Calculer la note moyenne à partir des services
+      let totalRating = 0;
+      let totalReviews = 0;
+      myServicesList.forEach((service: any) => {
+        if (service.provider?.rating) {
+          totalRating += service.provider.rating;
+          totalReviews += service.provider.totalReviews || 0;
+        }
+      });
+      const avgRating = myServicesList.length > 0 ? totalRating / myServicesList.length : 0;
 
       setStats({
         totalBookings: myBookings.length,
         activeServices: myServicesList.filter((s: any) => s.isActive).length,
-        rating: 4.5, // Par défaut si pas de reviews
-        totalReviews: 0,
+        rating: avgRating,
+        totalReviews: totalReviews,
         pendingBookings: pending,
         completedBookings: completed,
       });
@@ -195,7 +199,9 @@ export function PrestataireDashboard() {
         <StatCard
           title="Note moyenne"
           value={stats.rating > 0 ? stats.rating.toFixed(1) : "N/A"}
-          change={stats.totalReviews > 0 ? `${stats.totalReviews} avis` : "Aucun avis"}
+          change={
+            stats.totalReviews > 0 ? `${stats.totalReviews} avis` : "Aucun avis"
+          }
           trend="up"
           icon={Star}
           color="bg-yellow-500"
@@ -235,7 +241,8 @@ export function PrestataireDashboard() {
                         {booking.service?.name || "Service"}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        {formatDate(booking.bookingDate)} à {booking.bookingTime}
+                        {formatDate(booking.bookingDate)} à{" "}
+                        {booking.bookingTime}
                       </p>
                     </div>
                     <div className="text-right">
@@ -269,9 +276,12 @@ export function PrestataireDashboard() {
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium text-gray-900">{service.name}</p>
+                      <p className="font-medium text-gray-900">
+                        {service.name}
+                      </p>
                       <p className="text-sm text-gray-500">
-                        {service.price} € - {service.duration} min
+                        {Number(service.price).toLocaleString("fr-SN")} CFA -{" "}
+                        {service.duration} min
                       </p>
                     </div>
                     <Badge variant={service.isActive ? "default" : "secondary"}>

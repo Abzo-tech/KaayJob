@@ -196,7 +196,10 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   image={category.image}
                   description={category.description}
                   onClick={() =>
-                    onNavigate(`service-providers?category=${category.id}`)
+                    onNavigate("service-providers", {
+                      categoryId: category.slug || category.id,
+                      categoryName: category.name,
+                    })
                   }
                   index={index}
                 />
