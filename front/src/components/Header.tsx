@@ -112,7 +112,7 @@ export function Header({
                 </button>
 
                 {/* Notification Bell with Dropdown */}
-                <NotificationDropdown variant="light" />
+                <NotificationDropdown variant="light" align="right" />
 
                 {/* Logout Button */}
                 <button

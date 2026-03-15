@@ -124,7 +124,7 @@ export function PrestataireBookings() {
 
   if (loading) {
     return (
-      <div className="p-6 lg:p-8 lg:ml-64">
+      <div className="p-4 md:p-6 lg:pl-72 lg:pr-6">
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-[#000080]" />
         </div>
@@ -133,7 +133,7 @@ export function PrestataireBookings() {
   }
 
   return (
-    <div className="p-6 lg:p-8 lg:ml-64">
+    <div className="p-4 md:p-6 lg:pl-72 lg:pr-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#000080]">Mes réservations</h1>
         <p className="text-gray-500 mt-1">Gérez vos réservations</p>

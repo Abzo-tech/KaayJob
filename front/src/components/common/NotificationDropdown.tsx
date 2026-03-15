@@ -7,11 +7,13 @@ import {
   Check,
   Trash2,
   X,
+  RefreshCw,
 } from "lucide-react";
 import {
   useNotifications,
   Notification,
 } from "../../contexts/NotificationContext";
+import { api } from "../../lib/api";
 
 export function NotificationDropdown({
   variant = "dark",
@@ -31,6 +33,7 @@ export function NotificationDropdown({
     markAllAsRead,
     deleteNotification,
     clearReadNotifications,
+    fetchNotifications,
   } = useNotifications();
 
   const iconColor = variant === "light" ? "text-gray-700" : "text-white";
@@ -134,6 +137,20 @@ export function NotificationDropdown({
     await clearReadNotifications();
   };
 
+  const handleTestNotification = async () => {
+    try {
+      await api.post("/notifications/test", {
+        title: "Bienvenue sur KaayJob!",
+        message: "Vos notifications fonctionneront désormais correctement.",
+        type: "success"
+      });
+      // Rafraîchir les notifications
+      fetchNotifications();
+    } catch (error) {
+      console.error("Erreur test notification:", error);
+    }
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Bouton cloche */}
@@ -155,7 +172,7 @@ export function NotificationDropdown({
         <div
           className={`absolute w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-[9999] overflow-visible ${
             isSidebar
-              ? "top-full mt-2 right-0"
+              ? "top-full mt-2 left-full ml-2"
               : align === "right"
                 ? "left-full ml-2 top-0"
                 : "-left-72 top-0"
@@ -296,6 +313,17 @@ export function NotificationDropdown({
               </button>
             </div>
           )}
+          
+          {/* Bouton de test des notifications */}
+          <div className="px-4 py-2 bg-gray-50 border-t border-gray-100">
+            <button
+              onClick={handleTestNotification}
+              className="w-full text-center text-xs text-gray-500 hover:text-[#000080] font-medium transition-colors flex items-center justify-center gap-1"
+            >
+              <RefreshCw size={12} />
+              Créer une notification de test
+            </button>
+          </div>
         </div>
       )}
     </div>

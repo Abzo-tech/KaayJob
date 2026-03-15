@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
+import { ImageUpload } from "../common/ImageUpload";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,7 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
     email: "",
     phone: "",
   });
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -106,6 +108,10 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
           email: parsedUser.email || "",
           phone: parsedUser.phone || "",
         });
+      const savedImage = localStorage.getItem("profileImage");
+        if (savedImage) {
+          setProfileImage(savedImage);
+        }
       } catch (e) {
         console.error("Error parsing user data:", e);
       }
@@ -219,6 +225,18 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat("fr-FR").format(price) + " XOF";
 
+  const handleImageUpload = (image: string | null) => {
+    if (image) {
+      setProfileImage(image);
+      localStorage.setItem("profileImage", image);
+      toast.success("Photo de profil mise à jour!");
+    } else {
+      setProfileImage(null);
+      localStorage.removeItem("profileImage");
+      toast.success("Photo de profil supprimée!");
+    }
+  };
+
   const handleCancelBooking = async (bookingId: string) => {
     if (!confirm("Êtes-vous sûr de vouloir annuler cette réservation ?"))
       return;
@@ -303,19 +321,14 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
         <div className="bg-gradient-to-r from-[#000080] to-[#001a99] rounded-2xl p-6 -mt-4">
           {/* Profile Card */}
           <div className="bg-white rounded-2xl shadow-sm p-8 text-center">
-            <Avatar className="w-20 h-20 mx-auto mb-4">
-              <AvatarImage
-                src={
-                  user?.firstName
-                    ? `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=000080&color=fff&size=128`
-                    : ""
-                }
+            <div className="flex justify-center mb-4">
+              <ImageUpload
+                value={profileImage}
+                onChange={handleImageUpload}
+                label="Photo de profil"
+                size="lg"
               />
-              <AvatarFallback className="bg-[#000080] text-white text-2xl font-bold">
-                {user?.firstName?.[0] || "U"}
-                {user?.lastName?.[0] || ""}
-              </AvatarFallback>
-            </Avatar>
+            </div>
             <h1 className="text-xl font-bold text-gray-900">
               {user?.firstName} {user?.lastName}
             </h1>

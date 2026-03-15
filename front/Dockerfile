@@ -9,13 +9,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copier les fichiers de dépendances
-COPY front/package*.json ./
+COPY package*.json ./
 
 # Installer les dépendances
 RUN npm ci
 
 # Copier le code source
-COPY front/ .
+COPY . .
 
 # Variable d'environnement pour le build
 ENV VITE_API_URL=/api
@@ -33,7 +33,7 @@ FROM nginx:alpine AS production
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copier la configuration Nginx personnalisée
-COPY front/nginx.conf /etc/nginx/conf.d/
+COPY nginx.conf /etc/nginx/conf.d/
 
 # Copier les fichiers build depuis le builder
 COPY --from=builder /app/build /usr/share/nginx/html

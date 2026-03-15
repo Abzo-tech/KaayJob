@@ -24,6 +24,67 @@ router.get("/categories", async (req: Request, res: Response) => {
   await ProviderController.getCategories(req, res);
 });
 
+// GET /api/providers/me - Profil du prestataire actuel (doit être avant /:id)
+router.get(
+  "/me",
+  authenticate,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user.id;
+
+      const result = await query(
+        `SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role,
+                u.bio, u.specialization, u.address, u.zone, u.avatar,
+                u.is_verified, u.created_at,
+                p.availability, p.response_time, p.completion_rate
+         FROM users u
+         LEFT JOIN provider_profiles p ON u.id = p.user_id
+         WHERE u.id = $1`,
+        [userId],
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, message: "Prestataire non trouvé" });
+      }
+
+      const provider = result.rows[0];
+      res.json({
+        success: true,
+        data: {
+          id: provider.id,
+          email: provider.email,
+          firstName: provider.first_name,
+          lastName: provider.last_name,
+          phone: provider.phone,
+          role: provider.role,
+          bio: provider.bio,
+          specialization: provider.specialization,
+          address: provider.address,
+          zone: provider.zone,
+          avatar: provider.avatar,
+          isVerified: provider.is_verified,
+          createdAt: provider.created_at,
+          availability: provider.availability || null,
+          responseTime: provider.response_time,
+          completionRate: provider.completion_rate,
+        },
+      });
+    } catch (error) {
+      console.error("Erreur récupération profil:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  },
+);
+
+// GET /api/providers/me/dashboard - Tableau de bord prestataire
+router.get(
+  "/me/dashboard",
+  authenticate,
+  async (req: Request, res: Response) => {
+    await ProviderController.getDashboard(req, res);
+  },
+);
+
 // GET /api/providers/:id - Profil d'un prestataire
 router.get("/:id", async (req: Request, res: Response) => {
   await ProviderController.getById(req, res);
@@ -78,15 +139,6 @@ router.post(
       return res.status(400).json({ success: false, errors: errors.array() });
     }
     await ProviderController.requestVerification(req, res);
-  },
-);
-
-// GET /api/providers/me/dashboard - Tableau de bord prestataire
-router.get(
-  "/me/dashboard",
-  authenticate,
-  async (req: Request, res: Response) => {
-    await ProviderController.getDashboard(req, res);
   },
 );
 

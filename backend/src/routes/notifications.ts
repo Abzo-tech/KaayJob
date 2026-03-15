@@ -136,6 +136,24 @@ router.delete("/", async (req: AuthRequest, res: Response) => {
   }
 });
 
+// POST /api/notifications/test - Créer une notification de test
+router.post("/test", async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { title, message, type } = req.body;
+
+    await query(
+      "INSERT INTO notifications (id, user_id, title, message, type, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())",
+      [userId, title || "Test", message || "Ceci est une notification de test", type || "info"],
+    );
+
+    res.json({ success: true, message: "Notification de test créée" });
+  } catch (error) {
+    console.error("Erreur création notification test:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
 // Fonction utilitaire pour créer une notification (à utiliser par d'autres routes)
 export async function createNotification(
   userId: string,

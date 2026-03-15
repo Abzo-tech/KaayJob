@@ -71,7 +71,7 @@ export function AdminSettings() {
     setIsSaving(true);
 
     try {
-      const response = await api.put<{ success: boolean; data: any }>(
+      const response = await api.put(
         "/auth/profile",
         {
           firstName: profileData.firstName,
@@ -104,7 +104,7 @@ export function AdminSettings() {
     <div className="p-6 lg:p-8 lg:ml-64">
       {/* En-tête */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#000080]">Paramètres</h1>
+        <h1 className="text-3xl font-bold text-gray-800">Paramètres</h1>
         <p className="text-gray-500 mt-1">
           Gérez les paramètres de votre plateforme
         </p>
@@ -167,7 +167,7 @@ export function AdminSettings() {
                   <Label htmlFor="phone">Téléphone</Label>
                   <Input id="phone" defaultValue="+221 33 123 45 67" />
                 </div>
-                <Button className="bg-[#000080] hover:bg-blue-900">
+                <Button className="bg-gray-800 hover:bg-gray-900">
                   <Save size={16} className="mr-2" />
                   Enregistrer
                 </Button>
@@ -194,7 +194,7 @@ export function AdminSettings() {
                   <Label htmlFor="timezone">Fuseau horaire</Label>
                   <Input id="timezone" defaultValue="Africa/Dakar (UTC+0)" />
                 </div>
-                <Button className="bg-[#000080] hover:bg-blue-900">
+                <Button className="bg-gray-800 hover:bg-gray-900">
                   <Save size={16} className="mr-2" />
                   Enregistrer
                 </Button>
@@ -214,7 +214,7 @@ export function AdminSettings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-6">
-                <div className="w-24 h-24 bg-[#000080] rounded-full flex items-center justify-center text-white text-3xl font-bold">
+                <div className="w-24 h-24 bg-gray-700 rounded-full flex items-center justify-center text-white text-3xl font-bold">
                   {profileData.firstName ? profileData.firstName[0].toUpperCase() : "A"}{profileData.lastName ? profileData.lastName[0].toUpperCase() : "A"}
                 </div>
                 <div>
@@ -263,7 +263,7 @@ export function AdminSettings() {
                     onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
                   />
                 </div>
-                <Button type="submit" className="bg-[#000080] hover:bg-blue-900" disabled={isSaving}>
+                <Button type="submit" className="bg-gray-800 hover:bg-gray-900" disabled={isSaving}>
                   <Save size={16} className="mr-2" />
                   {isSaving ? "Enregistrement..." : "Mettre à jour le profil"}
                 </Button>
@@ -379,7 +379,7 @@ export function AdminSettings() {
                 </div>
               </div>
 
-              <Button className="bg-[#000080] hover:bg-blue-900">
+              <Button className="bg-gray-800 hover:bg-gray-900">
                 <Save size={16} className="mr-2" />
                 Enregistrer les préférences
               </Button>
@@ -412,7 +412,7 @@ export function AdminSettings() {
                   </Label>
                   <Input id="confirmPassword" type="password" />
                 </div>
-                <Button className="bg-[#000080] hover:bg-blue-900">
+                <Button className="bg-gray-800 hover:bg-gray-900">
                   Mettre à jour le mot de passe
                 </Button>
               </CardContent>
@@ -428,7 +428,7 @@ export function AdminSettings() {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Shield size={24} className="text-green-600" />
+                    <Shield size={24} className="text-gray-600" />
                     <div>
                       <p className="font-medium">2FA désactivé</p>
                       <p className="text-sm text-gray-500">
@@ -457,7 +457,7 @@ export function AdminSettings() {
                         Dakar, Senegal • Chrome sur Windows
                       </p>
                     </div>
-                    <Badge className="bg-green-100 text-green-800">
+                    <Badge className="bg-gray-100 text-gray-800">
                       Active
                     </Badge>
                   </div>

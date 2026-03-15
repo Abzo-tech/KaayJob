@@ -289,14 +289,14 @@ export function PrestataireSubscription() {
 
   if (loading) {
     return (
-      <div className="p-6 lg:p-8 lg:ml-64 flex items-center justify-center min-h-screen">
+      <div className="p-4 md:p-6 lg:pl-72 lg:pr-6 flex items-center justify-center min-h-screen">
         <Loader2 className="w-10 h-10 animate-spin text-[#000080]" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 lg:p-8 lg:ml-64">
+    <div className="p-4 md:p-6 lg:pl-72 lg:pr-6">
       {/* En-tête */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#000080]">Mon Abonnement</h1>

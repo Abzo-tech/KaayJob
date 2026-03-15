@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: frontend
+  namespace: kaayjob
+  labels:
+    app: frontend
+    run: frontend
+spec:
+  containers:
+  - name: frontend
+    image: kaayjob/frontend:new
+    imagePullPolicy: Never
+    ports:
+    - containerPort: 80
+    resources:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "256Mi"
+        cpu: "500m"

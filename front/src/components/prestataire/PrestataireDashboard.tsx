@@ -169,7 +169,7 @@ export function PrestataireDashboard() {
   }
 
   return (
-    <div className="p-6 lg:p-8 lg:ml-64">
+    <div className="p-4 md:p-6 lg:pl-72 lg:pr-6">
       {/* En-tête */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-[#000080]">
