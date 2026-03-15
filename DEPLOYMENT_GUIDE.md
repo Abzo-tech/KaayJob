@@ -16,6 +16,10 @@ Ce guide explique comment déployer l'application KaayJob sur Vercel (Frontend) 
 
 ## Étape 2: Déployer le Backend sur Render
 
+### Configuration Render
+
+Vous allez créer UN service Render pour le backend. Laissez "Root directory" **VIDE**.
+
 ### Option A: Déploiement automatique avec render.yaml
 
 1. Pousser le code sur GitHub/GitLab
@@ -34,10 +38,11 @@ Ce guide explique comment déployer l'application KaayJob sur Vercel (Frontend) 
    - **Name**: kaayjob-backend
    - **Environment**: Docker
    - **Dockerfile Path**: `backend/Dockerfile.render`
-   - **Docker Command**: `sh -c "npx prisma migrate deploy && node dist/index.js"`
+   - **Docker Command**: (laisser vide - le CMD est dans le Dockerfile)
+   - **Root Directory**: (laisser vide)
 5. Cliquer "Create Web Service"
 
-### Configuration des Variables d'environnement sur Render
+### Variables d'environnement sur Render
 
 Dans le dashboard Render, ajouter ces variables:
 
@@ -46,11 +51,11 @@ DATABASE_URL=postgresql://user:password@host:5432/kaayjob
 NODE_ENV=production
 PORT=3000
 JWT_SECRET=votre-secret-jwt-tres-securise
-ALLOWED_ORIGINS=https://kaayjob.vercel.app
-FRONTEND_URL=https://kaayjob.vercel.app
+ALLOWED_ORIGINS=https://votre-projet.vercel.app
+FRONTEND_URL=https://votre-projet.vercel.app
 ```
 
-**Note**: Render crée automatiquement la base de données PostgreSQL. La variable `DATABASE_URL` sera automatiquement définie par Render.
+**Note**: Render crée automatiquement la base de données PostgreSQL si vous utilisez le Blueprint.
 
 ---
 

@@ -6,6 +6,18 @@
 
 echo "🐳 Backend Docker - Démarrage..."
 
+# Extraire l'host et le port de DATABASE_URL si disponible
+if [ -n "$DATABASE_URL" ]; then
+    # Format: postgresql://user:password@host:port/database
+    DB_HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:]+):([0-9]+)/.*|\1|')
+    DB_PORT=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:]+):([0-9]+)/.*|\2|')
+    echo "📦 Database URL détectée - Host: $DB_HOST, Port: $DB_PORT"
+fi
+
+# Si DB_HOST ou DB_PORT n'est pas défini, utiliser les valeurs par défaut
+DB_HOST=${DB_HOST:-postgres-service}
+DB_PORT=${DB_PORT:-5432}
+
 # Attendre que la base de données soit prête
 echo "⏳ Attente de la base de données..."
 MAX_RETRIES=30
@@ -28,8 +40,11 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     exit 1
 fi
 
-# Les migrations et la génération du client Prisma sont déjà faites au moment du build
-# Pas besoin de les refaire au démarrage
+# Exécuter les migrations Prisma si DATABASE_URL est disponible
+if [ -n "$DATABASE_URL" ]; then
+    echo "🔄 Exécution des migrations Prisma..."
+    npx prisma migrate deploy || echo "⚠️ Migrations déjà à jour ou ignorées"
+fi
 
 echo "🚀 Lancement du serveur backend..."
 exec "$@"
