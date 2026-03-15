@@ -69,6 +69,8 @@ exports.pool = new pg_1.Pool({
     max: 20,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
+    // SSL configuration for Prisma Accelerate
+    ssl: process.env.DATABASE_URL?.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined,
 });
 exports.pool.on("error", (err) => {
     console.error("Erreur inattendue avec la base de données:", err.message);
