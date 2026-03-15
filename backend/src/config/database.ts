@@ -11,8 +11,21 @@ import { Pool, PoolConfig } from "pg";
 // Parser DATABASE_URL si présent (format: postgresql://user:password@host:port/database)
 function parseDatabaseUrl(url: string): PoolConfig | null {
   try {
-    // La bibliothèque pg peut parser directement l'URL
-    // Remplacer postgres:// par postgresql:// pour la compatibilité avec l'API URL
+    // Gérer le cas où le mot de passe contient des caractères spéciaux comme @
+    // Format: postgres://username:password@host:port/database?sslmode=require
+    const match = url.match(/postgres?:\/\/(.+?):(.+?)@(.+?):(\d+)\/(.+?)(\?.*)?$/);
+    
+    if (match) {
+      return {
+        user: match[1],
+        password: match[2],
+        host: match[3],
+        port: parseInt(match[4]),
+        database: match[5],
+      };
+    }
+    
+    // Fallback: utiliser l'API URL
     const normalizedUrl = url.replace(/^postgres:/, 'postgresql:');
     const urlObj = new URL(normalizedUrl);
     
