@@ -14,29 +14,37 @@ const pg_1 = require("pg");
 // Parser DATABASE_URL si présent (format: postgresql://user:password@host:port/database)
 function parseDatabaseUrl(url) {
     try {
-        // Supprimer le préfixe postgresql://
-        const withoutProtocol = url.replace(/^postgresql?:/, '');
-        // Extraire les informations avec une expression régulière
-        const match = withoutProtocol.match(/\/(?:([^:]+):([^@]+)@)?([^:/]+)(?::(\d+))?\/(.+)/);
-        if (match) {
-            return {
-                user: match[1] || 'postgres',
-                password: match[2] || 'postgres',
-                host: match[3] || 'localhost',
-                port: parseInt(match[4]) || 5432,
-                database: match[5] || 'kaayjob'
-            };
-        }
+        // La bibliothèque pg peut parser directement l'URL
+        // Mais on peut aussi utiliser URL pour plus de contrôle
+        const urlObj = new URL(url.replace(/^postgresql/, 'postgres'));
+        return {
+            host: urlObj.hostname,
+            port: parseInt(urlObj.port) || 5432,
+            database: urlObj.pathname.slice(1), // Enlever le /
+            user: urlObj.username,
+            password: urlObj.password,
+        };
     }
     catch (e) {
         console.error('Erreur lors du parsing de DATABASE_URL:', e);
+        return null;
     }
-    return null;
 }
 // Utiliser DATABASE_URL ou les variables individuelles
 const dbConfig = process.env.DATABASE_URL
     ? parseDatabaseUrl(process.env.DATABASE_URL)
     : null;
+console.log('📦 Configuration de la base de données:');
+console.log('  - DATABASE_URL présent:', !!process.env.DATABASE_URL);
+if (dbConfig) {
+    console.log('  - Host:', dbConfig.host);
+    console.log('  - Port:', dbConfig.port);
+    console.log('  - Database:', dbConfig.database);
+    console.log('  - User:', dbConfig.user);
+}
+else {
+    console.log('  - Utilisation des variables individuelles');
+}
 exports.pool = new pg_1.Pool({
     host: dbConfig?.host || process.env.DB_HOST || "localhost",
     port: dbConfig?.port || parseInt(process.env.DB_PORT || "5432"),
