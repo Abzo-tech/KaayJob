@@ -13,12 +13,25 @@ env | grep -E '^(DATABASE_URL|DB_HOST|DB_PORT|PORT|NODE_ENV)=' | sed 's/=.*/=***
 # Extraire l'host et le port de DATABASE_URL si disponible
 if [ -n "$DATABASE_URL" ]; then
     # Format: postgresql://user:password@host:port/database
-    # Utiliser awk pour gérer les mots de passe spéciaux
-    DB_HOST=$(echo "$DATABASE_URL" | awk -F'[@:/]' '{print $(NF-3)}')
-    DB_PORT=$(echo "$DATABASE_URL" | awk -F'[@:/]' '{print $(NF-2)}')
-    echo "📦 Database URL détectée - Host: $DB_HOST, Port: $DB_PORT"
+    # ou: postgresql://user@host:port/database
     
-    # Utiliser les valeurs extraites
+    # Extraire le host (tout ce qui est après @ et avant :)
+    DB_HOST=$(echo "$DATABASE_URL" | sed -E 's/.*@([^:]+):.*/\1/')
+    # Extraire le port (tout ce qui est après : et avant /)
+    DB_PORT=$(echo "$DATABASE_URL" | sed -E 's/.*:[0-9]+\/.*/\0/' | sed -E 's/.*:([0-9]+)\/.*/\1/')
+    
+    echo "📦 Database URL détectée - Host: $DB_HOST, Port: $DB_PORT"
+    echo "📦 URL complète: $DATABASE_URL"
+    
+    # Vérifier que DB_HOST n'est pas vide ou localhost
+    if [ -z "$DB_HOST" ] || [ "$DB_HOST" = "localhost" ] || [ "$DB_HOST" = "127.0.0.1" ]; then
+        echo "⚠️ DB_HOST invalide: $DB_HOST"
+        # Essayer une autre méthode
+        DB_HOST=$(echo "$DATABASE_URL" | grep -oE '//([^:]+)' | cut -d'/' -f3)
+        DB_PORT=$(echo "$DATABASE_URL" | grep -oE ':[0-9]+/' | head -1 | tr -d ':/')
+        echo "📦 Extraction alternative - Host: $DB_HOST, Port: $DB_PORT"
+    fi
+    
     export DB_HOST
     export DB_PORT
 fi

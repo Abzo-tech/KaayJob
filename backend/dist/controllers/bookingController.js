@@ -68,8 +68,10 @@ class BookingController {
                                 price: true,
                                 provider: {
                                     select: {
+                                        userId: true,
                                         user: {
                                             select: {
+                                                id: true,
                                                 firstName: true,
                                                 lastName: true,
                                             },
@@ -285,7 +287,7 @@ class BookingController {
             // Valid status transitions
             const validTransitions = {
                 PENDING: ["CONFIRMED", "CANCELLED", "REJECTED"],
-                CONFIRMED: ["IN_PROGRESS", "CANCELLED"],
+                CONFIRMED: ["IN_PROGRESS", "CANCELLED", "COMPLETED"],
                 IN_PROGRESS: ["COMPLETED", "CANCELLED"],
                 COMPLETED: [],
                 CANCELLED: [],
