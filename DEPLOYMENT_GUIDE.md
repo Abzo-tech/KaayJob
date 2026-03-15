@@ -10,8 +10,7 @@ Ce guide explique comment déployer l'application KaayJob sur Vercel (Frontend) 
 
 1. Créer un compte sur [Render.com](https://render.com) (gratuit)
 2. Créer un compte sur [Vercel.com](https://vercel.com) (gratuit)
-3. Installer le CLI Render: `npm install -g render-deploy`
-4. Installer Vercel CLI: `npm install -g vercel`
+3. Pousser votre code sur GitHub
 
 ---
 
