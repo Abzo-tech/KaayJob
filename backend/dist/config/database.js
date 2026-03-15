@@ -15,8 +15,9 @@ const pg_1 = require("pg");
 function parseDatabaseUrl(url) {
     try {
         // La bibliothèque pg peut parser directement l'URL
-        // Mais on peut aussi utiliser URL pour plus de contrôle
-        const urlObj = new URL(url.replace(/^postgresql/, 'postgres'));
+        // Remplacer postgres:// par postgresql:// pour la compatibilité avec l'API URL
+        const normalizedUrl = url.replace(/^postgres:/, 'postgresql:');
+        const urlObj = new URL(normalizedUrl);
         return {
             host: urlObj.hostname,
             port: parseInt(urlObj.port) || 5432,

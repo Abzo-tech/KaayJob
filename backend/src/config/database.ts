@@ -12,8 +12,9 @@ import { Pool, PoolConfig } from "pg";
 function parseDatabaseUrl(url: string): PoolConfig | null {
   try {
     // La bibliothèque pg peut parser directement l'URL
-    // Mais on peut aussi utiliser URL pour plus de contrôle
-    const urlObj = new URL(url.replace(/^postgresql/, 'postgres'));
+    // Remplacer postgres:// par postgresql:// pour la compatibilité avec l'API URL
+    const normalizedUrl = url.replace(/^postgres:/, 'postgresql:');
+    const urlObj = new URL(normalizedUrl);
     
     return {
       host: urlObj.hostname,
