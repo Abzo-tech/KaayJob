@@ -11,31 +11,37 @@ import { Pool, PoolConfig } from "pg";
 // Parser DATABASE_URL si présent (format: postgresql://user:password@host:port/database)
 function parseDatabaseUrl(url: string): PoolConfig | null {
   try {
-    // Gérer le cas où le mot de passe contient des caractères spéciaux comme @
-    // Format: postgres://username:password@host:port/database?sslmode=require
-    const match = url.match(/postgres?:\/\/(.+?):(.+?)@(.+?):(\d+)\/(.+?)(\?.*)?$/);
+    // Le format Prisma Accelerate: postgres://username:password@host:port/database?sslmode=require
+    // where password contains special characters like @ and :
+    // We need to find the @ that separates user:password from host
     
-    if (match) {
-      return {
-        user: match[1],
-        password: match[2],
-        host: match[3],
-        port: parseInt(match[4]),
-        database: match[5],
-      };
-    }
+    // Remove protocol
+    let cleanUrl = url.replace(/^postgres:/, 'postgresql:');
     
-    // Fallback: utiliser l'API URL
-    const normalizedUrl = url.replace(/^postgres:/, 'postgresql:');
-    const urlObj = new URL(normalizedUrl);
+    // Find the @ that's between the credentials and the host
+    // The pattern is: protocol://username:password@host:port/database
+    const atSignIndex = cleanUrl.indexOf('@');
+    if (atSignIndex === -1) return null;
     
-    return {
-      host: urlObj.hostname,
-      port: parseInt(urlObj.port) || 5432,
-      database: urlObj.pathname.slice(1), // Enlever le /
-      user: urlObj.username,
-      password: urlObj.password,
-    };
+    // Extract everything before @ (credentials) and after @ (host+db)
+    const credentials = cleanUrl.substring(cleanUrl.indexOf('://') + 3, atSignIndex);
+    const hostPart = cleanUrl.substring(atSignIndex + 1);
+    
+    // Split credentials into user and password
+    // The password may contain : or @ so we need to find the last : before @
+    const lastColonInCredentials = credentials.lastIndexOf(':');
+    const user = credentials.substring(0, lastColonInCredentials);
+    const password = credentials.substring(lastColonInCredentials + 1);
+    
+    // Parse host part
+    const slashIndex = hostPart.indexOf('/');
+    const hostPort = hostPart.substring(0, slashIndex);
+    const database = hostPart.substring(slashIndex + 1).split('?')[0];
+    
+    const [host, portStr] = hostPort.split(':');
+    const port = parseInt(portStr) || 5432;
+    
+    return { user, password, host, port, database };
   } catch (e) {
     console.error('Erreur lors du parsing de DATABASE_URL:', e);
     return null;
