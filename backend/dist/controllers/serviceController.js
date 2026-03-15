@@ -50,9 +50,15 @@ class ServiceController {
                 include: {
                     category: true,
                     provider: {
-                        include: {
+                        select: {
+                            id: true,
+                            userId: true,
+                            rating: true,
+                            totalReviews: true,
+                            isVerified: true,
                             user: {
                                 select: {
+                                    id: true,
                                     firstName: true,
                                     lastName: true,
                                 },
@@ -94,9 +100,15 @@ class ServiceController {
                 include: {
                     category: true,
                     provider: {
-                        include: {
+                        select: {
+                            id: true,
+                            userId: true,
+                            rating: true,
+                            totalReviews: true,
+                            isVerified: true,
                             user: {
                                 select: {
+                                    id: true,
                                     firstName: true,
                                     lastName: true,
                                     email: true,

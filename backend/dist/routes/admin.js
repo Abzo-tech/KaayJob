@@ -1435,7 +1435,8 @@ router.get("/analytics", async (req, res) => {
                 monthly,
                 topProviders,
                 categories: serviceCategories,
-                activity
+                activity,
+                totalUsers: (await prisma_1.prisma.user.count()),
             },
         });
     }
