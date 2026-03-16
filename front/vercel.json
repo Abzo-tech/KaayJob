@@ -1,6 +1,9 @@
 {
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/$1" }],
-  "env": {
-    "VITE_API_URL": "@kaayjob-api-url"
-  }
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "outputDirectory": "build",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://kaayjob.onrender.com/api/$1" }
+  ]
 }
