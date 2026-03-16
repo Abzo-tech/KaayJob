@@ -11,17 +11,37 @@ import { Pool, PoolConfig } from "pg";
 // Parser DATABASE_URL si présent (format: postgresql://user:password@host:port/database)
 function parseDatabaseUrl(url: string): PoolConfig | null {
   try {
-    // La bibliothèque pg peut parser directement l'URL
-    // Mais on peut aussi utiliser URL pour plus de contrôle
-    const urlObj = new URL(url.replace(/^postgresql/, 'postgres'));
+    // Le format Prisma Accelerate: postgres://username:password@host:port/database?sslmode=require
+    // where password contains special characters like @ and :
+    // We need to find the @ that separates user:password from host
     
-    return {
-      host: urlObj.hostname,
-      port: parseInt(urlObj.port) || 5432,
-      database: urlObj.pathname.slice(1), // Enlever le /
-      user: urlObj.username,
-      password: urlObj.password,
-    };
+    // Remove protocol
+    let cleanUrl = url.replace(/^postgres:/, 'postgresql:');
+    
+    // Find the @ that's between the credentials and the host
+    // The pattern is: protocol://username:password@host:port/database
+    const atSignIndex = cleanUrl.indexOf('@');
+    if (atSignIndex === -1) return null;
+    
+    // Extract everything before @ (credentials) and after @ (host+db)
+    const credentials = cleanUrl.substring(cleanUrl.indexOf('://') + 3, atSignIndex);
+    const hostPart = cleanUrl.substring(atSignIndex + 1);
+    
+    // Split credentials into user and password
+    // The password may contain : or @ so we need to find the last : before @
+    const lastColonInCredentials = credentials.lastIndexOf(':');
+    const user = credentials.substring(0, lastColonInCredentials);
+    const password = credentials.substring(lastColonInCredentials + 1);
+    
+    // Parse host part
+    const slashIndex = hostPart.indexOf('/');
+    const hostPort = hostPart.substring(0, slashIndex);
+    const database = hostPart.substring(slashIndex + 1).split('?')[0];
+    
+    const [host, portStr] = hostPort.split(':');
+    const port = parseInt(portStr) || 5432;
+    
+    return { user, password, host, port, database };
   } catch (e) {
     console.error('Erreur lors du parsing de DATABASE_URL:', e);
     return null;
@@ -53,6 +73,8 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  // SSL configuration for Prisma Accelerate
+  ssl: process.env.DATABASE_URL?.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined,
 });
 
 pool.on("error", (err) => {
