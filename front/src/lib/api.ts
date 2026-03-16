@@ -7,10 +7,10 @@
 
 // En production (Vercel), utiliser l'URL du backend Render
 // En local, utiliser le proxy /api
-const API_BASE_URL = import.meta.env.VITE_API_URL 
-  ? (import.meta.env.VITE_API_URL.startsWith('http') 
-      ? import.meta.env.VITE_API_URL 
-      : `https://kaayjob.onrender.com`)
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.startsWith("http")
+    ? import.meta.env.VITE_API_URL
+    : `https://kaayjob.onrender.com`
   : "/api";
 
 /**
