@@ -2,12 +2,16 @@
  * Configuration API pour KaayJob
  * Point central pour les appels au backend
  * Utilise le proxy Vite (/api -> backend) en local
- * Utilise VITE_API_URL en production (Vercel)
+ * Utilise l'URL du backend en production
  */
 
 // En production (Vercel), utiliser l'URL du backend Render
 // En local, utiliser le proxy /api
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL 
+  ? (import.meta.env.VITE_API_URL.startsWith('http') 
+      ? import.meta.env.VITE_API_URL 
+      : `https://kaayjob.onrender.com`)
+  : "/api";
 
 /**
  * headers par défaut pour les requêtes
