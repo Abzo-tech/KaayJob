@@ -5,19 +5,9 @@
  * Utilise le proxy Vercel (/api -> backend) en production
  */
 
-<<<<<<< HEAD
 // En production (Vercel), utiliser le proxy Vercel (/api -> backend)
 // En local, utiliser le proxy Vite (/api -> backend localhost)
 const API_BASE_URL = "/api";
-=======
-// En production (Vercel), utiliser l'URL du backend Render
-// En local, utiliser le proxy /api
-const API_BASE_URL = import.meta.env.VITE_API_URL 
-  ? (import.meta.env.VITE_API_URL.startsWith('http') 
-      ? import.meta.env.VITE_API_URL 
-      : `https://kaayjob.onrender.com/api`)
-  : "/api";
->>>>>>> fd0eb6b42811fb55b588a4942136e0b85a0febff
 
 /**
  * headers par défaut pour les requêtes
