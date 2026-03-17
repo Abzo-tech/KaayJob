@@ -2,7 +2,7 @@
  * Configuration API pour KaayJob
  * Point central pour les appels au backend
  * Utilise le proxy Vite (/api -> backend) en local
- * Utilise l'URL du backend en production
+ * Utilise le proxy Vercel (/api -> backend) en production
  */
 
 // En production (Vercel), utiliser le proxy Vercel (/api -> backend)
