@@ -46,6 +46,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       "http://127.0.0.1:3000",
       "http://localhost:8888",
       "http://127.0.0.1:8888",
+      "https://kaay-job.vercel.app",
+      "https://kaay-job-git-main-abzo-techs-projects.vercel.app",
+      "https://kaay-job-git-abzo-abzo-techs-projects.vercel.app",
     ];
 
 app.use(
