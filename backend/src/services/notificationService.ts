@@ -14,6 +14,7 @@ export async function createNotification(
   message: string,
   type: string = "info",
   link?: string,
+  privateRecipients?: string[],
 ): Promise<void> {
   try {
     console.log(
@@ -23,10 +24,15 @@ export async function createNotification(
       title,
       "message:",
       message,
+      "privateRecipients:",
+      privateRecipients,
     );
+
+    const privateRecipientsJson = privateRecipients ? JSON.stringify(privateRecipients) : null;
+
     await query(
-      "INSERT INTO notifications (id, user_id, title, message, type, link, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())",
-      [userId, title, message, type, link || null],
+      "INSERT INTO notifications (id, user_id, title, message, type, link, private_recipients, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())",
+      [userId, title, message, type, link || null, privateRecipientsJson],
     );
     console.log("Notification created successfully for user:", userId);
   } catch (error) {

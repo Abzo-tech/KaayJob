@@ -5,6 +5,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Phone, Mail, MapPin, Clock, MessageCircle, Headphones } from "lucide-react";
+import { toast } from "sonner";
 
 interface ContactPageProps {
   onNavigate: (page: string) => void;
@@ -25,7 +26,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Merci pour votre message ! Nous vous répondrons dans les 24 heures.");
+    toast.success("Merci pour votre message ! Nous vous répondrons dans les 24 heures.");
     setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
   };
 

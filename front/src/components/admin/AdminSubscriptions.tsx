@@ -87,7 +87,7 @@ export function AdminSubscriptions() {
         setLoading(true);
         const [subsResponse, plansResponse] = await Promise.all([
           api.get("/admin/subscriptions"),
-          api.get("/admin/subscription-plans"),
+          api.get("/admin/subscriptions/plans"),
         ]);
         if (subsResponse.success) {
           setSubscriptions(subsResponse.data || []);
@@ -239,7 +239,7 @@ export function AdminSubscriptions() {
       description: plan.description || "",
       price: plan.price,
       duration: plan.duration,
-      features: plan.features.join("\n"),
+      features: Array.isArray(plan.features) ? plan.features.join("\n") : "",
       isActive: plan.isActive,
     });
     setIsEditing(true);
@@ -255,8 +255,8 @@ export function AdminSubscriptions() {
       const planData = {
         name: planForm.name,
         description: planForm.description || null,
-        price: planForm.price,
-        duration: planForm.duration,
+        price: Number(planForm.price),
+        duration: Number(planForm.duration),
         features: featuresArray,
         isActive: planForm.isActive,
       };
@@ -264,18 +264,18 @@ export function AdminSubscriptions() {
       let response;
       if (editingPlan) {
         response = await api.put(
-          `/admin/subscription-plans/${editingPlan.id}`,
+          `/admin/subscriptions/plans/${editingPlan.id}`,
           planData,
         );
       } else {
-        response = await api.post("/admin/subscription-plans", planData);
+        response = await api.post("/admin/subscriptions/plans", planData);
       }
 
       if (response.success) {
         toast.success(
           editingPlan ? "Plan mis à jour" : "Plan créé avec succès",
         );
-        const plansResponse = await api.get("/admin/subscription-plans");
+        const plansResponse = await api.get("/admin/subscriptions/plans");
         if (plansResponse.success) {
           setPlans(plansResponse.data || []);
         }
@@ -293,10 +293,10 @@ export function AdminSubscriptions() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce plan ?")) return;
 
     try {
-      const response = await api.delete(`/admin/subscription-plans/${id}`);
+      const response = await api.delete(`/admin/subscriptions/plans/${id}`);
       if (response.success) {
         toast.success("Plan supprimé");
-        const plansResponse = await api.get("/admin/subscription-plans");
+        const plansResponse = await api.get("/admin/subscriptions/plans");
         if (plansResponse.success) {
           setPlans(plansResponse.data || []);
         }
@@ -557,43 +557,82 @@ export function AdminSubscriptions() {
           {!isEditing ? (
             <>
               {/* Liste des plans avec options de modification */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className="space-y-4 mt-6 max-h-96 overflow-y-auto">
                 {plans.map((plan) => (
                   <Card
                     key={plan.id}
-                    className={
+                    className={`${
                       plan.slug === "pro"
                         ? "border-purple-500 border-2"
                         : !plan.isActive
                           ? "opacity-60"
                           : ""
-                    }
+                    }`}
                   >
-                    <CardHeader
-                      className={`${
-                        plan.slug === "pro"
-                          ? "bg-purple-100"
-                          : plan.slug === "premium"
-                            ? "bg-yellow-100"
-                            : "bg-gray-100"
-                      } rounded-t-lg`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                          {plan.slug === "pro" && (
-                            <Star size={20} className="text-purple-600" />
-                          )}
-                          {plan.slug === "premium" && (
-                            <Crown size={20} className="text-yellow-600" />
-                          )}
-                          {plan.name}
-                        </CardTitle>
-                        <div className="flex gap-1">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {plan.slug === "pro" && (
+                              <Star size={18} className="text-purple-600" />
+                            )}
+                            {plan.slug === "premium" && (
+                              <Crown size={18} className="text-yellow-600" />
+                            )}
+                            {!plan.slug?.includes("pro") && !plan.slug?.includes("premium") && (
+                              <div className="w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center">
+                                <span className="text-white text-xs font-bold">G</span>
+                              </div>
+                            )}
+                            <h3 className="font-semibold text-lg">{plan.name}</h3>
+                            {!plan.isActive && (
+                              <Badge className="bg-red-100 text-red-800 text-xs">
+                                Inactif
+                              </Badge>
+                            )}
+                          </div>
+
+                          <p className="text-sm text-gray-600 mb-3">{plan.description}</p>
+
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-2xl font-bold text-[#000080]">
+                              {plan.price === 0 || !plan.price
+                                ? "Gratuit"
+                                : `${plan.price.toLocaleString()} CFA`}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {plan.duration > 0 ? `${plan.duration} jours` : "Illimité"}
+                            </span>
+                          </div>
+
+                          <div className="mb-3">
+                            <p className="text-sm font-medium mb-1">Fonctionnalités :</p>
+                            <div className="flex flex-wrap gap-1">
+                              {(plan.features as string[])?.slice(0, 3).map((feature, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full"
+                                >
+                                  <Check size={12} />
+                                  {feature.length > 20 ? `${feature.substring(0, 20)}...` : feature}
+                                </span>
+                              ))}
+                              {(plan.features as string[])?.length > 3 && (
+                                <span className="text-xs text-gray-500">
+                                  +{(plan.features as string[]).length - 3} autres
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-1 ml-4">
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => handleEditPlan(plan)}
+                            title="Modifier"
                           >
                             <Edit2 size={14} />
                           </Button>
@@ -602,39 +641,12 @@ export function AdminSubscriptions() {
                             size="sm"
                             className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
                             onClick={() => handleDeletePlan(plan.id)}
+                            title="Supprimer"
                           >
                             <Trash2 size={14} />
                           </Button>
                         </div>
                       </div>
-                      <CardDescription>
-                        {plan.duration > 0
-                          ? `${plan.duration} jours`
-                          : "Illimité"}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <p className="text-3xl font-bold">
-                        {plan.price === 0
-                          ? "Gratuit"
-                          : `${plan.price.toLocaleString()} CFA`}
-                      </p>
-                      <ul className="mt-4 space-y-2">
-                        {(plan.features as string[]).map((feature, index) => (
-                          <li
-                            key={index}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <Check size={16} className="text-green-500" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                      {!plan.isActive && (
-                        <Badge className="mt-4 bg-red-100 text-red-800">
-                          Inactif
-                        </Badge>
-                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -653,22 +665,26 @@ export function AdminSubscriptions() {
           ) : (
             <>
               {/* Formulaire de création/modification de plan */}
-              <div className="space-y-4 mt-4">
+              <div className="space-y-5 mt-6">
                 <div>
-                  <Label htmlFor="planName">Nom du plan</Label>
+                  <Label htmlFor="planName" className="text-sm font-medium">
+                    Nom du plan
+                  </Label>
                   <Input
                     id="planName"
                     value={planForm.name}
                     onChange={(e) =>
                       setPlanForm({ ...planForm, name: e.target.value })
                     }
-                    placeholder="Ex: Premium"
+                    placeholder="Ex: Premium Plus"
                     className="mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="planDescription">Description</Label>
+                  <Label htmlFor="planDescription" className="text-sm font-medium">
+                    Description
+                  </Label>
                   <Input
                     id="planDescription"
                     value={planForm.description}
@@ -682,7 +698,9 @@ export function AdminSubscriptions() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="planPrice">Prix (CFA)</Label>
+                    <Label htmlFor="planPrice" className="text-sm font-medium">
+                      Prix (CFA)
+                    </Label>
                     <Input
                       id="planPrice"
                       type="number"
@@ -693,11 +711,14 @@ export function AdminSubscriptions() {
                           price: parseFloat(e.target.value) || 0,
                         })
                       }
+                      placeholder="0"
                       className="mt-1"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="planDuration">Durée (jours)</Label>
+                    <Label htmlFor="planDuration" className="text-sm font-medium">
+                      Durée (jours)
+                    </Label>
                     <Input
                       id="planDuration"
                       type="number"
@@ -708,14 +729,15 @@ export function AdminSubscriptions() {
                           duration: parseInt(e.target.value) || 0,
                         })
                       }
+                      placeholder="30"
                       className="mt-1"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="planFeatures">
-                    Fonctionnalités (une par ligne)
+                  <Label htmlFor="planFeatures" className="text-sm font-medium">
+                    Fonctionnalités
                   </Label>
                   <textarea
                     id="planFeatures"
@@ -723,8 +745,9 @@ export function AdminSubscriptions() {
                     onChange={(e) =>
                       setPlanForm({ ...planForm, features: e.target.value })
                     }
-                    placeholder="Service illimité&#10;Badge VIP&#10;Support prioritaire"
-                    className="mt-1 w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#000080]"
+                    placeholder="Une fonctionnalité par ligne"
+                    className="mt-1 w-full h-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#000080] resize-none text-sm"
+                    rows={4}
                   />
                 </div>
 
@@ -739,28 +762,29 @@ export function AdminSubscriptions() {
                         isActive: e.target.checked,
                       })
                     }
-                    className="w-4 h-4"
+                    className="w-4 h-4 text-[#000080] focus:ring-[#000080] border-gray-300 rounded"
+                    aria-label="Plan actif"
                   />
-                  <Label htmlFor="planActive" className="cursor-pointer">
+                  <Label htmlFor="planActive" className="text-sm cursor-pointer">
                     Plan actif
                   </Label>
                 </div>
               </div>
 
-              <div className="flex gap-2 mt-6">
+              <div className="flex gap-4 mt-8 pt-6 border-t border-gray-200">
                 <Button
                   variant="outline"
                   onClick={() => setIsEditing(false)}
-                  className="flex-1"
+                  className="flex-1 h-12 text-base font-medium"
                 >
                   Annuler
                 </Button>
                 <Button
                   onClick={handleSavePlan}
-                  className="flex-1 bg-[#000080] hover:bg-blue-900"
+                  className="flex-1 h-12 bg-[#000080] hover:bg-blue-900 text-base font-medium"
                 >
-                  <Save size={18} className="mr-2" />
-                  Enregistrer
+                  <Save size={20} className="mr-2" />
+                  {editingPlan ? "Mettre à jour" : "Créer le plan"}
                 </Button>
               </div>
             </>

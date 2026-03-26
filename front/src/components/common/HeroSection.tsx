@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 
@@ -6,9 +6,10 @@ interface HeroSectionProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onSearch: () => void;
+  onNavigate?: (page: string) => void;
 }
 
-export function HeroSection({ searchQuery, onSearchChange, onSearch }: HeroSectionProps) {
+export function HeroSection({ searchQuery, onSearchChange, onSearch, onNavigate }: HeroSectionProps) {
   return (
     <section className="relative h-screen text-white overflow-hidden">
       {/* Senegalese Background Image - Service Provider & Client Communication */}
@@ -63,6 +64,20 @@ export function HeroSection({ searchQuery, onSearchChange, onSearch }: HeroSecti
               Chercher
             </Button>
           </div>
+
+          {/* Map Search Button */}
+          {onNavigate && (
+            <div className="mt-4 text-center">
+              <Button
+                onClick={() => onNavigate("providers-map")}
+                variant="outline"
+                className="bg-white/90 backdrop-blur-sm border-white/30 text-[#000080] hover:bg-white hover:text-blue-900 font-semibold px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                <MapPin className="w-5 h-5 mr-2" />
+                Trouver sur la carte avec géolocalisation
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Scroll indicator */}

@@ -51,7 +51,7 @@ const handleResponse = async (response: Response): Promise<any> => {
 
 export const api = {
   // GET request
-  async get(endpoint: string): Promise<any> {
+  async get<T = any>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "GET",
       headers: getHeaders(),
@@ -60,7 +60,7 @@ export const api = {
   },
 
   // POST request
-  async post(endpoint: string, body?: unknown): Promise<any> {
+  async post<T = any>(endpoint: string, body?: unknown): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
       headers: getHeaders(),
@@ -70,7 +70,7 @@ export const api = {
   },
 
   // PUT request
-  async put(endpoint: string, body?: unknown): Promise<any> {
+  async put<T = any>(endpoint: string, body?: unknown): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "PUT",
       headers: getHeaders(),
@@ -80,7 +80,7 @@ export const api = {
   },
 
   // DELETE request
-  async delete(endpoint: string): Promise<any> {
+  async delete<T = any>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "DELETE",
       headers: getHeaders(),

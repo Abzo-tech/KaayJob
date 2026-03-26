@@ -14,29 +14,40 @@ router.use(authenticate);
 // GET /api/notifications - Liste des notifications de l'utilisateur
 router.get("/", async (req: AuthRequest, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const user = req.user;
+    const userId = user?.id;
+    const userRole = user?.role;
     const { limit = 20, offset = 0, unreadOnly } = req.query;
 
-    let whereClause = "user_id = $1";
+    let whereClause = "";
+    let params: any[] = [];
+
+    // Logique de filtrage selon le rôle
+    if (userRole === "admin" || userRole === "ADMIN") {
+      // Admin voit TOUTES les notifications
+      whereClause = "1=1"; // Pas de restriction pour admin
+    } else {
+      // Clients et prestataires : voient leurs notifications directes + celles où ils sont dans private_recipients
+      whereClause = "user_id = $1 OR EXISTS (SELECT 1 FROM json_array_elements_text(private_recipients::json) AS elem WHERE elem::text = $1)";
+      params = [userId];
+    }
+
     if (unreadOnly === "true") {
-      whereClause += " AND read = false";
+      whereClause += (whereClause === "1=1" ? " AND" : " AND") + " read = false";
     }
 
     // Compter les notifications non lues
-    const countResult = await query(
-      "SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND read = false",
-      [userId],
-    );
+    const countQuery = `SELECT COUNT(*) as count FROM notifications WHERE ${whereClause}`;
+    const countResult = await query(countQuery, params);
 
     // Récupérer les notifications
-    const result = await query(
-      `SELECT id, title, message, type, read, link, created_at
-       FROM notifications 
+    const selectQuery = `SELECT id, title, message, type, read, link, created_at
+       FROM notifications
        WHERE ${whereClause}
        ORDER BY created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [userId, Number(limit), Number(offset)],
-    );
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+
+    const result = await query(selectQuery, [...params, Number(limit), Number(offset)]);
 
     res.json({
       success: true,

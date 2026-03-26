@@ -111,8 +111,10 @@ export function Header({
                   </span>
                 </button>
 
-                {/* Notification Bell with Dropdown */}
-                <NotificationDropdown variant="light" align="right" />
+                {/* Notification Bell - Only for clients */}
+                {user.role === "client" && (
+                  <NotificationDropdown variant="light" align="left" />
+                )}
 
                 {/* Logout Button */}
                 <button

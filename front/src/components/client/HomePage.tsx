@@ -165,6 +165,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
             searchQuery ? { search: searchQuery } : undefined,
           )
         }
+        onNavigate={onNavigate}
       />
 
       {/* Services Section with Images */}

@@ -21,6 +21,7 @@ const services_1 = __importDefault(require("./routes/services"));
 const reviews_1 = __importDefault(require("./routes/reviews"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
+const payments_1 = __importDefault(require("./routes/payments"));
 const database_1 = require("./config/database");
 const prisma_1 = require("./config/prisma");
 const app = (0, express_1.default)();
@@ -42,6 +43,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
         "http://127.0.0.1:3000",
         "http://localhost:8888",
         "http://127.0.0.1:8888",
+        "https://kaay-job.vercel.app",
+        "https://kaay-job-git-main-abzo-techs-projects.vercel.app",
+        "https://kaay-job-git-abzo-abzo-techs-projects.vercel.app",
     ];
 app.use((0, cors_1.default)({
     origin: allowedOrigins,
@@ -63,6 +67,7 @@ app.use("/api/services", services_1.default);
 app.use("/api/reviews", reviews_1.default);
 app.use("/api/admin", admin_1.default);
 app.use("/api/notifications", notifications_1.default);
+app.use("/api/payments", payments_1.default);
 // Health check
 app.get("/api/health", async (req, res) => {
     try {

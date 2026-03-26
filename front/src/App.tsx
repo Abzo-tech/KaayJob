@@ -4,6 +4,7 @@ import { HomePage } from "./components/client/HomePage";
 import { LoginPage } from "./components/client/LoginPage";
 import { ServiceCategoriesPage } from "./components/client/ServiceCategoriesPage";
 import { ServiceProvidersListPage } from "./components/client/ServiceProvidersListPage";
+import { ServiceProvidersMapPage } from "./components/client/ServiceProvidersMapPage";
 import { ServiceDetailPage } from "./components/client/ServiceDetailPage";
 import { BookingPage } from "./components/client/BookingPage";
 import { CheckoutPage } from "./components/client/CheckoutPage";
@@ -15,6 +16,7 @@ import { Toaster } from "./components/ui/sonner";
 
 // Admin imports
 import { AdminSidebar } from "./components/admin/AdminSidebar";
+import { AdminNotifications } from "./components/admin/AdminNotifications";
 import { AdminDashboard } from "./components/admin/AdminDashboard";
 import { AdminUsers } from "./components/admin/AdminUsers";
 import { AdminServices } from "./components/admin/AdminServices";
@@ -27,6 +29,7 @@ import { AdminCategories } from "./components/admin/AdminCategories";
 
 // Prestataire imports
 import { PrestataireSidebar } from "./components/prestataire/PrestataireSidebar";
+import { PrestataireNotifications } from "./components/prestataire/PrestataireNotifications";
 import { PrestataireDashboard } from "./components/prestataire/PrestataireDashboard";
 import { PrestataireServices } from "./components/prestataire/PrestataireServices";
 import { PrestataireBookings } from "./components/prestataire/PrestataireBookings";
@@ -145,6 +148,7 @@ export default function App() {
           onNavigate={handleNavigate}
           onLogout={handleLogout}
         />
+        <AdminNotifications />
         {renderAdminContent()}
       </>
     );
@@ -184,6 +188,7 @@ export default function App() {
           onNavigate={handleNavigate}
           onLogout={handleLogout}
         />
+        <PrestataireNotifications />
         {renderPrestataireContent()}
       </>
     );
@@ -258,6 +263,13 @@ export default function App() {
             params={pageParams}
           />
         );
+      case "providers-map":
+        return (
+          <ServiceProvidersMapPage
+            onNavigate={handleNavigate}
+            params={pageParams}
+          />
+        );
       case "service-detail":
         return (
           <ServiceDetailPage onNavigate={handleNavigate} params={pageParams} />
@@ -282,7 +294,7 @@ export default function App() {
 
   return (
     <NotificationProvider>
-      <Toaster />
+      <Toaster position="bottom-right" />
       <div className="min-h-screen bg-gray-50">
         {/* Hide Header on admin, prestataire, and login pages */}
         {!isAdminPage && !isPrestatairePage && !isLoginPage && (

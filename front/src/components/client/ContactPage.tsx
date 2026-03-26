@@ -24,6 +24,7 @@ import {
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
+import { toast } from "sonner";
 
 // Fix for default marker icon
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })
@@ -200,7 +201,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
             console.error("Error reverse geocoding:", error);
           }
         },
-        () => alert("Impossible d'obtenir votre position."),
+        () => toast.error("Impossible d'obtenir votre position."),
       );
     }
   };
@@ -231,9 +232,7 @@ export function ContactPage({ onNavigate }: ContactPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(
-      "Merci pour votre message ! Nous vous répondrons dans les 24 heures.",
-    );
+    toast.success("Merci pour votre message ! Nous vous répondrons dans les 24 heures.");
     setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
   };
 

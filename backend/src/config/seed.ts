@@ -789,6 +789,75 @@ async function seed() {
     console.log(`✅ ${reviewsData.length} avis créés`);
 
     // ============================================
+    // 8. CRÉER DES PLANS D'ABONNEMENT PAR DÉFAUT
+    // ============================================
+    const subscriptionPlans = [
+      {
+        name: "Gratuit",
+        slug: "gratuit",
+        description: "Plan gratuit pour débuter",
+        price: 0,
+        duration: 0, // Illimité
+        features: [
+          "5 services maximum",
+          "Visibilité standard",
+          "Support par email"
+        ],
+        isActive: true,
+        displayOrder: 0,
+      },
+      {
+        name: "Premium",
+        slug: "premium",
+        description: "Plan premium avec avantages",
+        price: 9900, // 99.00 CFA
+        duration: 30,
+        features: [
+          "Services illimités",
+          "Badge VIP",
+          "Visibilité prioritaire",
+          "Support prioritaire",
+          "Statistiques avancées"
+        ],
+        isActive: true,
+        displayOrder: 1,
+      },
+      {
+        name: "Pro",
+        slug: "pro",
+        description: "Plan professionnel complet",
+        price: 24900, // 249.00 CFA
+        duration: 30,
+        features: [
+          "Tout Premium",
+          "Publication en premier",
+          "Badge Pro",
+          "Formation exclusive",
+          "Gestion équipe"
+        ],
+        isActive: true,
+        displayOrder: 2,
+      },
+    ];
+
+    for (const plan of subscriptionPlans) {
+      await prisma.subscriptionPlan.upsert({
+        where: { slug: plan.slug },
+        update: {
+          name: plan.name,
+          description: plan.description,
+          price: plan.price,
+          duration: plan.duration,
+          features: plan.features,
+          isActive: plan.isActive,
+          displayOrder: plan.displayOrder,
+        },
+        create: plan,
+      });
+    }
+    console.log(`✅ ${subscriptionPlans.length} plans d'abonnement créés`);
+
+    // ============================================
     // RÉSUMÉ
     // ============================================
     console.log("\n=========================================");

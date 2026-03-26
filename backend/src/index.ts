@@ -19,6 +19,7 @@ import servicesRoutes from "./routes/services";
 import reviewsRoutes from "./routes/reviews";
 import adminRoutes from "./routes/admin";
 import notificationsRoutes from "./routes/notifications";
+import paymentsRoutes from "./routes/payments";
 
 import { testConnection } from "./config/database";
 import { prisma } from "./config/prisma";
@@ -79,6 +80,7 @@ app.use("/api/services", servicesRoutes);
 app.use("/api/reviews", reviewsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationsRoutes);
+app.use("/api/payments", paymentsRoutes);
 
 // Health check
 app.get("/api/health", async (req, res) => {

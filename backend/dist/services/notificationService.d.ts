@@ -5,5 +5,5 @@
 /**
  * Créer une notification pour un utilisateur
  */
-export declare function createNotification(userId: string, title: string, message: string, type?: string, link?: string): Promise<void>;
+export declare function createNotification(userId: string, title: string, message: string, type?: string, link?: string, privateRecipients?: string[]): Promise<void>;
 //# sourceMappingURL=notificationService.d.ts.map

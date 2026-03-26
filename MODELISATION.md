@@ -25,10 +25,10 @@ Ce document contient tous les diagrammes UML du projet KaayJob, prêts à être 
 | - createdAt: DateTime|                   |
 | - updatedAt: DateTime|                   | 1:N
 +----------+-----------+                   |
-           |                               v
-           | 1:1                  +---------------+
-           |                       |    SERVICE    |
-           v                       +---------------+
+            |                               v
+            | 1:1                  +---------------+
+            |                       |    SERVICE    |
+            v                       +---------------+
 +------------------------+       | - id: UUID    |
 |   PROVIDER_PROFILE     |       | - providerId  |
 +------------------------+       | - categoryId |
@@ -52,9 +52,9 @@ Ce document contient tous les diagrammes UML du projet KaayJob, prêts à être 
 | - isVerified: Boolean |       +---------------+
 | - profileImage: String|       | - id: UUID    |
 +----------+------------+       | - clientId    |
-           |                    | - serviceId   |
-           | 1:N                | - bookingDate |
-           v                    | - bookingTime |
+            |                    | - serviceId   |
+            | 1:N                | - bookingDate |
+            v                    | - bookingTime |
 +------------------------+     | - duration: Int|
 |        REVIEW          |     | - status      |
 +------------------------+     | - address     |
@@ -64,7 +64,7 @@ Ce document contient tous les diagrammes UML du projet KaayJob, prêts à être 
 | - providerId: UUID    |     | - totalAmount |
 | - serviceId: UUID?   |     | - paymentStatus|
 | - rating: Int         |     +---------------+
-| - comment: String?   |
+| - comment: String?    |
 | - isVerified: Boolean |
 +----------------------+
 
@@ -361,9 +361,9 @@ Ce document contient tous les diagrammes UML du projet KaayJob, prêts à être 
 | PRESTATAIRE           |       | CONFIRMED          |
 | ADMIN                 |       | IN_PROGRESS        |
 +------------------------+       | COMPLETED          |
-                                | CANCELLED          |
-                                | REJECTED           |
-                                +-------------------+
+                                 | CANCELLED          |
+                                 | REJECTED           |
+                                 +-------------------+
 
 +------------------------+
 |      <<model>>        |
@@ -515,31 +515,31 @@ Participant: Client          Participant: Frontend       Participant: Backend   
 ### 5.2 États d'un Prestataire
 
 ```
-                         +----------+
-                         |  PENDING |
-                         +----+-----+
-                              |
-              Approbation     |
-              admin           |
-                              v
-                     +----------------+
-                     |    VERIFIED    |
-                     +----+----------+
-                          |
-                          |
-                Désactiver|
-                (admin)  |
-                          v
-                     +------------+
-                     |  SUSPENDED  |
-                     +------------+
+                          +----------+
+                          |  PENDING |
+                          +----+-----+
+                               |
+               Approbation     |
+               admin           |
+                               v
+                      +----------------+
+                      |    VERIFIED    |
+                      +----+----------+
+                           |
+                           |
+                 Désactiver|
+                 (admin)  |
+                           v
+                      +------------+
+                      |  SUSPENDED  |
+                      +------------+
 ```
 
 ---
 
 ## 6. DIAGRAMME DE COMPOSANTS
 
-### 6.1 Architecture des Composants Backend
+### 6.1 Architecture des Composants Backend (APRÈS REFACTORING)
 
 ```
 +------------------------------------------------------------------+
@@ -559,15 +559,15 @@ Participant: Client          Participant: Frontend       Participant: Backend   
 |  |  | /services  |  |            |  | CategoryController   |  |
 |  |  | /categories|  |            |  | ServiceController    |  |
 |  |  | /reviews   |  |            |  | ReviewController    |  |
-|  |  | /admin     |  |            |  | AdminController     |  |
+|  |  | /admin     |  |            |  |                     |  |
 |  |  +------------+  +------------+  +------------+           |  |
 |  |         |                |              |                |  |
 |  |         v                v              v                |  |
 |  |  +--------------------------------------------------+   |  |
-|  |  |              SERVICES LAYER                       |   |  |
+|  |  |              SERVICES LAYER (NOUVEAU!)           |   |  |
 |  |  +--------------------------------------------------+   |  |
-|  |  |  AuthService  | ProviderService | BookingService   |   |  |
-|  |  |  EmailService | NotificationService               |   |  |
+|  |  |  UserService      | BookingService | CategoryService|   |  |
+|  |  |  ServiceService   | EmailService  | NotificationSvc |   |  |
 |  |  +--------------------------------------------------+   |  |
 |  |                          |                               |  |
 |  |                          v                               |  |
@@ -578,15 +578,46 @@ Participant: Client          Participant: Frontend       Participant: Backend   
 |  +------------------------------------------------------------+  |
 |                              |                                    |
 +------------------------------|------------------------------------+
-                               v
-                    +-------------------+
-                    |   POSTGRESQL      |
-                    |   (Prisma         |
-                    |   Accelerate)     |
-                    +-------------------+
+                                v
+                     +-------------------+
+                     |   POSTGRESQL      |
+                     |   (Prisma         |
+                     |   Accelerate)     |
+                     +-------------------+
 ```
 
-### 6.2 Architecture des Composants Frontend
+### 6.2 Architecture Routes Admin (APRÈS REFACTORING)
+
+```
++------------------------------------------------------------------+
+|                     ROUTES ADMIN MODULARISÉES                     |
++------------------------------------------------------------------+
+|                                                                   |
+|  /api/admin                                                       |
+|  |                                                               |
+|  +--- /users ---------> backend/src/routes/admin/users.ts        |
+|  |                        -> utilise userService                  |
+|  +--- /bookings -------> backend/src/routes/admin/bookings.ts    |
+|  |                        -> utilise bookingService               |
+|  +--- /categories -----> backend/src/routes/admin/categories.ts  |
+|  |                        -> utilise categoryService              |
+|  +--- /services -------> backend/src/routes/admin/services.ts     |
+|  |                        -> utilise serviceService               |
+|  +--- /payments -------> backend/src/routes/admin/payments.ts     |
+|  +--- /subscriptions --> backend/src/routes/admin/subscriptions.ts
+|  +--- /analytics ------> backend/src/routes/admin/analytics.ts     |
+|  +--- /notifications -> backend/src/routes/admin/notifications.ts |
+|                                                                   |
+|  Fichiers créés:                                                  |
+|  - backend/src/services/userService.ts                            |
+|  - backend/src/services/bookingService.ts                         |
+|  - backend/src/services/categoryService.ts                        |
+|  - backend/src/services/serviceService.ts                         |
+|                                                                   |
++------------------------------------------------------------------+
+```
+
+### 6.3 Architecture des Composants Frontend (APRÈS REFACTORING)
 
 ```
 +------------------------------------------------------------------+
@@ -612,32 +643,40 @@ Participant: Client          Participant: Frontend       Participant: Backend   
 |  |         |                       |                          |  |
 |  |         v                       v                          |  |
 |  |  +------------------------------------------------+       |  |
+|  |  |        ADMIN COMPONENTS (NOUVEAU!)             |       |  |
+|  |  +------------------------------------------------+       |  |
+|  |  |  UserFilters  | UserStats  | UserTable        |       |  |
+|  |  |  UserDetailsModal | CreateUserForm            |       |  |
+|  |  +------------------------------------------------+       |  |
+|  |         |                       |                          |  |
+|  |         v                       v                          |  |
+|  |  +------------------------------------------------+       |  |
 |  |  |                  LIB / UTILS                    |       |  |
 |  |  +------------------------------------------------+       |  |
-|  |  |  api.ts (axios)  | auth.ts  | notifications.ts |       |  |
+|  |  |  api.ts  | auth.ts  | notifications.ts | adminUtils.tsx |  |
 |  |  +------------------------------------------------+       |  |
 |  |                                                            |  |
 |  +------------------------------------------------------------+  |
 |                              |                                    |
 +------------------------------|------------------------------------+
-                               v
-                    +-------------------+
-                    |    VITE PROXY    |
-                    |   (/api -> ...)  |
-                    +-------------------+
-                               |
-                               v
-                    +-------------------+
-                    |    BACKEND API    |
-                    | (Render.com)      |
-                    +-------------------+
+                                v
+                     +-------------------+
+                     |    VITE PROXY    |
+                     |   (/api -> ...)  |
+                     +-------------------+
+                                |
+                                v
+                     +-------------------+
+                     |    BACKEND API    |
+                     | (Render.com)      |
+                     +-------------------+
 ```
 
 ---
 
 ## 7. DIAGRAMME DE PACKAGES
 
-### 7.1 Structure des Packages Backend
+### 7.1 Structure des Packages Backend (APRÈS REFACTORING)
 
 ```
 +------------------------------------------------------------------+
@@ -662,20 +701,27 @@ Participant: Client          Participant: Frontend       Participant: Backend   
 |  |  +------------------+  +------------------+  +-----------+ |  |
 |  |  |     routes       |  |    services     |  | interfaces| |  |
 |  |  +------------------+  +------------------+  +-----------+ |  |
-|  |  | - auth.ts       |  | - emailService  |  | - IUser   | |  |
-|  |  | - bookings.ts   |  | - notifService  |  | - IProvider| |  |
-|  |  | - providers.ts |  +------------------+  | - IBooking | |  |
-|  |  | - categories.ts |                        | - IService | |  |
-|  |  | - services.ts  |                        | - ICategory| |  |
-|  |  | - reviews.ts   |                        +-----------+ |  |
-|  |  | - admin.ts     |                                      |  |
-|  |  | - notifications|                                      |  |
+|  |  | - auth.ts       |  | - userService   |  | - IUser   | |  |
+|  |  | - bookings.ts   |  | - bookingService |  | - IProvider| |  |
+|  |  | - providers.ts |  | - categoryService|  | - IBooking | |  |
+|  |  | - categories.ts|  | - serviceService |  | - IService | |  |
+|  |  | - services.ts  |  | - emailService   |  | - ICategory| |  |
+|  |  | - reviews.ts   |  | - notifService   |  +-----------+ |  |
+|  |  | - admin.ts     |  +------------------+                |  |
+|  |  | - notifications|                                          |  |
 |  |  +------------------+                                      |  |
 |  |                                                            |  |
-|  |  +------------------+                                      |  |
-|  |  |   validations   |                                      |  |
-|  |  +------------------+                                      |  |
-|  |  | - index.ts      |                                      |  |
+|  |  +------------------+  +------------------+                 |  |
+|  |  |   routes/admin  |  |   validations   |                 |  |
+|  |  +------------------+  +------------------+                 |  |
+|  |  | - users.ts      |  | - index.ts      |                 |  |
+|  |  | - bookings.ts   |  +------------------+                 |  |
+|  |  | - categories.ts |                                      |  |
+|  |  | - services.ts   |                                      |  |
+|  |  | - payments.ts   |                                      |  |
+|  |  | - subscriptions|                                      |  |
+|  |  | - analytics.ts |                                      |  |
+|  |  | - notifications|                                      |  |
 |  |  +------------------+                                      |  |
 |  |                                                            |  |
 |  +------------------------------------------------------------+  |
@@ -696,18 +742,18 @@ Participant: Client          Participant: Frontend       Participant: Backend   
           |                           |                           |
           v                           v                           v
 +-------------------+      +-------------------+      +-------------------+
-|   USER BROWSER   |      |    VERCEL CDN     |      |  RENDER.COM      |
+|   USER BROWSER   |      |    VERCEL CDN     |      |  RENDER.COM       |
 |                   |      |                   |      |                   |
 | - Chrome          |      | - Frontend Build  |      | - Backend Docker  |
 | - Firefox         |      | - Static Assets   |      | - Node.js         |
-| - Safari         |      | - API Proxy       |      | - Express.js      |
+| - Safari          |      | - API Proxy       |      | - Express.js      |
 | - Mobile          |      +-------------------+      +--------+----------+
 +-------------------+                                        |
           |                                                  v
           |                                       +-------------------+
           |                                       | PRISMA ACCELERATE |
-          +-------------------------------------->| (PostgreSQL)      |
-                                       HTTPS     +-------------------+
+          +------------------------------------->| (PostgreSQL)      |
+                                        HTTPS     +-------------------+
 
  COMMUNICATIONS:
  
@@ -740,4 +786,27 @@ Participant: Client          Participant: Frontend       Participant: Backend   
 
 ---
 
+## 10. RÉSUMÉ DES CHANGEMENTS DE REFACTORING
+
+### Backend
+1. **Routes admin modularisées** (backend/src/routes/admin/)
+   - users.ts, bookings.ts, categories.ts, services.ts, payments.ts, subscriptions.ts, analytics.ts, notifications.ts
+
+2. **Services créés** (backend/src/services/)
+   - userService.ts, bookingService.ts, categoryService.ts, serviceService.ts
+
+3. **admin.ts** est maintenant un point d'entrée qui importe tous les modules
+
+### Frontend
+1. **Composants réutilisables créés** (front/src/components/admin/)
+   - UserFilters.tsx, UserStats.tsx, UserTable.tsx, UserDetailsModal.tsx, CreateUserForm.tsx
+
+2. **AdminUsers.tsx** refactorisé pour utiliser les composants réutilisables
+
+3. **Nouveaux utilitaires** (front/src/lib/)
+   - adminUtils.tsx (fonctions pour les badges, statuts, formatting)
+
+---
+
 *Document généré pour KaayJob - Prêt pour StarUML*
+*Mis à jour après refactoring*

@@ -83,30 +83,56 @@ async function initializeDatabase() {
             {
                 name: "Gratuit",
                 slug: "gratuit",
-                description: "Plan gratuit avec fonctionnalités de base",
+                description: "Idéal pour démarrer votre activité",
                 price: 0,
                 duration: 0,
-                features: JSON.stringify(["5 services maximum", "Visibilité standard", "Support par email"]),
+                features: JSON.stringify([
+                    "3 services maximum",
+                    "Visibilité basique sur KaayJob",
+                    "Support par email uniquement",
+                    "Statistiques simples",
+                    "Commission 15% par réservation"
+                ]),
                 is_active: true,
                 display_order: 1
             },
             {
                 name: "Premium",
                 slug: "premium",
-                description: "Plan premium avec plus de visibilité",
+                description: "Pour les prestataires sérieux et professionnels",
                 price: 9900,
                 duration: 30,
-                features: JSON.stringify(["Services illimités", "Badge VIP", "Visibilité prioritaire", "Support prioritaire", "Statistiques avancées"]),
+                features: JSON.stringify([
+                    "Services illimités",
+                    "Badge Premium doré",
+                    "Visibilité prioritaire dans les recherches",
+                    "Commission réduite à 10%",
+                    "Support prioritaire par téléphone/chat",
+                    "Statistiques avancées des réservations",
+                    "Réponses aux avis clients",
+                    "Formation gratuite aux bonnes pratiques"
+                ]),
                 is_active: true,
                 display_order: 2
             },
             {
                 name: "Pro",
                 slug: "pro",
-                description: "Plan professionnel avec toutes les fonctionnalités",
+                description: "Pour les entrepreneurs et équipes professionnelles",
                 price: 24900,
                 duration: 30,
-                features: JSON.stringify(["Tout Premium", "Publication en premier", "Badge Pro", "Formation exclusive", "Gestion équipe"]),
+                features: JSON.stringify([
+                    "Tout du Premium",
+                    "Badge Pro exclusif avec certification",
+                    "Apparition en tête des résultats",
+                    "Commission ultra-réduite à 5%",
+                    "Support VIP 24/7",
+                    "Gestion multi-comptes pour votre équipe",
+                    "Outils marketing avancés",
+                    "Accès aux clients premium",
+                    "Formation avancée et certification",
+                    "API pour intégrations personnalisées"
+                ]),
                 is_active: true,
                 display_order: 3
             }

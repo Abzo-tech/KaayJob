@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Separator } from "./ui/separator";
 import { CreditCard, Wallet, Banknote, Shield, Calendar, Clock, MapPin, User } from "lucide-react";
+import { toast } from "sonner";
 
 interface CheckoutPageProps {
   onNavigate: (page: string) => void;
@@ -38,7 +39,7 @@ export function CheckoutPage({ onNavigate }: CheckoutPageProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Mock payment processing
-    alert("Paiement réussi ! Réservation confirmée.");
+    toast.success("Paiement réussi ! Réservation confirmée.");
     onNavigate('dashboard');
   };
 

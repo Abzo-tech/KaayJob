@@ -261,6 +261,17 @@ export function PrestataireSubscription() {
           ...currentSubscription,
           status: "cancelled",
         });
+        // Rafraîchir les données
+        const [subResponse, historyResponse] = await Promise.all([
+          api.get("/providers/me/subscription"),
+          api.get("/providers/me/subscription/history"),
+        ]);
+        if (subResponse.success) {
+          setCurrentSubscription(subResponse.data);
+        }
+        if (historyResponse.success) {
+          setSubscriptionHistory(historyResponse.data || []);
+        }
       } else {
         toast.error(response.message || "Erreur lors de l'annulation");
       }
@@ -281,11 +292,35 @@ export function PrestataireSubscription() {
 
   const currentPlan = getCurrentPlan();
   const isPremium =
-    currentSubscription?.plan === "premium" ||
-    currentSubscription?.plan === "pro";
+    (currentSubscription?.plan === "premium" ||
+    currentSubscription?.plan === "pro") &&
+    (currentSubscription?.status === "active" ||
+    currentSubscription?.status === "actif");
   const isActive =
     currentSubscription?.status === "active" ||
     currentSubscription?.status === "actif";
+
+  // Fonction pour obtenir le texte d'affichage selon le plan
+  const getMembershipText = () => {
+    if (!isPremium) return null;
+
+    if (currentSubscription?.plan === "pro") {
+      return {
+        title: "Vous êtes un membre Pro !",
+        description: "Profitez de tous les avantages exclusifs et maximisez votre visibilité.",
+        icon: <Crown className="text-purple-500" size={24} />
+      };
+    } else if (currentSubscription?.plan === "premium") {
+      return {
+        title: "Vous êtes un membre Premium !",
+        description: "Bénéficiez d'une visibilité prioritaire et de commissions réduites.",
+        icon: <Crown className="text-yellow-500" size={24} />
+      };
+    }
+    return null;
+  };
+
+  const membershipInfo = getMembershipText();
 
   if (loading) {
     return (
@@ -328,12 +363,17 @@ export function PrestataireSubscription() {
                 )}
               </div>
               <div className="flex flex-col gap-2">
-                {isPremium && (
-                  <div className="flex items-center gap-2">
-                    <Crown className="text-yellow-500" size={24} />
-                    <span className="font-medium text-yellow-600">
-                      Vous êtes un membre premium !
-                    </span>
+                {membershipInfo && (
+                  <div className="bg-gradient-to-r from-yellow-50 to-purple-50 p-3 rounded-lg border border-yellow-200">
+                    <div className="flex items-center gap-2 mb-1">
+                      {membershipInfo.icon}
+                      <span className="font-semibold text-gray-800">
+                        {membershipInfo.title}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 ml-8">
+                      {membershipInfo.description}
+                    </p>
                   </div>
                 )}
                 {isActive && (
@@ -359,17 +399,19 @@ export function PrestataireSubscription() {
 
       {/* Pas d'abonnement */}
       {!currentSubscription && (
-        <Card className="mb-8 border-yellow-400 bg-yellow-50">
+        <Card className="mb-8 border-yellow-400 bg-gradient-to-r from-yellow-50 to-orange-50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <AlertCircle className="text-yellow-600" size={32} />
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Crown className="text-yellow-600" size={24} />
+              </div>
               <div>
                 <h3 className="font-semibold text-yellow-800">
-                  Vous n'avez pas d'abonnement actif
+                  Débloquez votre potentiel sur KaayJob !
                 </h3>
                 <p className="text-sm text-yellow-700">
-                  Souscrivez à un plan premium pour bénéficier de plus de
-                  visibilité et de fonctionnalités.
+                  Passez au Premium ou Pro pour gagner plus de clients, réduire vos commissions
+                  et bénéficier d'outils professionnels exclusifs.
                 </p>
               </div>
             </div>
@@ -389,21 +431,28 @@ export function PrestataireSubscription() {
             return (
               <Card
                 key={plan.id}
-                className={
+                className={`relative overflow-hidden ${
                   planSlug === "pro"
-                    ? "border-purple-500 border-2"
-                    : isCurrentPlanActive
-                      ? "border-green-500 border-2"
-                      : ""
-                }
+                    ? "border-purple-500 border-2 shadow-lg shadow-purple-100"
+                    : planSlug === "premium"
+                      ? "border-yellow-500 border-2 shadow-lg shadow-yellow-100"
+                      : isCurrentPlanActive
+                        ? "border-green-500 border-2 shadow-lg shadow-green-100"
+                        : "border-gray-200"
+                }`}
               >
+                {planSlug === "pro" && (
+                  <div className="absolute top-0 right-0 bg-purple-500 text-white text-xs px-2 py-1 rounded-bl-lg font-semibold">
+                    Plus populaire
+                  </div>
+                )}
                 <CardHeader
                   className={`${
                     planSlug === "pro"
-                      ? "bg-purple-100"
+                      ? "bg-gradient-to-r from-purple-100 to-purple-50"
                       : planSlug === "premium"
-                        ? "bg-yellow-100"
-                        : "bg-gray-100"
+                        ? "bg-gradient-to-r from-yellow-100 to-yellow-50"
+                        : "bg-gradient-to-r from-gray-100 to-gray-50"
                   } rounded-t-lg`}
                 >
                   <CardTitle className="flex items-center gap-2">
@@ -413,10 +462,22 @@ export function PrestataireSubscription() {
                     {planSlug === "premium" && (
                       <Crown size={20} className="text-yellow-600" />
                     )}
-                    {plan.name}
+                    <span className={
+                      planSlug === "pro" ? "text-purple-800" :
+                      planSlug === "premium" ? "text-yellow-800" :
+                      "text-gray-800"
+                    }>
+                      {plan.name}
+                    </span>
                   </CardTitle>
-                  <CardDescription>
-                    {getDurationText(plan.duration)}
+                  <CardDescription className={
+                    planSlug === "pro" ? "text-purple-600" :
+                    planSlug === "premium" ? "text-yellow-600" :
+                    "text-gray-600"
+                  }>
+                    {planSlug === "gratuit" ? "Parfait pour démarrer" :
+                     planSlug === "premium" ? "Idéal pour les professionnels" :
+                     "Pour les entrepreneurs"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-4">
@@ -461,15 +522,15 @@ export function PrestataireSubscription() {
                         <Check size={18} className="mr-2" />
                       )}
                       {currentSubscription
-                        ? "Basculer vers Gratuit"
-                        : "S'abonner"}
+                        ? "Revenir au gratuit"
+                        : "Commencer gratuitement"}
                     </Button>
                   ) : (
                     <Button
-                      className={`w-full mt-6 ${
+                      className={`w-full mt-6 text-white font-semibold ${
                         planSlug === "premium"
-                          ? "bg-yellow-500 hover:bg-yellow-600"
-                          : "bg-purple-600 hover:bg-purple-700"
+                          ? "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 shadow-lg"
+                          : "bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 shadow-lg"
                       }`}
                       onClick={() => handleSubscribeClick(plan)}
                       disabled={subscribing === plan.id}
@@ -479,7 +540,7 @@ export function PrestataireSubscription() {
                       ) : (
                         <CreditCard size={18} className="mr-2" />
                       )}
-                      Souscrire
+                      {planSlug === "premium" ? "Devenir Premium" : "Devenir Pro"}
                     </Button>
                   )}
                 </CardContent>

@@ -15,6 +15,7 @@ const auth_1 = require("../middleware/auth");
 const validations_1 = require("../validations");
 const database_1 = require("../config/database");
 const prisma_1 = require("../config/prisma");
+const notificationService_1 = require("../services/notificationService");
 const router = (0, express_1.Router)();
 // GET /api/providers - Liste des prestataires (public)
 router.get("/", async (req, res) => {
@@ -103,6 +104,18 @@ router.post("/profile/verification", auth_1.authenticate, [(0, express_validator
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ success: false, errors: errors.array() });
+    }
+    const userId = req.user.id;
+    // Obtenir les informations du prestataire
+    const userResult = await (0, database_1.query)("SELECT first_name, last_name FROM users WHERE id = $1", [userId]);
+    if (userResult.rows.length === 0) {
+        return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+    }
+    const user = userResult.rows[0];
+    // Notifier les administrateurs de la demande de vérification (privé admin-prestataire)
+    const admins = await (0, database_1.query)("SELECT id FROM users WHERE role = 'admin'", []);
+    for (const admin of admins.rows) {
+        await (0, notificationService_1.createNotification)(admin.id, "Demande de vérification", `${user.first_name} ${user.last_name} a demandé la vérification de son profil.`, "info", "/admin/providers", [admin.id, userId]);
     }
     await providerController_1.default.requestVerification(req, res);
 });
@@ -233,6 +246,8 @@ router.post("/me/subscription/subscribe", auth_1.authenticate, [
         if (planPrice > 0 && paymentMethod) {
             await (0, database_1.query)(`INSERT INTO payments (id, user_id, amount, payment_method, status, created_at)
            VALUES (gen_random_uuid(), $1, $2, $3, 'PAID', NOW())`, [userId, planPrice, paymentMethod]);
+            // Notifier le prestataire du paiement réussi
+            await (0, notificationService_1.createNotification)(userId, "Paiement d'abonnement réussi", `Votre paiement de ${planPrice}€ pour l'abonnement ${planSlug.toUpperCase()} a été traité avec succès.`, "payment", "/prestataire/subscription");
         }
         const message = planPrice > 0
             ? `Paiement réussi ! Abonnement ${planSlug.toUpperCase()} activé`
@@ -359,10 +374,21 @@ router.get("/me/subscription/history", auth_1.authenticate, async (req, res) => 
 // POST /api/providers/me/subscription/cancel - Annuler l'abonnement
 router.post("/me/subscription/cancel", auth_1.authenticate, async (req, res) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Utilisateur non identifié" });
+        }
+        // Vérifier si l'utilisateur est un prestataire
+        const userCheck = await (0, database_1.query)("SELECT role FROM users WHERE id = $1", [userId]);
+        if (userCheck.rows.length === 0) {
+            return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+        }
+        if (userCheck.rows[0].role !== "PRESTATAIRE") {
+            return res.status(403).json({ success: false, message: "Seuls les prestataires peuvent annuler leur abonnement" });
+        }
         // Mettre à jour le statut de l'abonnement
-        const result = await (0, database_1.query)(`UPDATE subscriptions 
-         SET status = 'cancelled', updated_at = NOW()
+        const result = await (0, database_1.query)(`UPDATE subscriptions
+         SET status = 'cancelled'
          WHERE user_id = $1 AND status = 'active'
          RETURNING *`, [userId]);
         if (result.rows.length === 0) {
@@ -370,6 +396,11 @@ router.post("/me/subscription/cancel", auth_1.authenticate, async (req, res) => 
                 success: false,
                 message: "Aucun abonnement actif à annuler",
             });
+        }
+        // Notifier les administrateurs de l'annulation d'abonnement (privé admin-prestataire)
+        const admins = await (0, database_1.query)("SELECT id FROM users WHERE role = 'admin'", []);
+        for (const admin of admins.rows) {
+            await (0, notificationService_1.createNotification)(admin.id, "Annulation d'abonnement", `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name} a annulé son abonnement.`, "warning", "/admin/subscriptions", [admin.id, userId]);
         }
         res.json({
             success: true,
@@ -379,7 +410,7 @@ router.post("/me/subscription/cancel", auth_1.authenticate, async (req, res) => 
     }
     catch (error) {
         console.error("Erreur annulation:", error);
-        res.status(500).json({ success: false, message: "Erreur serveur" });
+        res.status(500).json({ success: false, message: "Erreur serveur: " + error.message });
     }
 });
 // GET /api/providers/me/payments - Historique des paiements

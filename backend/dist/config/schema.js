@@ -177,6 +177,24 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE INDEX IF NOT EXISTS idx_payments_booking ON payments(booking_id);
 CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
 
+-- Table des plans d'abonnement
+CREATE TABLE IF NOT EXISTS subscription_plans (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    price DECIMAL(10, 2) NOT NULL,
+    duration INTEGER DEFAULT 30,
+    features JSONB DEFAULT '[]'::jsonb,
+    is_active BOOLEAN DEFAULT TRUE,
+    display_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_subscription_plans_slug ON subscription_plans(slug);
+CREATE INDEX IF NOT EXISTS idx_subscription_plans_active ON subscription_plans(is_active);
+
 -- Table des notifications
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -186,6 +204,7 @@ CREATE TABLE IF NOT EXISTS notifications (
     type VARCHAR(20) DEFAULT 'info',
     read BOOLEAN DEFAULT FALSE,
     link VARCHAR(500),
+    private_recipients JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

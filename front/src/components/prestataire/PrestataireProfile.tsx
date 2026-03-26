@@ -20,6 +20,8 @@ import {
   Plus,
   Trash2,
   X,
+  Navigation,
+  Save,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
@@ -60,6 +62,8 @@ export function PrestataireProfile() {
     specialization: "",
     address: "",
     zone: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
   const [bankDetails, setBankDetails] = useState({
@@ -68,6 +72,7 @@ export function PrestataireProfile() {
     accountHolder: "",
   });
   const [isSavingBank, setIsSavingBank] = useState(false);
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [serviceImages, setServiceImages] = useState<string[]>([]);
@@ -87,6 +92,8 @@ export function PrestataireProfile() {
           specialization: parsedUser.specialization || "",
           address: parsedUser.address || "",
           zone: parsedUser.zone || "",
+          latitude: parsedUser.latitude || null,
+          longitude: parsedUser.longitude || null,
         });
         fetchServices(parsedUser.id);
         fetchAvailability();
@@ -171,6 +178,76 @@ export function PrestataireProfile() {
       toast.error("Erreur lors de l'enregistrement");
     } finally {
       setIsSavingBank(false);
+    }
+  };
+
+  const handleGetCurrentLocation = async () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+
+          setProfileData(prev => ({
+            ...prev,
+            latitude: lat,
+            longitude: lng,
+          }));
+
+          // Reverse geocoding to get address
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+            );
+            const data = await response.json();
+            if (data.display_name) {
+              setProfileData(prev => ({
+                ...prev,
+                address: data.display_name,
+              }));
+              toast.success("Position détectée et adresse mise à jour!");
+            }
+          } catch (error) {
+            console.error("Error reverse geocoding:", error);
+            toast.success("Position détectée avec succès!");
+          }
+        },
+        () => {
+          toast.error("Impossible d'obtenir votre position. Veuillez autoriser l'accès à la géolocalisation.");
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000
+        }
+      );
+    } else {
+      toast.error("La géolocalisation n'est pas supportée par ce navigateur.");
+    }
+  };
+
+  const handleSaveLocation = async () => {
+    setIsSavingLocation(true);
+    try {
+      const response = await api.put("/providers/profile/location", {
+        latitude: profileData.latitude,
+        longitude: profileData.longitude,
+        address: profileData.address,
+        zone: profileData.zone,
+        specialization: profileData.specialization,
+        bio: profileData.bio,
+      });
+
+      if (response.data?.success) {
+        toast.success("Informations de géolocalisation enregistrées avec succès!");
+      } else {
+        toast.error(response.data?.message || "Erreur lors de l'enregistrement");
+      }
+    } catch (error: any) {
+      console.error("Erreur sauvegarde localisation:", error);
+      toast.error(error.response?.data?.message || "Erreur lors de l'enregistrement");
+    } finally {
+      setIsSavingLocation(false);
     }
   };
 
@@ -346,7 +423,7 @@ export function PrestataireProfile() {
               </Card>
 
               <Card className="bg-white border-0 shadow-md">
-                <CardHeader><CardTitle>Zone de Service</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Zone de Service & Géolocalisation</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="address">Adresse</Label>
@@ -356,13 +433,75 @@ export function PrestataireProfile() {
                     <Label htmlFor="zone">Zone de couverture</Label>
                     <Input id="zone" value={profileData.zone} onChange={(e) => setProfileData({...profileData, zone: e.target.value})} className="mt-2" placeholder="Ex: Dakar, Plateau, Yoff..." />
                   </div>
+
+                  {/* Géolocalisation */}
+                  <div className="border-t pt-4">
+                    <Label className="text-base font-semibold">Coordonnées GPS</Label>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <Label htmlFor="latitude" className="text-sm">Latitude</Label>
+                        <Input
+                          id="latitude"
+                          type="number"
+                          step="0.000001"
+                          value={profileData.latitude || ""}
+                          onChange={(e) => setProfileData({...profileData, latitude: parseFloat(e.target.value) || null})}
+                          className="mt-1"
+                          placeholder="14.6937"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="longitude" className="text-sm">Longitude</Label>
+                        <Input
+                          id="longitude"
+                          type="number"
+                          step="0.000001"
+                          value={profileData.longitude || ""}
+                          onChange={(e) => setProfileData({...profileData, longitude: parseFloat(e.target.value) || null})}
+                          className="mt-1"
+                          placeholder="-17.4441"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleGetCurrentLocation}
+                        className="flex items-center gap-2"
+                      >
+                        <Navigation className="w-4 h-4" />
+                        Obtenir ma position
+                      </Button>
+
+                      {profileData.latitude && profileData.longitude && (
+                        <div className="flex items-center text-sm text-green-600">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          Position définie
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex items-center space-x-2">
                     <MapPin className="w-5 h-5 text-gray-500" />
                     <span className="text-sm text-gray-600">Rayon de service: 20km</span>
                   </div>
-                  <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white" onClick={handleSaveProfile} disabled={isSaving}>
-                    {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</> : "Enregistrer les modifications"}
-                  </Button>
+
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={handleSaveLocation}
+                      disabled={isSavingLocation}
+                    >
+                      {isSavingLocation ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</>
+                      ) : (
+                        <><Save className="mr-2 h-4 w-4" />Enregistrer géolocalisation</>
+                      )}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>

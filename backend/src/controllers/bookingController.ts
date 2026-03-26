@@ -16,11 +16,13 @@ async function createNotification(
   message: string,
   type: string = "info",
   link?: string,
+  privateRecipients?: string[],
 ) {
   try {
+    const privateRecipientsJson = privateRecipients ? JSON.stringify(privateRecipients) : null;
     await query(
-      "INSERT INTO notifications (id, user_id, title, message, type, link, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())",
-      [userId, title, message, type, link || null],
+      "INSERT INTO notifications (id, user_id, title, message, type, link, private_recipients, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())",
+      [userId, title, message, type, link || null, privateRecipientsJson],
     );
   } catch (error) {
     console.error("Erreur création notification:", error);
@@ -266,13 +268,27 @@ export class BookingController {
           include: { user: true },
         });
         if (providerProfile) {
+          // Notification privée entre client et prestataire
           await createNotification(
             providerProfile.userId,
             "Nouvelle réservation",
             `${user.firstName} ${user.lastName} a réservé "${service.name}"`,
             "info",
             "/prestataire/bookings",
+            [user.id, providerProfile.userId], // Visible seulement par le client et le prestataire
           );
+
+          // Notifier l'admin de la nouvelle réservation (message adapté)
+          const admins = await query("SELECT id FROM users WHERE role = 'ADMIN'", []);
+          for (const admin of admins.rows) {
+            await createNotification(
+              admin.id,
+              "Nouvelle réservation créée",
+              `${user.firstName} ${user.lastName} a réservé le service "${service.name}" auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}`,
+              "info",
+              "/admin/bookings",
+            );
+          }
         }
       }
 
@@ -354,15 +370,27 @@ export class BookingController {
         },
       });
 
+      // Trouver les utilisateurs concernés pour les notifications privées
+      let privateRecipients: string[] = [booking.clientId];
+      if (booking.service.providerId) {
+        const providerProfile = await prisma.providerProfile.findUnique({
+          where: { id: booking.service.providerId },
+        });
+        if (providerProfile) {
+          privateRecipients.push(providerProfile.userId);
+        }
+      }
+
       // Notifier le client du changement de statut
       await createNotification(
         booking.clientId,
-        "Statut de réservationmis à jour",
+        "Statut de réservation mis à jour",
         `Votre réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`,
         upperStatus === "CANCELLED" || upperStatus === "REJECTED"
           ? "error"
           : "success",
         "/client/bookings",
+        privateRecipients, // Privé entre client et prestataire
       );
 
       // Notifier le prestataire du changement de statut
@@ -379,9 +407,33 @@ export class BookingController {
               ? "error"
               : "success",
             "/prestataire/bookings",
+            privateRecipients, // Privé entre client et prestataire
           );
         }
       }
+
+      // Notifier l'admin avec un message adapté (pas de restriction de confidentialité)
+      const clientInfo = await prisma.user.findUnique({
+        where: { id: booking.clientId },
+        select: { firstName: true, lastName: true },
+      });
+
+      if (clientInfo) {
+        // Trouver tous les admins pour les notifier
+        const admins = await query("SELECT id FROM users WHERE role = 'ADMIN'", []);
+        for (const admin of admins.rows) {
+          await createNotification(
+            admin.id,
+            "Nouvelle activité de réservation",
+            `${clientInfo.firstName} ${clientInfo.lastName} a mis à jour sa réservation pour "${booking.service.name}" - Statut: ${upperStatus.toLowerCase()}`,
+            upperStatus === "CANCELLED" || upperStatus === "REJECTED"
+              ? "warning"
+              : "info",
+            "/admin/bookings",
+          );
+        }
+      }
+
 
       res.json({
         success: true,
@@ -435,6 +487,20 @@ export class BookingController {
         },
       });
 
+      // Trouver les utilisateurs concernés pour les notifications privées
+      let privateRecipients: string[] = [booking.clientId];
+      const service = await prisma.service.findUnique({
+        where: { id: booking.serviceId },
+      });
+      if (service?.providerId) {
+        const providerProfile = await prisma.providerProfile.findUnique({
+          where: { id: service.providerId },
+        });
+        if (providerProfile) {
+          privateRecipients.push(providerProfile.userId);
+        }
+      }
+
       // Notifier le client de l'annulation
       await createNotification(
         booking.clientId,
@@ -442,12 +508,10 @@ export class BookingController {
         "Votre réservation a été annulée",
         "warning",
         "/client/bookings",
+        privateRecipients, // Privé entre client et prestataire
       );
 
       // Notifier le prestataire de l'annulation
-      const service = await prisma.service.findUnique({
-        where: { id: booking.serviceId },
-      });
       if (service?.providerId) {
         const providerProfile = await prisma.providerProfile.findUnique({
           where: { id: service.providerId },
@@ -459,6 +523,7 @@ export class BookingController {
             `Une réservation a été annulée`,
             "warning",
             "/prestataire/bookings",
+            privateRecipients, // Privé entre client et prestataire
           );
         }
       }
