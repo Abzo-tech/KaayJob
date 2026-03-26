@@ -6,6 +6,7 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { ImageUpload, ServiceImageUpload } from "../common/ImageUpload";
 import {
   MapPin,
@@ -41,6 +42,7 @@ export function PrestataireProfile() {
     price: "",
     categoryId: "",
   });
+  const [categories, setCategories] = useState<any[]>([]);
 
   const [availability, setAvailability] = useState<any>({
     monday: { enabled: true, start: "08:00", end: "18:00" },
@@ -113,14 +115,30 @@ export function PrestataireProfile() {
       }
     }
     setIsLoading(false);
+
+    // Fetch categories for service creation
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get("/categories");
+      if (response.success && response.data) {
+        setCategories(response.data);
+      }
+    } catch (error) {
+      console.error("Erreur chargement catégories:", error);
+    }
+  };
 
   const fetchServices = async (providerId: string) => {
     setIsLoadingServices(true);
     try {
       const response = await api.get(`/services/provider/${providerId}`);
-      if (response.data?.success) {
-        setServices(response.data.data || []);
+      if (response.success) {
+        setServices(response.data || []);
+      } else {
+        setServices([]);
       }
     } catch (error) {
       console.error("Erreur chargement services:", error);
@@ -229,14 +247,34 @@ export function PrestataireProfile() {
   const handleSaveLocation = async () => {
     setIsSavingLocation(true);
     try {
-      const response = await api.put("/providers/profile/location", {
-        latitude: profileData.latitude,
-        longitude: profileData.longitude,
-        address: profileData.address,
-        zone: profileData.zone,
-        specialization: profileData.specialization,
-        bio: profileData.bio,
-      });
+      // Préparer les données à envoyer, en excluant les valeurs null/undefined
+      const dataToSend: any = {};
+
+      if (profileData.latitude !== null && profileData.latitude !== undefined) {
+        dataToSend.latitude = profileData.latitude;
+      }
+
+      if (profileData.longitude !== null && profileData.longitude !== undefined) {
+        dataToSend.longitude = profileData.longitude;
+      }
+
+      if (profileData.address !== null && profileData.address !== undefined && profileData.address.trim() !== "") {
+        dataToSend.address = profileData.address;
+      }
+
+      if (profileData.zone !== null && profileData.zone !== undefined && profileData.zone.trim() !== "") {
+        dataToSend.zone = profileData.zone;
+      }
+
+      if (profileData.specialization !== null && profileData.specialization !== undefined && profileData.specialization.trim() !== "") {
+        dataToSend.specialization = profileData.specialization;
+      }
+
+      if (profileData.bio !== null && profileData.bio !== undefined && profileData.bio.trim() !== "") {
+        dataToSend.bio = profileData.bio;
+      }
+
+      const response = await api.put("/providers/profile/location", dataToSend);
 
       if (response.data?.success) {
         toast.success("Informations de géolocalisation enregistrées avec succès!");
@@ -274,17 +312,35 @@ export function PrestataireProfile() {
       toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
+
+    // Vérifier si un service avec le même nom existe déjà
+    const existingService = services.find(
+      (service) => service.name.toLowerCase() === newService.name.toLowerCase()
+    );
+
+    if (existingService) {
+      toast.error("Un service avec ce nom existe déjà");
+      return;
+    }
+
     try {
-      const response = await api.post("/services", {
+      const dataToSend: any = {
         name: newService.name,
         description: newService.description,
         price: parseInt(newService.price),
-        categoryId: newService.categoryId || null,
         providerId: user?.id,
-      });
+      };
+
+      // N'ajouter categoryId que s'il est défini et non vide
+      if (newService.categoryId && newService.categoryId.trim() !== "") {
+        dataToSend.categoryId = newService.categoryId;
+      }
+
+      const response = await api.post("/services", dataToSend);
       if (response.data?.success) {
         toast.success("Service ajouté avec succès!");
-        setServices([...services, response.data.data]);
+        // Rafraîchir la liste des services au lieu d'ajouter manuellement
+        fetchServices(user?.id);
         setShowAddService(false);
         setNewService({ name: "", description: "", price: "", categoryId: "" });
       } else {
@@ -302,7 +358,8 @@ export function PrestataireProfile() {
       const response = await api.delete(`/services/${serviceId}`);
       if (response.data?.success) {
         toast.success("Service supprimé avec succès!");
-        setServices(services.filter((s) => s.id !== serviceId));
+        // Rafraîchir complètement la liste des services après suppression
+        fetchServices(user?.id);
       } else {
         toast.error(response.data?.message || "Erreur lors de la suppression");
       }
@@ -565,6 +622,21 @@ export function PrestataireProfile() {
                       <div>
                         <Label htmlFor="serviceName">Nom du service *</Label>
                         <Input id="serviceName" value={newService.name} onChange={(e) => setNewService({...newService, name: e.target.value})} className="mt-2" placeholder="Ex: Réparation de plomberie" />
+                      </div>
+                      <div>
+                        <Label htmlFor="serviceCategory">Catégorie (optionnel)</Label>
+                        <Select value={newService.categoryId} onValueChange={(value) => setNewService({...newService, categoryId: value})}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue placeholder="Sélectionner une catégorie (optionnel)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label htmlFor="serviceDesc">Description</Label>

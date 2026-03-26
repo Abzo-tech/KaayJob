@@ -411,7 +411,7 @@ export const createServiceValidation = [
     .isLength({ max: 200 })
     .withMessage("Nom: 200 caractères max"),
   isDescription("description", 1000, false),
-  isUUID("categoryId", true),
+  isUUID("categoryId", false), // Rendre optionnel
   isPrice("price"),
   isPriceType("priceType", false),
   isDuration("duration", false, 15),

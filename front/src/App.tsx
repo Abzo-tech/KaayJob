@@ -14,6 +14,16 @@ import { api, AuthResponse, User } from "./lib/api";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { Toaster } from "./components/ui/sonner";
 
+// Client imports
+import { AboutPage } from "./components/client/AboutPage";
+import { FAQPage } from "./components/client/FAQPage";
+import { PartnerPage } from "./components/client/PartnerPage";
+import { HelpPage } from "./components/client/HelpPage";
+import { ServicesPage } from "./components/client/ServicesPage";
+import { TermsPage } from "./components/client/TermsPage";
+import { PrivacyPage } from "./components/client/PrivacyPage";
+import { CookiesPage } from "./components/client/CookiesPage";
+
 // Admin imports
 import { AdminSidebar } from "./components/admin/AdminSidebar";
 import { AdminNotifications } from "./components/admin/AdminNotifications";
@@ -245,6 +255,24 @@ export default function App() {
     switch (pageName) {
       case "home":
         return <HomePage onNavigate={handleNavigate} />;
+      case "about":
+        return <AboutPage onNavigate={handleNavigate} />;
+      case "services":
+        return <ServicesPage onNavigate={handleNavigate} />;
+      case "partner":
+        return <PartnerPage onNavigate={handleNavigate} />;
+      case "help":
+        return <HelpPage onNavigate={handleNavigate} />;
+      case "faq":
+        return <FAQPage onNavigate={handleNavigate} />;
+      case "contact":
+        return <ContactPage onNavigate={handleNavigate} />;
+      case "terms":
+        return <TermsPage onNavigate={handleNavigate} />;
+      case "privacy":
+        return <PrivacyPage onNavigate={handleNavigate} />;
+      case "cookies":
+        return <CookiesPage onNavigate={handleNavigate} />;
       case "login":
         return <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />;
       case "login-provider":
@@ -280,8 +308,6 @@ export default function App() {
         return <CheckoutPage onNavigate={handleNavigate} />;
       case "dashboard":
         return <UserDashboard onNavigate={handleNavigate} />;
-      case "contact":
-        return <ContactPage onNavigate={handleNavigate} />;
       default:
         return <HomePage onNavigate={handleNavigate} />;
     }

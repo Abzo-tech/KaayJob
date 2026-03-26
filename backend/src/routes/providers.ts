@@ -328,7 +328,7 @@ router.get(
         `SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role,
                 u.bio, u.specialization, u.address, u.zone, u.avatar,
                 u.is_verified, u.created_at,
-                p.availability, p.response_time, p.completion_rate
+                p.availability
          FROM users u
          LEFT JOIN provider_profiles p ON u.id = p.user_id
          WHERE u.id = $1`,
@@ -357,8 +357,6 @@ router.get(
           isVerified: provider.is_verified,
           createdAt: provider.created_at,
           availability: provider.availability || null,
-          responseTime: provider.response_time,
-          completionRate: provider.completion_rate,
         },
       });
     } catch (error) {
@@ -411,8 +409,8 @@ router.put(
   "/profile/location",
   authenticate,
   [
-    body("latitude").isFloat({ min: -90, max: 90 }).withMessage("Latitude invalide"),
-    body("longitude").isFloat({ min: -180, max: 180 }).withMessage("Longitude invalide"),
+    body("latitude").optional().isFloat({ min: -90, max: 90 }).withMessage("Latitude invalide"),
+    body("longitude").optional().isFloat({ min: -180, max: 180 }).withMessage("Longitude invalide"),
     body("address").optional().isString().withMessage("Adresse invalide"),
     body("zone").optional().isString().withMessage("Zone invalide"),
     body("specialization").optional().isString().withMessage("Spécialisation invalide"),
@@ -442,16 +440,60 @@ router.put(
         return res.status(403).json({ success: false, message: "Seuls les prestataires peuvent mettre à jour leur localisation" });
       }
 
-      // Mettre à jour la localisation et autres infos de géolocalisation
-      await query(
-        `UPDATE users
-         SET latitude = $1, longitude = $2, address = $3, zone = $4,
-             specialization = COALESCE($5, specialization),
-             bio = COALESCE($6, bio),
-             updated_at = NOW()
-         WHERE id = $7`,
-        [latitude, longitude, address || null, zone || null, specialization, bio, userId],
-      );
+      // Construire la requête de mise à jour dynamiquement
+      const updateFields: string[] = [];
+      const updateValues: any[] = [];
+      let paramIndex = 1;
+
+      if (latitude !== undefined) {
+        updateFields.push(`latitude = $${paramIndex}`);
+        updateValues.push(latitude);
+        paramIndex++;
+      }
+
+      if (longitude !== undefined) {
+        updateFields.push(`longitude = $${paramIndex}`);
+        updateValues.push(longitude);
+        paramIndex++;
+      }
+
+      if (address !== undefined) {
+        updateFields.push(`address = $${paramIndex}`);
+        updateValues.push(address);
+        paramIndex++;
+      }
+
+      if (zone !== undefined) {
+        updateFields.push(`zone = $${paramIndex}`);
+        updateValues.push(zone);
+        paramIndex++;
+      }
+
+      if (specialization !== undefined) {
+        updateFields.push(`specialization = $${paramIndex}`);
+        updateValues.push(specialization);
+        paramIndex++;
+      }
+
+      if (bio !== undefined) {
+        updateFields.push(`bio = $${paramIndex}`);
+        updateValues.push(bio);
+        paramIndex++;
+      }
+
+      // Toujours mettre à jour updated_at
+      updateFields.push(`updated_at = NOW()`);
+
+      if (updateFields.length > 1) { // Plus que juste updated_at
+        const updateQuery = `
+          UPDATE users
+          SET ${updateFields.join(', ')}
+          WHERE id = $${paramIndex}
+        `;
+        updateValues.push(userId);
+
+        await query(updateQuery, updateValues);
+      }
 
       // S'assurer qu'un profil prestataire existe
       const profileCheck = await query(

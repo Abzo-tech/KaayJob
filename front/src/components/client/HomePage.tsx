@@ -65,25 +65,37 @@ const trustFeatures = [
 const footerSections = [
   {
     title: "À Propos",
-    links: ["Qui sommes-nous", "Notre Mission", "Nos Valeurs"],
+    links: [
+      { text: "Qui sommes-nous", route: "about" },
+      { text: "Notre Mission", route: "about" },
+      { text: "Nos Valeurs", route: "about" }
+    ],
   },
   {
     title: "Services",
     links: [
-      "Tous les Services",
-      "Trouver un Prestataire",
-      "Devenir Partenaire",
+      { text: "Tous les Services", route: "services" },
+      { text: "Trouver un Prestataire", route: "categories" },
+      { text: "Devenir Partenaire", route: "partner" },
     ],
   },
   {
     title: "Support",
-    links: ["Aide", "Contact", "FAQ"],
+    links: [
+      { text: "Aide", route: "help" },
+      { text: "Contact", route: "contact" },
+      { text: "FAQ", route: "faq" }
+    ],
   },
   {
     title: "Légal",
-    links: ["Conditions", "Politique de Confidentialité", "Cookies"],
+    links: [
+      { text: "Conditions", route: "terms" },
+      { text: "Politique de Confidentialité", route: "privacy" },
+      { text: "Cookies", route: "cookies" }
+    ],
   },
-];
+] as const;
 
 const socialLinks = ["Facebook", "Instagram", "Twitter", "LinkedIn"];
 
@@ -377,12 +389,12 @@ export function HomePage({ onNavigate }: HomePageProps) {
                 <ul className="space-y-2">
                   {section.links.map((link, i) => (
                     <li key={i}>
-                      <a
-                        href="#"
-                        className="text-gray-300 hover:text-[#FFF4EA] transition-colors"
+                      <button
+                        onClick={() => onNavigate(link.route)}
+                        className="text-gray-300 hover:text-[#FFF4EA] transition-colors text-left"
                       >
-                        {link}
-                      </a>
+                        {link.text}
+                      </button>
                     </li>
                   ))}
                 </ul>
