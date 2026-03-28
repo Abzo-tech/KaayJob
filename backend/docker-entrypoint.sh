@@ -63,9 +63,12 @@ else
 fi
 
 # Exécuter les migrations Prisma si DATABASE_URL est disponible
+echo "🔍 DATABASE_URL défini: ${DATABASE_URL:+YES}"
 if [ -n "$DATABASE_URL" ]; then
-    echo "🔄 Exécution des migrations Prisma..."
-    npx prisma migrate deploy || echo "⚠️ Migrations déjà à jour ou ignorées"
+    echo "🔄 Configuration de la base de données Prisma..."
+    npx prisma db push --force-reset || echo "⚠️ Échec de la configuration de la base de données"
+else
+    echo "⚠️ DATABASE_URL non défini, pas de configuration Prisma"
 fi
 
 echo "🚀 Lancement du serveur backend..."
