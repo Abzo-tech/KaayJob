@@ -9,13 +9,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Installer les dépendances (y compris devDependencies pour le build)
-COPY backend/package*.json ./
+COPY package*.json ./
 
 RUN npm ci && \
     npm install -g prisma
 
 # Copier le code source du backend
-COPY backend/ .
+COPY . .
 
 # Générer le client Prisma
 RUN npx prisma generate
@@ -43,7 +43,7 @@ COPY --from=builder --chown=nodejs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nodejs:nodejs /app/public ./public
 
 # Copier le script d'entrée
-COPY backend/docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 
 # Variables d'environnement
 ENV NODE_ENV=production

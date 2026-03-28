@@ -40,10 +40,12 @@ build_service() {
     fi
 }
 
-# Demander le registry
+# Demander le registry ou utiliser la variable d'environnement
 echo ""
-echo -e "${BLUE}🔗 Registry Docker (laissez vide pour localhost):${NC}"
-read -r REGISTRY
+if [ -z "$REGISTRY" ]; then
+    echo -e "${BLUE}🔗 Registry Docker (laissez vide pour localhost):${NC}"
+    read -r REGISTRY
+fi
 
 if [ -z "$REGISTRY" ]; then
     REGISTRY="localhost"
