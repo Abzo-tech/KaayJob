@@ -45,8 +45,10 @@ import {
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { validateFormField } from "../../lib/validations";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 
 export function PrestataireServices() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [searchTerm, setSearchTerm] = useState("");
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -187,10 +189,15 @@ export function PrestataireServices() {
   };
 
   const handleDeleteService = async (serviceId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce service ?")) {
-      return;
-    }
-    
+    const confirmed = await confirm(
+      "Supprimer le service",
+      "Êtes-vous sûr de vouloir supprimer ce service ? Cette action est irréversible.",
+      "Supprimer",
+      "Annuler"
+    );
+
+    if (!confirmed) return;
+
     try {
       setActionLoading(serviceId);
       await api.delete(`/services/${serviceId}`);
@@ -517,6 +524,7 @@ export function PrestataireServices() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </div>
   );
 }

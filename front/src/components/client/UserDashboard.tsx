@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 
 interface UserDashboardProps {
   onNavigate: (page: string) => void;
@@ -68,6 +69,7 @@ interface Booking {
 }
 
 export function UserDashboard({ onNavigate }: UserDashboardProps) {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [isLoading, setIsLoading] = useState(true);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -238,8 +240,15 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
   };
 
   const handleCancelBooking = async (bookingId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir annuler cette réservation ?"))
-      return;
+    const confirmed = await confirm(
+      "Annuler la réservation",
+      "Êtes-vous sûr de vouloir annuler cette réservation ?",
+      "Annuler",
+      "Conserver"
+    );
+
+    if (!confirmed) return;
+
     try {
       setActionLoading(bookingId);
       await api.delete(`/bookings/${bookingId}`);
@@ -954,8 +963,14 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
             </Button>
             <Button
               onClick={async () => {
-                if (!confirm("Êtes-vous sûr ? Cette action est irréversible."))
-                  return;
+                const confirmed = await confirm(
+                  "Supprimer le compte",
+                  "Êtes-vous sûr ? Cette action est irréversible et supprimera toutes vos données.",
+                  "Supprimer",
+                  "Annuler"
+                );
+
+                if (!confirmed) return;
                 setIsSaving(true);
                 try {
                   const response = await api.delete("/auth/account");
@@ -995,6 +1010,7 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </div>
   );
 }

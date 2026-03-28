@@ -1,0 +1,132 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7] [cursor=pointer]:
+            - img [ref=e8]
+            - generic [ref=e13]: KaayJob
+          - generic [ref=e14]:
+            - button "Connexion" [ref=e15] [cursor=pointer]
+            - button [active] [ref=e16] [cursor=pointer]:
+              - img [ref=e17]
+        - generic [ref=e20]:
+          - button "Accueil" [ref=e21] [cursor=pointer]:
+            - img [ref=e22]
+            - text: Accueil
+          - button "Services" [ref=e25] [cursor=pointer]
+          - button "Contact" [ref=e26] [cursor=pointer]:
+            - img [ref=e27]
+            - text: Contact
+          - button "Connexion" [ref=e30] [cursor=pointer]
+    - generic [ref=e31]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - heading "Trouvez les Meilleurs Prestataires Près de Vous" [level=1] [ref=e38]:
+            - text: Trouvez les Meilleurs
+            - generic [ref=e39]: Prestataires Près de Vous
+          - paragraph [ref=e40]: Connectez-vous avec des professionnels de confiance pour tous vos besoins
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - img [ref=e43]
+            - textbox "Plombier, électricien, nettoyage... Que recherchez-vous?" [ref=e46]
+            - button "Chercher" [ref=e47] [cursor=pointer]
+          - button "Trouver sur la carte avec géolocalisation" [ref=e49] [cursor=pointer]:
+            - img
+            - text: Trouver sur la carte avec géolocalisation
+      - generic [ref=e55]:
+        - heading "Nos Services" [level=2] [ref=e56]
+        - paragraph [ref=e57]: Une large gamme de services professionnels à votre portée
+      - generic [ref=e73]:
+        - heading "Prestataires en Vedette" [level=2] [ref=e74]
+        - paragraph [ref=e75]: Les meilleurs professionnels avec les meilleures notes
+      - generic [ref=e79]:
+        - generic [ref=e80]:
+          - heading "Comment ça Fonctionne" [level=2] [ref=e81]
+          - paragraph [ref=e82]: Trois étapes simples pour trouver le service idéal
+        - generic [ref=e83]:
+          - generic [ref=e85]:
+            - generic [ref=e87]: "1"
+            - heading "Rechercher" [level=3] [ref=e88]
+            - paragraph [ref=e89]: Trouvez le service dont vous avez besoin auprès de nos prestataires
+          - generic [ref=e91]:
+            - generic [ref=e93]: "2"
+            - heading "Réserver" [level=3] [ref=e94]
+            - paragraph [ref=e95]: Planifiez un rendez-vous à l'heure qui vous convient
+          - generic [ref=e97]:
+            - generic [ref=e99]: "3"
+            - heading "Obtenir le Service" [level=3] [ref=e100]
+            - paragraph [ref=e101]: Profitez d'un service de qualité par des professionnels vérifiés
+        - button "Commencer Maintenant" [ref=e103] [cursor=pointer]:
+          - text: Commencer Maintenant
+          - img
+      - generic [ref=e105]:
+        - heading "Pourquoi Nous Choisir" [level=2] [ref=e107]
+        - generic [ref=e108]:
+          - generic [ref=e109]:
+            - generic [ref=e110]: ✓
+            - heading "Professionnel Vérifiés" [level=3] [ref=e111]
+          - generic [ref=e112]:
+            - generic [ref=e113]: 💰
+            - heading "Prix Transparents" [level=3] [ref=e114]
+          - generic [ref=e115]:
+            - generic [ref=e116]: 🛡️
+            - heading "Garantie de Qualité" [level=3] [ref=e117]
+          - generic [ref=e118]:
+            - generic [ref=e119]: 📞
+            - heading "Support 24/7" [level=3] [ref=e120]
+      - contentinfo [ref=e121]:
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e127]:
+              - heading "À Propos" [level=3] [ref=e128]
+              - list [ref=e129]:
+                - listitem [ref=e130]:
+                  - button "Qui sommes-nous" [ref=e131] [cursor=pointer]
+                - listitem [ref=e132]:
+                  - button "Notre Mission" [ref=e133] [cursor=pointer]
+                - listitem [ref=e134]:
+                  - button "Nos Valeurs" [ref=e135] [cursor=pointer]
+            - generic [ref=e136]:
+              - heading "Services" [level=3] [ref=e137]
+              - list [ref=e138]:
+                - listitem [ref=e139]:
+                  - button "Tous les Services" [ref=e140] [cursor=pointer]
+                - listitem [ref=e141]:
+                  - button "Trouver un Prestataire" [ref=e142] [cursor=pointer]
+                - listitem [ref=e143]:
+                  - button "Devenir Partenaire" [ref=e144] [cursor=pointer]
+            - generic [ref=e145]:
+              - heading "Support" [level=3] [ref=e146]
+              - list [ref=e147]:
+                - listitem [ref=e148]:
+                  - button "Aide" [ref=e149] [cursor=pointer]
+                - listitem [ref=e150]:
+                  - button "Contact" [ref=e151] [cursor=pointer]
+                - listitem [ref=e152]:
+                  - button "FAQ" [ref=e153] [cursor=pointer]
+            - generic [ref=e154]:
+              - heading "Légal" [level=3] [ref=e155]
+              - list [ref=e156]:
+                - listitem [ref=e157]:
+                  - button "Conditions" [ref=e158] [cursor=pointer]
+                - listitem [ref=e159]:
+                  - button "Politique de Confidentialité" [ref=e160] [cursor=pointer]
+                - listitem [ref=e161]:
+                  - button "Cookies" [ref=e162] [cursor=pointer]
+          - generic [ref=e164]:
+            - paragraph [ref=e165]: © 2026 KaayJob. Tous droits réservés.
+            - generic [ref=e166]:
+              - link "Facebook" [ref=e167] [cursor=pointer]:
+                - /url: "#"
+              - link "Instagram" [ref=e168] [cursor=pointer]:
+                - /url: "#"
+              - link "Twitter" [ref=e169] [cursor=pointer]:
+                - /url: "#"
+              - link "LinkedIn" [ref=e170] [cursor=pointer]:
+                - /url: "#"
+```

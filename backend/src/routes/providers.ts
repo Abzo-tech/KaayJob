@@ -11,7 +11,7 @@ import { authenticate } from "../middleware/auth";
 import { updateProviderProfileValidation } from "../validations";
 import { query } from "../config/database";
 import { prisma } from "../config/prisma";
-import { createNotification } from "../services/notificationService";
+import { createNotification, createFormattedNotification } from "../services/notificationService";
 
 const router = Router();
 
@@ -227,6 +227,10 @@ router.get("/map", async (req: Request, res: Response) => {
       WHERE u.role = 'PRESTATAIRE'
         AND u.latitude IS NOT NULL
         AND u.longitude IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM services s
+          WHERE s.provider_id = u.id AND s.is_active = true
+        )
     `;
 
     const params: any[] = [];
@@ -565,18 +569,21 @@ router.post(
 
     // Notifier les administrateurs de la demande de vérification (privé admin-prestataire)
     const admins = await query(
-      "SELECT id FROM users WHERE role = 'admin'",
+      "SELECT id, role FROM users WHERE role = 'admin'",
       [],
     );
 
     for (const admin of admins.rows) {
-      await createNotification(
-        admin.id,
+      await createFormattedNotification(
+        { id: admin.id, role: admin.role, firstName: "Admin", lastName: "" },
         "Demande de vérification",
         `${user.first_name} ${user.last_name} a demandé la vérification de son profil.`,
         "info",
         "/admin/providers",
         [admin.id, userId], // Privé entre admin et prestataire
+        {
+          actor: { firstName: user.first_name, lastName: user.last_name, role: "PRESTATAIRE" }
+        }
       );
     }
 
@@ -949,18 +956,21 @@ router.post(
 
       // Notifier les administrateurs de l'annulation d'abonnement (privé admin-prestataire)
       const admins = await query(
-        "SELECT id FROM users WHERE role = 'admin'",
+        "SELECT id, role FROM users WHERE role = 'admin'",
         [],
       );
 
       for (const admin of admins.rows) {
-        await createNotification(
-          admin.id,
+        await createFormattedNotification(
+          { id: admin.id, role: admin.role, firstName: "Admin", lastName: "" },
           "Annulation d'abonnement",
           `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name} a annulé son abonnement.`,
           "warning",
           "/admin/subscriptions",
           [admin.id, userId], // Privé entre admin et prestataire
+          {
+            actor: { firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name, role: "PRESTATAIRE" }
+          }
         );
       }
 

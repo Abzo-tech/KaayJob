@@ -8,7 +8,7 @@ import { randomUUID } from "crypto";
 import { prisma } from "../../config/prisma";
 import { query } from "../../config/database";
 import { AuthRequest } from "../../middleware/auth";
-import { createNotification } from "../../services/notificationService";
+import { createNotification, createFormattedNotification } from "../../services/notificationService";
 
 const router = Router();
 
@@ -211,12 +211,18 @@ router.post(
       );
 
       // Créer une notification pour l'admin
-      await createNotification(
-        req.user!.id,
+      await createFormattedNotification(
+        { id: req.user!.id, role: req.user!.role || 'admin', firstName: 'Admin', lastName: '' },
         "Abonnement créé",
         `Un abonnement ${plan.toUpperCase()} a été créé pour un prestataire`,
         "success",
         "/admin/subscriptions",
+        undefined,
+        {
+          actor: { firstName: 'Admin', lastName: '', role: 'ADMIN' },
+          action: 'subscription_created',
+          entity: plan.toUpperCase()
+        }
       );
 
       res.status(201).json({

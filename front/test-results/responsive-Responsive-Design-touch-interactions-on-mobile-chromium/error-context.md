@@ -1,0 +1,122 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - generic [ref=e7] [cursor=pointer]:
+          - img [ref=e8]
+          - generic [ref=e13]: KaayJob
+        - generic [ref=e14]:
+          - button "Connexion" [ref=e15] [cursor=pointer]
+          - button [ref=e16] [cursor=pointer]:
+            - img [ref=e17]
+    - generic [ref=e18]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - heading "Trouvez les Meilleurs Prestataires Près de Vous" [level=1] [ref=e25]:
+            - text: Trouvez les Meilleurs
+            - generic [ref=e26]: Prestataires Près de Vous
+          - paragraph [ref=e27]: Connectez-vous avec des professionnels de confiance pour tous vos besoins
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - img [ref=e30]
+            - textbox "Plombier, électricien, nettoyage... Que recherchez-vous?" [ref=e33]
+            - button "Chercher" [ref=e34] [cursor=pointer]
+          - button "Trouver sur la carte avec géolocalisation" [ref=e36] [cursor=pointer]:
+            - img
+            - text: Trouver sur la carte avec géolocalisation
+      - generic [ref=e42]:
+        - heading "Nos Services" [level=2] [ref=e43]
+        - paragraph [ref=e44]: Une large gamme de services professionnels à votre portée
+      - generic [ref=e60]:
+        - heading "Prestataires en Vedette" [level=2] [ref=e61]
+        - paragraph [ref=e62]: Les meilleurs professionnels avec les meilleures notes
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - heading "Comment ça Fonctionne" [level=2] [ref=e68]
+          - paragraph [ref=e69]: Trois étapes simples pour trouver le service idéal
+        - generic [ref=e70]:
+          - generic [ref=e72]:
+            - generic [ref=e74]: "1"
+            - heading "Rechercher" [level=3] [ref=e75]
+            - paragraph [ref=e76]: Trouvez le service dont vous avez besoin auprès de nos prestataires
+          - generic [ref=e78]:
+            - generic [ref=e80]: "2"
+            - heading "Réserver" [level=3] [ref=e81]
+            - paragraph [ref=e82]: Planifiez un rendez-vous à l'heure qui vous convient
+          - generic [ref=e84]:
+            - generic [ref=e86]: "3"
+            - heading "Obtenir le Service" [level=3] [ref=e87]
+            - paragraph [ref=e88]: Profitez d'un service de qualité par des professionnels vérifiés
+        - button "Commencer Maintenant" [ref=e90] [cursor=pointer]:
+          - text: Commencer Maintenant
+          - img
+      - generic [ref=e92]:
+        - heading "Pourquoi Nous Choisir" [level=2] [ref=e94]
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - generic [ref=e97]: ✓
+            - heading "Professionnel Vérifiés" [level=3] [ref=e98]
+          - generic [ref=e99]:
+            - generic [ref=e100]: 💰
+            - heading "Prix Transparents" [level=3] [ref=e101]
+          - generic [ref=e102]:
+            - generic [ref=e103]: 🛡️
+            - heading "Garantie de Qualité" [level=3] [ref=e104]
+          - generic [ref=e105]:
+            - generic [ref=e106]: 📞
+            - heading "Support 24/7" [level=3] [ref=e107]
+      - contentinfo [ref=e108]:
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - heading "À Propos" [level=3] [ref=e115]
+              - list [ref=e116]:
+                - listitem [ref=e117]:
+                  - button "Qui sommes-nous" [ref=e118] [cursor=pointer]
+                - listitem [ref=e119]:
+                  - button "Notre Mission" [ref=e120] [cursor=pointer]
+                - listitem [ref=e121]:
+                  - button "Nos Valeurs" [ref=e122] [cursor=pointer]
+            - generic [ref=e123]:
+              - heading "Services" [level=3] [ref=e124]
+              - list [ref=e125]:
+                - listitem [ref=e126]:
+                  - button "Tous les Services" [ref=e127] [cursor=pointer]
+                - listitem [ref=e128]:
+                  - button "Trouver un Prestataire" [ref=e129] [cursor=pointer]
+                - listitem [ref=e130]:
+                  - button "Devenir Partenaire" [ref=e131] [cursor=pointer]
+            - generic [ref=e132]:
+              - heading "Support" [level=3] [ref=e133]
+              - list [ref=e134]:
+                - listitem [ref=e135]:
+                  - button "Aide" [ref=e136] [cursor=pointer]
+                - listitem [ref=e137]:
+                  - button "Contact" [ref=e138] [cursor=pointer]
+                - listitem [ref=e139]:
+                  - button "FAQ" [ref=e140] [cursor=pointer]
+            - generic [ref=e141]:
+              - heading "Légal" [level=3] [ref=e142]
+              - list [ref=e143]:
+                - listitem [ref=e144]:
+                  - button "Conditions" [ref=e145] [cursor=pointer]
+                - listitem [ref=e146]:
+                  - button "Politique de Confidentialité" [ref=e147] [cursor=pointer]
+                - listitem [ref=e148]:
+                  - button "Cookies" [ref=e149] [cursor=pointer]
+          - generic [ref=e151]:
+            - paragraph [ref=e152]: © 2026 KaayJob. Tous droits réservés.
+            - generic [ref=e153]:
+              - link "Facebook" [ref=e154] [cursor=pointer]:
+                - /url: "#"
+              - link "Instagram" [ref=e155] [cursor=pointer]:
+                - /url: "#"
+              - link "Twitter" [ref=e156] [cursor=pointer]:
+                - /url: "#"
+              - link "LinkedIn" [ref=e157] [cursor=pointer]:
+                - /url: "#"
+```

@@ -35,6 +35,7 @@ import {
 } from "../ui/dialog";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 
 interface SubscriptionPlan {
   id: string;
@@ -70,6 +71,7 @@ interface Subscription {
 }
 
 export function PrestataireSubscription() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [loading, setLoading] = useState(true);
   const [currentSubscription, setCurrentSubscription] =
     useState<Subscription | null>(null);
@@ -85,7 +87,7 @@ export function PrestataireSubscription() {
   );
   const [phoneNumber, setPhoneNumber] = useState("");
   const [processingPayment, setProcessingPayment] = useState(false);
-  
+
   // Nouveaux états pour les fonctionnalités supplémentaires
   const [subscriptionHistory, setSubscriptionHistory] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -245,10 +247,13 @@ export function PrestataireSubscription() {
   const handleCancelSubscription = async () => {
     if (!currentSubscription) return;
 
-    const confirmCancel = window.confirm(
-      "Êtes-vous sûr de vouloir annuler votre abonnement ? Cette action est irréversible."
+    const confirmCancel = await confirm(
+      "Annuler l'abonnement",
+      "Êtes-vous sûr de vouloir annuler votre abonnement ? Cette action est irréversible.",
+      "Annuler",
+      "Conserver"
     );
-    
+
     if (!confirmCancel) return;
 
     try {
@@ -876,6 +881,7 @@ export function PrestataireSubscription() {
           </CardContent>
         )}
       </Card>
+      <ConfirmDialog />
     </div>
   );
 }

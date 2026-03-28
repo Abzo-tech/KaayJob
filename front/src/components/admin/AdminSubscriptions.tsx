@@ -50,6 +50,7 @@ import {
 import { Label } from "../ui/label";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 
 interface SubscriptionPlan {
   id: string;
@@ -64,6 +65,7 @@ interface SubscriptionPlan {
 }
 
 export function AdminSubscriptions() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [loading, setLoading] = useState(true);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -200,7 +202,14 @@ export function AdminSubscriptions() {
   };
 
   const handleCancel = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir annuler cet abonnement ?")) return;
+    const confirmed = await confirm(
+      "Annuler l'abonnement",
+      "Êtes-vous sûr de vouloir annuler cet abonnement ? Cette action entraînera la perte des privilèges associés.",
+      "Annuler l'abonnement",
+      "Conserver"
+    );
+
+    if (!confirmed) return;
 
     try {
       const response = await api.delete(`/admin/subscriptions/${id}`);
@@ -290,7 +299,14 @@ export function AdminSubscriptions() {
   };
 
   const handleDeletePlan = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce plan ?")) return;
+    const confirmed = await confirm(
+      "Supprimer le plan",
+      "Êtes-vous sûr de vouloir supprimer ce plan d'abonnement ? Cette action est irréversible et affectera tous les abonnements associés.",
+      "Supprimer",
+      "Annuler"
+    );
+
+    if (!confirmed) return;
 
     try {
       const response = await api.delete(`/admin/subscriptions/plans/${id}`);
@@ -791,6 +807,7 @@ export function AdminSubscriptions() {
           )}
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </div>
   );
 }

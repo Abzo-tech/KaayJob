@@ -26,8 +26,10 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { useConfirmDialog } from "../../hooks/useConfirmDialog";
 
 export function PrestataireProfile() {
+  const { confirm, ConfirmDialog } = useConfirmDialog();
   const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -353,7 +355,15 @@ export function PrestataireProfile() {
   };
 
   const handleDeleteService = async (serviceId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce service?")) return;
+    const confirmed = await confirm(
+      "Supprimer le service",
+      "Êtes-vous sûr de vouloir supprimer ce service ? Cette action est irréversible.",
+      "Supprimer",
+      "Annuler"
+    );
+
+    if (!confirmed) return;
+
     try {
       const response = await api.delete(`/services/${serviceId}`);
       if (response.data?.success) {
@@ -755,6 +765,7 @@ export function PrestataireProfile() {
           </TabsContent>
         </Tabs>
       </div>
+      <ConfirmDialog />
     </div>
   );
 }

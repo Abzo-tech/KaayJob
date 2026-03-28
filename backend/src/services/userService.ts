@@ -5,7 +5,8 @@
 
 import { prisma } from "../config/prisma";
 import { query } from "../config/database";
-import { createNotification } from "./notificationService";
+import { createNotification, createFormattedNotification } from "./notificationService";
+import { NotificationRecipient, NotificationContext } from "../utils/notificationFormatter";
 
 export interface CreateUserData {
   email: string;
@@ -106,8 +107,8 @@ export async function createUser(data: CreateUserData, adminId?: string) {
   const user = result.rows[0];
 
   // Créer une notification pour le nouvel utilisateur
-  await createNotification(
-    user.id,
+  await createFormattedNotification(
+    { id: user.id, role, firstName: user.first_name, lastName: user.last_name },
     "Bienvenue sur KaayJob",
     `Votre compte a été créé avec succès. Votre rôle: ${role}`,
     "success",
@@ -124,24 +125,28 @@ export async function createUser(data: CreateUserData, adminId?: string) {
 
     // Notifier chaque client du nouveau prestataire
     for (const client of clientsResult.rows) {
-      await createNotification(
-        client.id,
+      await createFormattedNotification(
+        { id: client.id, role: "CLIENT" },
         "Nouveau prestataire disponible",
         `${firstName} ${lastName} propose maintenant ses services sur KaayJob`,
         "info",
         "/categories",
+        undefined,
+        { actor: { firstName, lastName, role: "PRESTATAIRE" } }
       );
     }
   }
 
   // Notification pour l'admin
   if (adminId) {
-    await createNotification(
-      adminId,
+    await createFormattedNotification(
+      { id: adminId, role: "ADMIN" },
       "Utilisateur créé",
       `${firstName} ${lastName} (${email}) a été créé avec succès`,
       "success",
       "/admin/users",
+      undefined,
+      { target: { firstName, lastName, role } }
     );
   }
 
@@ -213,12 +218,14 @@ export async function updateUser(userId: string, data: UpdateUserData, adminId?:
   // Notification pour l'admin
   if (adminId) {
     const userName = `${result.rows[0].first_name} ${result.rows[0].last_name}`;
-    await createNotification(
-      adminId,
+    await createFormattedNotification(
+      { id: adminId, role: "ADMIN" },
       "Utilisateur mis à jour",
       `${userName} a été mis à jour avec succès`,
       "info",
       "/admin/users",
+      undefined,
+      { target: { firstName: result.rows[0].first_name, lastName: result.rows[0].last_name, role: result.rows[0].role } }
     );
   }
 
@@ -264,20 +271,22 @@ export async function verifyProvider(providerId: string, adminId: string) {
 
   // Notifications
   const userName = `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name}`;
-  await createNotification(
-    providerId,
+  await createFormattedNotification(
+    { id: providerId, role: "PRESTATAIRE", firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name },
     "Compte vérifié",
     "Votre compte prestataire a été vérifié par l'administrateur. Vous pouvez maintenant offrir vos services sur la plateforme.",
     "success",
     "/prestataire/dashboard",
   );
 
-  await createNotification(
-    adminId,
+  await createFormattedNotification(
+    { id: adminId, role: "ADMIN" },
     "Prestataire vérifié",
     `${userName} a été vérifié avec succès`,
     "success",
     "/admin/users",
+    undefined,
+    { target: { firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name, role: "PRESTATAIRE" } }
   );
 
   return result.rows[0];
@@ -322,8 +331,8 @@ export async function deleteUser(userId: string, adminId?: string) {
 
   // Notification pour l'admin
   if (adminId) {
-    await createNotification(
-      adminId,
+    await createFormattedNotification(
+      { id: adminId, role: "ADMIN" },
       "Utilisateur supprimé",
       "L'utilisateur a été supprimé avec succès",
       "warning",

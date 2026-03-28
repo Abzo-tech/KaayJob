@@ -32,6 +32,12 @@ export class ProviderController {
         user: {
           role: Role.PRESTATAIRE,
         },
+        // Only show providers who have at least one active service
+        services: {
+          some: {
+            isActive: true,
+          },
+        },
       };
 
       if (specialty) {
