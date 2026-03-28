@@ -132,8 +132,14 @@ export function HomePage({ onNavigate }: HomePageProps) {
       try {
         setIsLoadingProviders(true);
         const response = await api.get("/providers?limit=5");
-        if (response.success && response.data) {
-          setFeaturedProviders(response.data);
+        if (response.success && response.data && response.data.data) {
+          // Convertir les types string vers number pour rating et hourlyRate
+          const processedProviders = response.data.data.map((provider: any) => ({
+            ...provider,
+            rating: typeof provider.rating === 'string' ? parseFloat(provider.rating) : provider.rating,
+            hourlyRate: typeof provider.hourlyRate === 'string' ? parseFloat(provider.hourlyRate) : provider.hourlyRate,
+          }));
+          setFeaturedProviders(processedProviders);
         }
       } catch (err) {
         console.error("Erreur lors du chargement des prestataires:", err);
