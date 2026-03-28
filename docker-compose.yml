@@ -63,8 +63,8 @@ services:
   # ===================================================================
   frontend:
     build:
-      context: .
-      dockerfile: front/Dockerfile
+      context: ./front
+      dockerfile: Dockerfile
     container_name: kaayjob-frontend
     restart: always
     ports:

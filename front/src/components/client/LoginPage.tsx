@@ -122,7 +122,9 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
         isValid = false;
       }
 
-      const nameError = validateFormField(formData.firstName, "name", "Nom");
+      const nameError = userType === "provider"
+        ? validateFormField(formData.firstName, "address", "Nom de l'entreprise") // Pour prestataires, utiliser validation d'adresse (plus permissive)
+        : validateFormField(formData.firstName, "name", "Nom");
       if (nameError) {
         newErrors.name = nameError;
         isValid = false;
@@ -285,3 +287,4 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
     </div>
   );
 }
+
