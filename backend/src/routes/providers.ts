@@ -128,13 +128,23 @@ router.post("/setup-geolocation", async (req: Request, res: Response) => {
         ]);
 
         // Créer un profil prestataire
+        const profileId = 'profile-' + provider.id;
         await query(`
           INSERT INTO provider_profiles (
             id, user_id, hourly_rate, years_experience, is_available, created_at, updated_at
           ) VALUES (
-            gen_random_uuid(), $1, $2, $3, true, NOW(), NOW()
+            $1, $2, $3, $4, true, NOW(), NOW()
           )
-        `, [provider.id, Math.floor(Math.random() * 50) + 20, Math.floor(Math.random() * 15) + 2]);
+        `, [profileId, provider.id, Math.floor(Math.random() * 50) + 20, Math.floor(Math.random() * 15) + 2]);
+
+        // Créer un service actif pour ce prestataire
+        await query(`
+          INSERT INTO services (
+            id, provider_id, category_id, name, description, price, price_type, duration, is_active, created_at, updated_at
+          ) VALUES (
+            gen_random_uuid(), $1, NULL, $2, $3, $4, 'FIXED', 60, true, NOW(), NOW()
+          )
+        `, [profileId, `Service de ${provider.specialization}`, `Service professionnel de ${provider.specialization.toLowerCase()}`, Math.floor(Math.random() * 100) + 50]);
       }
     }
 
