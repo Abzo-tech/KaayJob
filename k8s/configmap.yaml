@@ -17,4 +17,4 @@ data:
   JWT_EXPIRES_IN: "7d"
 
   # Configuration Frontend
-  VITE_API_URL: "http://backend-service:3000"
+  VITE_API_URL: "/api"
