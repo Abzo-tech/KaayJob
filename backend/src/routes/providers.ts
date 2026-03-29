@@ -205,11 +205,36 @@ router.post("/setup-geolocation", async (req: Request, res: Response) => {
       }
     }
 
+    // Créer des catégories de base si elles n'existent pas
+    const categories = [
+      { name: 'Plomberie', slug: 'plomberie', description: 'Services de plomberie et réparation', icon: '🔧' },
+      { name: 'Électricité', slug: 'electricite', description: 'Installation et réparation électrique', icon: '⚡' },
+      { name: 'Menuiserie', slug: 'menuiserie', description: 'Travaux de bois et menuiserie', icon: '🔨' },
+      { name: 'Peinture', slug: 'peinture', description: 'Peinture intérieure et extérieure', icon: '🎨' },
+      { name: 'Jardinage', slug: 'jardinage', description: 'Entretien d\'espaces verts', icon: '🌿' },
+      { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage', icon: '🧽' },
+      { name: 'Réparation', slug: 'reparation', description: 'Réparations diverses', icon: '🔧' },
+      { name: 'Transport', slug: 'transport', description: 'Services de transport', icon: '🚚' }
+    ];
+
+    let categoriesCreated = 0;
+    for (const category of categories) {
+      const existingCategory = await query('SELECT id FROM categories WHERE slug = $1', [category.slug]);
+      if (existingCategory.rows.length === 0) {
+        await query(`
+          INSERT INTO categories (name, slug, description, icon, is_active, created_at)
+          VALUES ($1, $2, $3, $4, true, NOW())
+        `, [category.name, category.slug, category.description, category.icon]);
+        categoriesCreated++;
+      }
+    }
+
     res.json({
       success: true,
       message: "Configuration de géolocalisation terminée avec succès",
       testProviders: testProviders.length,
       profilesCreated,
+      categoriesCreated,
       existingUsersMigrated: existingProviders.rows.length
     });
   } catch (error) {
@@ -217,6 +242,65 @@ router.post("/setup-geolocation", async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Erreur lors de la configuration de la géolocalisation",
+    });
+  }
+});
+
+// POST /api/providers/init-database - Initialisation complète de la base de données
+router.post("/init-database", async (req: Request, res: Response) => {
+  try {
+    console.log("Initialisation complète de la base de données...");
+
+    // Créer les catégories de base
+    const categories = [
+      { name: 'Plomberie', slug: 'plomberie', description: 'Services de plomberie et réparation', icon: '🔧' },
+      { name: 'Électricité', slug: 'electricite', description: 'Installation et réparation électrique', icon: '⚡' },
+      { name: 'Menuiserie', slug: 'menuiserie', description: 'Travaux de bois et menuiserie', icon: '🔨' },
+      { name: 'Peinture', slug: 'peinture', description: 'Peinture intérieure et extérieure', icon: '🎨' },
+      { name: 'Jardinage', slug: 'jardinage', description: 'Entretien d\'espaces verts', icon: '🌿' },
+      { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage', icon: '🧽' },
+      { name: 'Réparation', slug: 'reparation', description: 'Réparations diverses', icon: '🔧' },
+      { name: 'Transport', slug: 'transport', description: 'Services de transport', icon: '🚚' }
+    ];
+
+    let categoriesCreated = 0;
+    for (const category of categories) {
+      try {
+        const existingCategory = await query('SELECT id FROM categories WHERE slug = $1', [category.slug]);
+        if (existingCategory.rows.length === 0) {
+          await query(`
+            INSERT INTO categories (id, name, slug, description, icon, is_active, created_at)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, true, NOW())
+          `, [category.name, category.slug, category.description, category.icon]);
+          categoriesCreated++;
+        }
+      } catch (err) {
+        console.log(`Catégorie ${category.name} déjà existante ou erreur:`, err);
+      }
+    }
+
+    // Créer des utilisateurs admin si aucun n'existe
+    const adminCheck = await query("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1");
+    if (adminCheck.rows.length === 0) {
+      await query(`
+        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at)
+        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'ADMIN', true, NOW())
+      `, ['admin@kaayjob.com', '$2b$10$hashedpassword', 'Admin', 'KaayJob', '+221000000000']);
+      console.log("✅ Admin créé");
+    }
+
+    res.json({
+      success: true,
+      message: "Base de données initialisée avec succès",
+      categoriesCreated,
+      adminCreated: adminCheck.rows.length === 0
+    });
+
+  } catch (error) {
+    console.error("Erreur initialisation base de données:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de l'initialisation de la base de données",
     });
   }
 });
