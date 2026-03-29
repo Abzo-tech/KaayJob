@@ -5,9 +5,10 @@
  * Utilise le proxy Vercel (/api -> backend) en production
  */
 
-// En production (Vercel), utiliser le proxy Vercel (/api -> backend)
-// En local, utiliser le proxy Vite (/api -> backend localhost)
-const API_BASE_URL = "/api";
+// Utiliser l'URL complète de Render en production, proxy Vite en local
+const API_BASE_URL = import.meta.env.PROD
+  ? "https://kaayjob.onrender.com/api"
+  : "/api";
 
 // Cache simple pour éviter les requêtes répétées
 const cache = new Map<string, { data: any; timestamp: number }>();
