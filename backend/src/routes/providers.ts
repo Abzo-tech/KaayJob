@@ -46,6 +46,35 @@ router.post("/setup-geolocation", async (req: Request, res: Response) => {
       WHERE bio IS NULL OR specialization IS NULL OR address IS NULL OR zone IS NULL
     `);
 
+    // Créer des index pour optimiser les performances
+    console.log("Création des index de performance...");
+    try {
+      // Index sur role pour les filtres fréquents
+      await query(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`);
+
+      // Index sur email pour les connexions
+      await query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+
+      // Index sur specialization pour les filtres par catégorie
+      await query(`CREATE INDEX IF NOT EXISTS idx_users_specialization ON users(specialization)`);
+
+      // Index composé sur latitude/longitude pour les requêtes géographiques
+      await query(`CREATE INDEX IF NOT EXISTS idx_users_location ON users(latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL`);
+
+      // Index sur provider_profiles.user_id
+      await query(`CREATE INDEX IF NOT EXISTS idx_provider_profiles_user_id ON provider_profiles(user_id)`);
+
+      // Index sur services.provider_id et is_active
+      await query(`CREATE INDEX IF NOT EXISTS idx_services_provider_active ON services(provider_id, is_active) WHERE is_active = true`);
+
+      // Index sur reviews pour les statistiques
+      await query(`CREATE INDEX IF NOT EXISTS idx_reviews_provider_rating ON reviews(provider_id, rating)`);
+
+      console.log("✅ Index de performance créés");
+    } catch (indexError) {
+      console.log("⚠️ Certains index existaient déjà ou erreur lors de la création:", indexError);
+    }
+
     // Insérer des données de test pour la démonstration
     const testProviders = [
       {
@@ -219,28 +248,24 @@ router.get("/map", async (req: Request, res: Response) => {
         COALESCE(pp.hourly_rate, 0) as "hourlyRate",
         COALESCE(pp.years_experience, 0) as "yearsExperience",
         u.created_at,
-        CASE WHEN pp.availability->>'isAvailable' = 'true' THEN true ELSE false END as "isAvailable",
+        COALESCE(pp.is_available, true) as "isAvailable",
         COALESCE(rating_stats.avg_rating, 0) as rating,
         COALESCE(rating_stats.review_count, 0) as "totalReviews",
         0 as "totalBookings"
       FROM users u
-      LEFT JOIN provider_profiles pp ON u.id = pp.user_id
+      INNER JOIN provider_profiles pp ON u.id = pp.user_id
       LEFT JOIN (
         SELECT
-          p.user_id,
-          AVG(r.rating) as avg_rating,
-          COUNT(r.id) as review_count
-        FROM provider_profiles p
-        LEFT JOIN reviews r ON p.user_id = r.provider_id
-        GROUP BY p.user_id
-      ) rating_stats ON u.id = rating_stats.user_id
+          provider_id,
+          AVG(rating)::float as avg_rating,
+          COUNT(*)::int as review_count
+        FROM reviews
+        GROUP BY provider_id
+      ) rating_stats ON u.id = rating_stats.provider_id
       WHERE u.role = 'PRESTATAIRE'
         AND u.latitude IS NOT NULL
         AND u.longitude IS NOT NULL
-        AND EXISTS (
-          SELECT 1 FROM services s
-          WHERE s.provider_id = u.id AND s.is_active = true
-        )
+        AND pp.is_available = true
     `;
 
     const params: any[] = [];
@@ -253,10 +278,8 @@ router.get("/map", async (req: Request, res: Response) => {
       paramIndex++;
     }
 
-    // Filtre par disponibilité
-    if (availableOnly === 'true') {
-      queryStr += ` AND (pp.availability->>'isAvailable' = 'true' OR pp.availability IS NULL)`;
-    }
+    // Filtre par disponibilité déjà appliqué dans WHERE
+    // availableOnly est géré au niveau de la condition pp.is_available = true
 
     // Filtre par rayon si coordonnées fournies
     if (lat && lng) {

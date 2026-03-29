@@ -9,6 +9,10 @@
 // En local, utiliser le proxy Vite (/api -> backend localhost)
 const API_BASE_URL = "/api";
 
+// Cache simple pour éviter les requêtes répétées
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 /**
  * headers par défaut pour les requêtes
  */
@@ -50,13 +54,31 @@ const handleResponse = async (response: Response): Promise<any> => {
  */
 
 export const api = {
-  // GET request
-  async get<T = any>(endpoint: string): Promise<T> {
+  // GET request avec cache
+  async get<T = any>(endpoint: string, useCache = true): Promise<T> {
+    const cacheKey = `GET:${endpoint}`;
+
+    // Vérifier le cache pour les requêtes GET
+    if (useCache) {
+      const cached = cache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+        return cached.data;
+      }
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "GET",
       headers: getHeaders(),
     });
-    return handleResponse(response);
+
+    const data = await handleResponse(response);
+
+    // Mettre en cache les réponses réussies
+    if (useCache && response.ok) {
+      cache.set(cacheKey, { data, timestamp: Date.now() });
+    }
+
+    return data;
   },
 
   // POST request
