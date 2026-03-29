@@ -21,7 +21,7 @@ import adminRoutes from "./routes/admin";
 import notificationsRoutes from "./routes/notifications";
 import paymentsRoutes from "./routes/payments";
 
-import { testConnection } from "./config/database";
+import { testConnection, query } from "./config/database";
 import { prisma } from "./config/prisma";
 import { seedDatabase } from "./scripts/seed";
 
@@ -123,6 +123,55 @@ app.post("/api/seed", async (req, res) => {
   }
 });
 
+// Create admin account endpoint (for emergency access)
+app.post("/api/setup-admin", async (req, res) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
+
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({
+        success: false,
+        message: "Tous les champs sont requis: email, password, firstName, lastName"
+      });
+    }
+
+    // Vérifier si l'admin existe déjà
+    const existingAdmin = await query("SELECT id FROM users WHERE email = $1", [email]);
+    if (existingAdmin.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Un utilisateur avec cet email existe déjà"
+      });
+    }
+
+    // Créer l'admin
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await query(`
+      INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
+      VALUES (gen_random_uuid(), $1, $2, $3, $4, '+221000000000', 'ADMIN', true, NOW(), NOW())
+    `, [email, hashedPassword, firstName, lastName]);
+
+    res.json({
+      success: true,
+      message: `Administrateur ${firstName} ${lastName} créé avec succès`,
+      credentials: {
+        email,
+        password: "••••••••",
+        role: "ADMIN"
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur création admin:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la création de l'administrateur",
+    });
+  }
+});
+
 // Error handling
 app.use(
   (
@@ -148,15 +197,17 @@ const startServer = async () => {
   try {
     await testConnection();
 
-    // Initialiser les données de démonstration au démarrage
+    // Initialiser les données de démonstration au démarrage UNIQUEMENT si la base est vide
     try {
-      console.log("🔄 Vérification des données de démonstration...");
+      console.log("🔄 Vérification de l'état de la base de données...");
+      const usersCount = await prisma.user.count();
       const categoriesCount = await prisma.category.count();
-      if (categoriesCount === 0) {
-        console.log("📦 Aucune catégorie trouvée, exécution du seed...");
+
+      if (usersCount === 0 && categoriesCount === 0) {
+        console.log("📦 Base de données vide détectée, exécution du seed...");
         await seedDatabase();
       } else {
-        console.log(`✅ ${categoriesCount} catégories déjà présentes, seed ignoré`);
+        console.log(`✅ Base de données contient déjà ${usersCount} utilisateurs et ${categoriesCount} catégories, seed ignoré`);
       }
     } catch (seedError) {
       console.log("⚠️ Erreur lors du seed (non critique):", seedError);

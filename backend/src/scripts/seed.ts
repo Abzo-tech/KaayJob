@@ -148,11 +148,19 @@ export async function seedDatabase() {
     // Créer un admin si aucun n'existe
     const adminCheck = await query("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1");
     if (adminCheck.rows.length === 0) {
+      // Créer un admin avec mot de passe connu pour les tests
       await query(`
-        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at)
-        VALUES (gen_random_uuid(), $1, '$2b$10$adminpassword', $2, $3, $4, 'ADMIN', true, NOW())
+        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
+        VALUES (gen_random_uuid(), $1, '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $2, $3, $4, 'ADMIN', true, NOW(), NOW())
       `, ['admin@kaayjob.com', 'Admin', 'KaayJob', '+221000000000']);
-      console.log('✅ Administrateur créé');
+      console.log('✅ Administrateur créé - Email: admin@kaayjob.com, Mot de passe: password123');
+
+      // Créer aussi un utilisateur test normal
+      await query(`
+        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
+        VALUES (gen_random_uuid(), $1, '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $2, $3, $4, 'CLIENT', true, NOW(), NOW())
+      `, ['test@example.com', 'Test', 'User', '+22177123456']);
+      console.log('✅ Utilisateur test créé - Email: test@example.com, Mot de passe: password123');
     }
 
     console.log('🎉 Base de données initialisée avec succès !');

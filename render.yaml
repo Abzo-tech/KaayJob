@@ -6,9 +6,10 @@ services:
     dockerCommand: sh -c "npx prisma migrate deploy && node dist/index.js"
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: kaayjob
-          property: connectionString
+        # Utiliser votre base de données existante - configurez cette valeur dans Render
+        # Allez dans Dashboard > kaayjob-backend > Environment > Add Environment Variable
+        # Clé: DATABASE_URL, Valeur: postgresql://votre-url-de-base-existante
+        value: postgresql://placeholder:placeholder@placeholder:5432/placeholder
       - key: NODE_ENV
         value: production
       - key: PORT
@@ -18,7 +19,8 @@ services:
       - key: FRONTEND_URL
         value: https://kaayjob.vercel.app
 
-databases:
-  - name: kaayjob
-    plan: free
-    databaseName: kaayjob
+# Supprimé - utilisez votre base de données existante
+# databases:
+#   - name: kaayjob
+#     plan: free
+#     databaseName: kaayjob
