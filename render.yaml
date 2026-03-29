@@ -6,10 +6,7 @@ services:
     dockerCommand: sh -c "npx prisma migrate deploy && node dist/index.js"
     envVars:
       - key: DATABASE_URL
-        # Utiliser votre base de données existante - configurez cette valeur dans Render
-        # Allez dans Dashboard > kaayjob-backend > Environment > Add Environment Variable
-        # Clé: DATABASE_URL, Valeur: postgresql://votre-url-de-base-existante
-        value: postgresql://placeholder:placeholder@placeholder:5432/placeholder
+        value: postgres://b9a0969b382808c1926482e10fd5a854e2fd7e020e81a9f3cc96e2885408ee95:sk_wqQoOr0QtZD7DSoDVsjPm@db.prisma.io:5432/postgres?sslmode=require
       - key: NODE_ENV
         value: production
       - key: PORT
