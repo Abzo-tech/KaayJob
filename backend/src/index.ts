@@ -23,6 +23,7 @@ import paymentsRoutes from "./routes/payments";
 
 import { testConnection } from "./config/database";
 import { prisma } from "./config/prisma";
+import { seedDatabase } from "./scripts/seed";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -103,6 +104,25 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// Seed database endpoint
+app.post("/api/seed", async (req, res) => {
+  try {
+    console.log("🌱 Exécution du seed de données...");
+    const result = await seedDatabase();
+    res.json({
+      success: true,
+      message: "Base de données initialisée avec succès",
+      data: result,
+    });
+  } catch (error) {
+    console.error("❌ Erreur lors du seed:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de l'initialisation de la base de données",
+    });
+  }
+});
+
 // Error handling
 app.use(
   (
@@ -127,6 +147,21 @@ app.use((req, res) => {
 const startServer = async () => {
   try {
     await testConnection();
+
+    // Initialiser les données de démonstration au démarrage
+    try {
+      console.log("🔄 Vérification des données de démonstration...");
+      const categoriesCount = await prisma.category.count();
+      if (categoriesCount === 0) {
+        console.log("📦 Aucune catégorie trouvée, exécution du seed...");
+        await seedDatabase();
+      } else {
+        console.log(`✅ ${categoriesCount} catégories déjà présentes, seed ignoré`);
+      }
+    } catch (seedError) {
+      console.log("⚠️ Erreur lors du seed (non critique):", seedError);
+    }
+
     app.listen(PORT, () => {
       console.log(`✅ Serveur KaayJob démarré sur le port ${PORT}`);
       console.log(`   API: http://localhost:${PORT}/api`);
