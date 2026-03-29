@@ -63,19 +63,19 @@ async function createUser(data, adminId) {
      VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, true, NOW(), NOW()) RETURNING id, email, first_name, last_name, phone, role, created_at`, [email, password, firstName, lastName, phone || null, role]);
     const user = result.rows[0];
     // Créer une notification pour le nouvel utilisateur
-    await (0, notificationService_1.createNotification)(user.id, "Bienvenue sur KaayJob", `Votre compte a été créé avec succès. Votre rôle: ${role}`, "success", role === "PRESTATAIRE" ? "/prestataire/dashboard" : "/client/dashboard");
+    await (0, notificationService_1.createFormattedNotification)({ id: user.id, role, firstName: user.first_name, lastName: user.last_name }, "Bienvenue sur KaayJob", `Votre compte a été créé avec succès. Votre rôle: ${role}`, "success", role === "PRESTATAIRE" ? "/prestataire/dashboard" : "/client/dashboard");
     // Si c'est un prestataire qui s'inscrit, notifier tous les clients existants
     if (role === "PRESTATAIRE") {
         // Récupérer tous les clients actifs
         const clientsResult = await (0, database_1.query)("SELECT id FROM users WHERE role = 'CLIENT' AND is_active = true", []);
         // Notifier chaque client du nouveau prestataire
         for (const client of clientsResult.rows) {
-            await (0, notificationService_1.createNotification)(client.id, "Nouveau prestataire disponible", `${firstName} ${lastName} propose maintenant ses services sur KaayJob`, "info", "/categories");
+            await (0, notificationService_1.createFormattedNotification)({ id: client.id, role: "CLIENT" }, "Nouveau prestataire disponible", `${firstName} ${lastName} propose maintenant ses services sur KaayJob`, "info", "/categories", undefined, { actor: { firstName, lastName, role: "PRESTATAIRE" } });
         }
     }
     // Notification pour l'admin
     if (adminId) {
-        await (0, notificationService_1.createNotification)(adminId, "Utilisateur créé", `${firstName} ${lastName} (${email}) a été créé avec succès`, "success", "/admin/users");
+        await (0, notificationService_1.createFormattedNotification)({ id: adminId, role: "ADMIN" }, "Utilisateur créé", `${firstName} ${lastName} (${email}) a été créé avec succès`, "success", "/admin/users", undefined, { target: { firstName, lastName, role } });
     }
     return user;
 }
@@ -131,7 +131,7 @@ async function updateUser(userId, data, adminId) {
     // Notification pour l'admin
     if (adminId) {
         const userName = `${result.rows[0].first_name} ${result.rows[0].last_name}`;
-        await (0, notificationService_1.createNotification)(adminId, "Utilisateur mis à jour", `${userName} a été mis à jour avec succès`, "info", "/admin/users");
+        await (0, notificationService_1.createFormattedNotification)({ id: adminId, role: "ADMIN" }, "Utilisateur mis à jour", `${userName} a été mis à jour avec succès`, "info", "/admin/users", undefined, { target: { firstName: result.rows[0].first_name, lastName: result.rows[0].last_name, role: result.rows[0].role } });
     }
     return result.rows[0];
 }
@@ -158,8 +158,8 @@ async function verifyProvider(providerId, adminId) {
     }
     // Notifications
     const userName = `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name}`;
-    await (0, notificationService_1.createNotification)(providerId, "Compte vérifié", "Votre compte prestataire a été vérifié par l'administrateur. Vous pouvez maintenant offrir vos services sur la plateforme.", "success", "/prestataire/dashboard");
-    await (0, notificationService_1.createNotification)(adminId, "Prestataire vérifié", `${userName} a été vérifié avec succès`, "success", "/admin/users");
+    await (0, notificationService_1.createFormattedNotification)({ id: providerId, role: "PRESTATAIRE", firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name }, "Compte vérifié", "Votre compte prestataire a été vérifié par l'administrateur. Vous pouvez maintenant offrir vos services sur la plateforme.", "success", "/prestataire/dashboard");
+    await (0, notificationService_1.createFormattedNotification)({ id: adminId, role: "ADMIN" }, "Prestataire vérifié", `${userName} a été vérifié avec succès`, "success", "/admin/users", undefined, { target: { firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name, role: "PRESTATAIRE" } });
     return result.rows[0];
 }
 /**
@@ -187,7 +187,7 @@ async function deleteUser(userId, adminId) {
     await (0, database_1.query)("DELETE FROM users WHERE id = $1", [userId]);
     // Notification pour l'admin
     if (adminId) {
-        await (0, notificationService_1.createNotification)(adminId, "Utilisateur supprimé", "L'utilisateur a été supprimé avec succès", "warning", "/admin/users");
+        await (0, notificationService_1.createFormattedNotification)({ id: adminId, role: "ADMIN" }, "Utilisateur supprimé", "L'utilisateur a été supprimé avec succès", "warning", "/admin/users");
     }
     return { success: true };
 }

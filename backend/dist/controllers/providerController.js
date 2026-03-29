@@ -21,6 +21,12 @@ class ProviderController {
                 user: {
                     role: client_1.Role.PRESTATAIRE,
                 },
+                // Only show providers who have at least one active service
+                services: {
+                    some: {
+                        isActive: true,
+                    },
+                },
             };
             if (specialty) {
                 where.specialty = { contains: specialty, mode: "insensitive" };
@@ -97,64 +103,90 @@ class ProviderController {
         }
     }
     /**
-     * Obtenir un prestataire par ID
-     */
+       * Obtenir un prestataire par ID
+       */
     static async getById(req, res) {
         try {
             const { id } = req.params;
-            const provider = await prisma_1.prisma.providerProfile.findFirst({
-                where: {
-                    id,
-                    user: {
-                        role: client_1.Role.PRESTATAIRE,
-                    },
-                },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            firstName: true,
-                            lastName: true,
-                            email: true,
-                            phone: true,
-                            avatar: true,
-                            createdAt: true,
-                        },
-                    },
-                    services: {
-                        where: { isActive: true },
-                        orderBy: { createdAt: "desc" },
-                    },
-                },
-            });
-            if (!provider) {
-                res
-                    .status(404)
-                    .json({ success: false, message: "Prestataire non trouvé" });
+            const { query } = require("../config/database");
+            // Chercher le prestataire par ID utilisateur (qui est passé depuis la carte)
+            const result = await query(`SELECT
+          u.id, u.email, u.first_name, u.last_name, u.phone, u.role,
+          u.bio, u.specialization, u.address, u.zone, u.avatar, u.latitude, u.longitude,
+          u.is_verified, u.created_at,
+          pp.hourly_rate, pp.years_experience, pp.availability, pp.is_available as "isAvailable",
+          COALESCE(rating_stats.avg_rating, 0) as rating,
+          COALESCE(rating_stats.review_count, 0) as "totalReviews"
+        FROM users u
+        LEFT JOIN provider_profiles pp ON u.id = pp.user_id
+        LEFT JOIN (
+          SELECT
+            p.user_id,
+            AVG(r.rating) as avg_rating,
+            COUNT(r.id) as review_count
+          FROM provider_profiles p
+          LEFT JOIN reviews r ON p.user_id = r.provider_id
+          GROUP BY p.user_id
+        ) rating_stats ON u.id = rating_stats.user_id
+        WHERE u.id = $1 AND u.role = 'PRESTATAIRE'`, [id]);
+            if (result.rows.length === 0) {
+                res.status(404).json({ success: false, message: "Prestataire non trouvé" });
                 return;
             }
+            const provider = result.rows[0];
             // Get reviews
-            const reviews = await prisma_1.prisma.review.findMany({
-                where: { providerId: id },
-                include: {
-                    client: {
-                        select: {
-                            id: true,
-                            firstName: true,
-                            lastName: true,
-                            avatar: true,
-                        },
-                    },
+            const reviewsResult = await query(`SELECT r.*, u.first_name, u.last_name, u.avatar
+        FROM reviews r
+        JOIN users u ON r.client_id = u.id
+        WHERE r.provider_id = $1
+        ORDER BY r.created_at DESC
+        LIMIT 10`, [id]);
+            // Get services
+            const servicesResult = await query(`SELECT s.*
+        FROM services s
+        WHERE s.provider_id = $1 AND s.is_active = true
+        ORDER BY s.created_at DESC`, [id]);
+            const data = {
+                id: provider.id,
+                user: {
+                    id: provider.id,
+                    firstName: provider.first_name,
+                    lastName: provider.last_name,
+                    email: provider.email,
+                    phone: provider.phone,
+                    avatar: provider.avatar,
+                    createdAt: provider.created_at,
                 },
-                orderBy: { createdAt: "desc" },
-                take: 10,
-            });
+                specialty: provider.specialization,
+                bio: provider.bio,
+                address: provider.address,
+                zone: provider.zone,
+                latitude: parseFloat(provider.latitude),
+                longitude: parseFloat(provider.longitude),
+                isVerified: provider.is_verified,
+                hourlyRate: provider.hourly_rate ? parseFloat(provider.hourly_rate) : undefined,
+                yearsExperience: provider.years_experience ? parseInt(provider.years_experience) : undefined,
+                availability: provider.availability,
+                isAvailable: provider.isAvailable,
+                rating: parseFloat(provider.rating) || 0,
+                totalReviews: parseInt(provider.totalReviews) || 0,
+                reviews: reviewsResult.rows.map((r) => ({
+                    id: r.id,
+                    rating: r.rating,
+                    comment: r.comment,
+                    createdAt: r.created_at,
+                    client: {
+                        id: r.client_id,
+                        firstName: r.first_name,
+                        lastName: r.last_name,
+                        avatar: r.avatar,
+                    },
+                })),
+                services: servicesResult.rows,
+            };
             res.json({
                 success: true,
-                data: {
-                    ...provider,
-                    reviews,
-                },
+                data,
             });
         }
         catch (error) {

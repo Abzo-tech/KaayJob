@@ -10,8 +10,8 @@ export declare class ProviderController {
      */
     static getAll(req: Request, res: Response): Promise<void>;
     /**
-     * Obtenir un prestataire par ID
-     */
+       * Obtenir un prestataire par ID
+       */
     static getById(req: Request, res: Response): Promise<void>;
     /**
      * Obtenir les services d'un prestataire

@@ -170,6 +170,24 @@ class ServiceController {
                 res.status(400).json({ success: false, message: "Profil prestataire non trouvé. Veuillez compléter votre profil d'abord." });
                 return;
             }
+            // Vérifier si un service avec le même nom existe déjà pour ce prestataire
+            const existingService = await prisma_1.prisma.service.findFirst({
+                where: {
+                    providerId: providerProfile.userId,
+                    name: {
+                        equals: name,
+                        mode: "insensitive",
+                    },
+                    isActive: true,
+                },
+            });
+            if (existingService) {
+                res.status(400).json({
+                    success: false,
+                    message: "Un service avec ce nom existe déjà dans votre liste de services.",
+                });
+                return;
+            }
             const service = await prisma_1.prisma.service.create({
                 data: {
                     providerId: providerProfile.userId, // Use ProviderProfile.userId (not id) as per schema

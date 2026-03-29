@@ -388,7 +388,7 @@ exports.createServiceValidation = [
         .isLength({ max: 200 })
         .withMessage("Nom: 200 caractères max"),
     (0, exports.isDescription)("description", 1000, false),
-    (0, exports.isUUID)("categoryId", true),
+    (0, exports.isUUID)("categoryId", false), // Rendre optionnel
     (0, exports.isPrice)("price"),
     (0, exports.isPriceType)("priceType", false),
     (0, exports.isDuration)("duration", false, 15),

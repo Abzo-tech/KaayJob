@@ -155,7 +155,11 @@ router.post("/", [
         // Créer une notification pour le prestataire
         await (0, notificationService_1.createNotification)(userId, "Nouvel abonnement", `Votre abonnement ${plan.toUpperCase()} a été activé avec succès`, "success", "/prestataire/abonnement");
         // Créer une notification pour l'admin
-        await (0, notificationService_1.createNotification)(req.user.id, "Abonnement créé", `Un abonnement ${plan.toUpperCase()} a été créé pour un prestataire`, "success", "/admin/subscriptions");
+        await (0, notificationService_1.createFormattedNotification)({ id: req.user.id, role: req.user.role || 'admin', firstName: 'Admin', lastName: '' }, "Abonnement créé", `Un abonnement ${plan.toUpperCase()} a été créé pour un prestataire`, "success", "/admin/subscriptions", undefined, {
+            actor: { firstName: 'Admin', lastName: '', role: 'ADMIN' },
+            action: 'subscription_created',
+            entity: plan.toUpperCase()
+        });
         res.status(201).json({
             success: true,
             message: "Abonnement créé avec succès",
@@ -445,19 +449,16 @@ router.delete("/plans/:id", async (req, res) => {
         // Vérifier si le plan existe
         const existing = await prisma_1.prisma.subscriptionPlan.findUnique({
             where: { id },
-            include: {
-                _count: {
-                    select: { subscriptions: true },
-                },
-            },
         });
         if (!existing) {
             return res
                 .status(404)
                 .json({ success: false, message: "Plan non trouvé" });
         }
-        // Vérifier si des abonnements utilisent ce plan
-        if (existing._count.subscriptions > 0) {
+        // Vérifier si des abonnements utilisent ce plan (utilisation du champ plan)
+        const subscriptionResult = await (0, database_1.query)("SELECT COUNT(*) as count FROM subscriptions WHERE plan = $1", [existing.slug]);
+        const subscriptionCount = parseInt(subscriptionResult.rows[0].count);
+        if (subscriptionCount > 0) {
             return res.status(400).json({
                 success: false,
                 message: "Impossible de supprimer ce plan car des abonnements l'utilisent",

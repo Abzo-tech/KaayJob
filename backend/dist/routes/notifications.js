@@ -19,16 +19,9 @@ router.get("/", async (req, res) => {
         const { limit = 20, offset = 0, unreadOnly } = req.query;
         let whereClause = "";
         let params = [];
-        // Logique de filtrage selon le rôle
-        if (userRole === "admin" || userRole === "ADMIN") {
-            // Admin voit TOUTES les notifications
-            whereClause = "1=1"; // Pas de restriction pour admin
-        }
-        else {
-            // Clients et prestataires : voient leurs notifications directes + celles où ils sont dans private_recipients
-            whereClause = "user_id = $1 OR EXISTS (SELECT 1 FROM json_array_elements_text(private_recipients::json) AS elem WHERE elem::text = $1)";
-            params = [userId];
-        }
+        // Tous les utilisateurs voient leurs notifications directes + celles où ils sont dans private_recipients
+        whereClause = "user_id = $1 OR EXISTS (SELECT 1 FROM json_array_elements_text(private_recipients::json) AS elem WHERE elem::text = $1)";
+        params = [userId];
         if (unreadOnly === "true") {
             whereClause += (whereClause === "1=1" ? " AND" : " AND") + " read = false";
         }
@@ -136,5 +129,4 @@ async function createNotification(userId, title, message, type = "info", link) {
     }
 }
 exports.default = router;
-module.exports = router;
 //# sourceMappingURL=notifications.js.map

@@ -11,7 +11,7 @@ WORKDIR /app
 # Installer les dépendances (y compris devDependencies pour le build)
 COPY package*.json ./
 
-RUN npm ci && \
+RUN npm install && \
     npm install -g prisma
 
 # Copier le code source du backend
