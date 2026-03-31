@@ -6,18 +6,15 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY backend/package.json backend/package-lock.json backend/
+# Copy backend directory
+COPY backend ./backend
 
-# Install dependencies
+# Install dependencies and build
 WORKDIR /app/backend
 RUN npm ci
 
 # Install Prisma CLI globally
 RUN npm install -g prisma
-
-# Copy source code
-COPY backend ./
 
 # Set dummy DATABASE_URL for prisma generate (will be overridden at runtime)
 ENV DATABASE_URL="postgresql://placeholder:placeholder@placeholder:5432/placeholder"
