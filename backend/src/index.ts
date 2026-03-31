@@ -24,7 +24,7 @@ import paymentsRoutes from "./routes/payments";
 import { testConnection, query } from "./config/database";
 import { prisma } from "./config/prisma";
 import { seedDatabase } from "./scripts/seed";
-const bcrypt = require('bcrypt');
+import bcrypt from "bcryptjs";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -278,7 +278,6 @@ app.post("/api/setup-admin", async (req, res) => {
     }
 
     // Créer l'admin
-    const bcrypt = require('bcrypt');
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await query(`
