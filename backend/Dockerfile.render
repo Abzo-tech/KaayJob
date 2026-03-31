@@ -7,7 +7,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY backend/package*.json ./
+COPY package*.json ./
 
 # Install dependencies
 RUN npm ci
@@ -16,7 +16,7 @@ RUN npm ci
 RUN npm install -g prisma
 
 # Copy source code
-COPY backend/ .
+COPY . .
 
 # Set dummy DATABASE_URL for prisma generate (will be overridden at runtime)
 ENV DATABASE_URL="postgresql://placeholder:placeholder@placeholder:5432/placeholder"
