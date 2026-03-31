@@ -24,6 +24,7 @@ import paymentsRoutes from "./routes/payments";
 import { testConnection, query } from "./config/database";
 import { prisma } from "./config/prisma";
 import { seedDatabase } from "./scripts/seed";
+const bcrypt = require('bcrypt');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -119,6 +120,137 @@ app.post("/api/seed", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Erreur lors de l'initialisation de la base de données",
+    });
+  }
+});
+
+// Create basic test data endpoint (emergency solution)
+app.post("/api/create-test-data", async (req, res) => {
+  try {
+    console.log('🌱 Création de données de test basiques...');
+
+    // Créer quelques catégories de base
+    const categories = [
+      { name: 'Jardinage', slug: 'jardinage', description: 'Services de jardinage et espaces verts', icon: '🌿', isActive: true },
+      { name: 'Plomberie', slug: 'plomberie', description: 'Réparations et installations de plomberie', icon: '🔧', isActive: true },
+      { name: 'Électricité', slug: 'electricite', description: 'Travaux électriques et dépannages', icon: '⚡', isActive: true },
+      { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage et entretien', icon: '🧹', isActive: true },
+      { name: 'Réparations', slug: 'reparations', description: 'Réparations diverses à domicile', icon: '🔨', isActive: true }
+    ];
+
+    for (const cat of categories) {
+      await prisma.category.upsert({
+        where: { slug: cat.slug },
+        update: cat,
+        create: cat
+      });
+    }
+
+    // Créer un utilisateur admin
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    await prisma.user.upsert({
+      where: { email: 'admin@kaayjob.com' },
+      update: {
+        firstName: 'Admin',
+        lastName: 'KaayJob',
+        phone: '+221000000000',
+        role: 'ADMIN',
+        isVerified: true,
+        isActive: true,
+        password: hashedPassword,
+      },
+      create: {
+        email: 'admin@kaayjob.com',
+        password: hashedPassword,
+        firstName: 'Admin',
+        lastName: 'KaayJob',
+        phone: '+221000000000',
+        role: 'ADMIN',
+        isVerified: true,
+        isActive: true,
+      }
+    });
+
+    // Créer quelques prestataires
+    const providers = [
+      { email: 'jardinier@email.com', firstName: 'Ahmed', lastName: 'Diallo', specialty: 'Jardinage' },
+      { email: 'plombier@email.com', firstName: 'Moussa', lastName: 'Sow', specialty: 'Plomberie' },
+      { email: 'electricien@email.com', firstName: 'Fatou', lastName: 'Diop', specialty: 'Électricité' }
+    ];
+
+    for (const prov of providers) {
+      const userPassword = await bcrypt.hash('test123', 10);
+      const user = await prisma.user.upsert({
+        where: { email: prov.email },
+        update: {
+          firstName: prov.firstName,
+          lastName: prov.lastName,
+          phone: '+221000000000',
+          role: 'PRESTATAIRE',
+          isVerified: true,
+          isActive: true,
+          password: userPassword,
+        },
+        create: {
+          email: prov.email,
+          password: userPassword,
+          firstName: prov.firstName,
+          lastName: prov.lastName,
+          phone: '+221000000000',
+          role: 'PRESTATAIRE',
+          isVerified: true,
+          isActive: true,
+        }
+      });
+
+      // Créer le profil prestataire
+      await prisma.providerProfile.upsert({
+        where: { userId: user.id },
+        update: {
+          businessName: `${prov.firstName} ${prov.specialty}`,
+          specialty: prov.specialty,
+          bio: `Professionnel ${prov.specialty} expérimenté`,
+          isAvailable: true,
+          rating: 4.5,
+          totalReviews: 10,
+          totalBookings: 25,
+          isVerified: true,
+        },
+        create: {
+          userId: user.id,
+          businessName: `${prov.firstName} ${prov.specialty}`,
+          specialty: prov.specialty,
+          bio: `Professionnel ${prov.specialty} expérimenté`,
+          isAvailable: true,
+          rating: 4.5,
+          totalReviews: 10,
+          totalBookings: 25,
+          isVerified: true,
+        }
+      });
+    }
+
+    console.log('✅ Données de test créées avec succès');
+
+    res.json({
+      success: true,
+      message: 'Données de test créées avec succès',
+      data: {
+        categories: categories.length,
+        users: providers.length + 1, // + admin
+        credentials: {
+          admin: { email: 'admin@kaayjob.com', password: 'admin123' },
+          providers: providers.map(p => ({ email: p.email, password: 'test123' }))
+        }
+      }
+    });
+
+  } catch (error: any) {
+    console.error('❌ Erreur création données test:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la création des données de test',
+      error: error.message
     });
   }
 });
