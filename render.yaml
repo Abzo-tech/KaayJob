@@ -3,7 +3,7 @@ services:
     name: kaayjob-backend
     env: docker
     dockerfilePath: backend/Dockerfile.render
-    dockerCommand: sh -c "npx prisma migrate deploy && node dist/index.js"
+    dockerCommand: sh -c "npx prisma generate && node dist/index.js"
     envVars:
       - key: DATABASE_URL
         value: postgresql://postgres:postgres@127.0.0.1:5432/kaayjob?schema=public
