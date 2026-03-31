@@ -100,10 +100,13 @@ jobs:
     - name: Verify deployment
       run: |
         echo "✅ Backend deployment status:"
-        kubectl get pods -l app=kaayjob-backend
+        kubectl get pods -l app=backend -n kaayjob
 
         echo "✅ Frontend deployment status:"
-        kubectl get pods -l app=kaayjob-frontend
+        kubectl get pods -l app=frontend -n kaayjob
 
         echo "✅ Services status:"
-        kubectl get services -l app=kaayjob
+        kubectl get services -n kaayjob
+
+        echo "✅ External IP:"
+        kubectl get services -n kaayjob frontend-service
