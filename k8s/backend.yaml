@@ -29,57 +29,17 @@ spec:
               name: http
           env:
             - name: NODE_ENV
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: NODE_ENV
+              value: "production"
             - name: PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: PORT
-            - name: DB_HOST
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: DB_HOST
-            - name: DB_PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: DB_PORT
-            - name: DB_NAME
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: DB_NAME
-            - name: DB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: kaayjob-secrets
-                  key: POSTGRES_USER
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: kaayjob-secrets
-                  key: POSTGRES_PASSWORD
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: kaayjob-secrets
-                  key: JWT_SECRET
-            - name: JWT_EXPIRES_IN
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: JWT_EXPIRES_IN
-            - name: FRONTEND_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: FRONTEND_URL
+              value: "3000"
             - name: DATABASE_URL
-              value: "postgresql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
+              value: "postgres://b9a0969b382808c1926482e10fd5a854e2fd7e020e81a9f3cc96e2885408ee95:sk_wqQoOr0QtZD7DSoDVsjPm@db.prisma.io:5432/postgres?sslmode=require"
+            - name: JWT_SECRET
+              value: "kaayjob-production-secret-key-change-in-production"
+            - name: JWT_EXPIRES_IN
+              value: "7d"
+            - name: FRONTEND_URL
+              value: "http://localhost:3000"
           resources:
             requests:
               memory: "256Mi"

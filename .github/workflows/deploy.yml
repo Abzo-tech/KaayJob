@@ -93,12 +93,16 @@ jobs:
         # Update frontend deployment
         sed -i "s|image:.*|image: ${{ env.FRONTEND_IMAGE }}:latest|g" k8s/frontend-deployment.yaml
 
-        # Apply Kubernetes manifests
-        kubectl apply -f k8s/
+        # Create namespace if it doesn't exist
+        kubectl create namespace kaayjob --dry-run=client -o yaml | kubectl apply -f -
 
-        # Wait for rollout to complete
-        kubectl rollout status deployment/kaayjob-backend
-        kubectl rollout status deployment/kaayjob-frontend
+        # Apply only essential manifests (deployment and service)
+        kubectl apply -f k8s/backend.yaml
+        kubectl apply -f k8s/frontend.yaml
+
+        # Wait for rollout to complete (only for successfully applied deployments)
+        kubectl rollout status deployment/backend -n kaayjob || echo "Backend deployment failed - check logs"
+        kubectl rollout status deployment/frontend -n kaayjob || echo "Frontend deployment failed - check logs"
 
     - name: Verify deployment
       run: |

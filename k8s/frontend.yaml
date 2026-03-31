@@ -29,10 +29,7 @@ spec:
               name: http
           env:
             - name: VITE_API_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: kaayjob-config
-                  key: VITE_API_URL
+              value: "https://kaayjob.onrender.com/api"
           resources:
             requests:
               memory: "128Mi"
