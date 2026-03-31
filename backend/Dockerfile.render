@@ -42,7 +42,7 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
 
 # Copy docker-entrypoint script
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY --from=builder /app/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Install OpenSSL for Prisma
