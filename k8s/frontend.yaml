@@ -62,7 +62,7 @@ metadata:
   name: frontend-service
   namespace: kaayjob
 spec:
-  type: ClusterIP
+  type: LoadBalancer  # Exposition publique
   ports:
     - port: 80
       targetPort: 80
