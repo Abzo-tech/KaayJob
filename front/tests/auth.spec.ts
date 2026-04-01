@@ -1,79 +1,136 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from "@playwright/test";
 
-test.describe('Authentication', () => {
-  test('should register a new client user', async ({ page }) => {
-    await page.goto('/');
+test.describe("Authentication", () => {
+  test("registers a new client user", async ({ page }) => {
+    await page.route("**/api/auth/register", async (route) => {
+      const payload = route.request().postDataJSON();
 
-    // Click on login/register button
-    await page.getByRole('button', { name: /connexion/i }).click();
+      expect(payload).toMatchObject({
+        firstName: "Jean",
+        lastName: "Dupont",
+        email: "jean.dupont@example.com",
+        phone: "+221771234567",
+        role: "client",
+      });
 
-    // Should navigate to login page
-    await expect(page).toHaveURL(/.*login/);
+      await route.fulfill({
+        status: 201,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            user: {
+              id: "client-1",
+              email: payload.email,
+              firstName: payload.firstName,
+              lastName: payload.lastName,
+              phone: payload.phone,
+              role: "client",
+            },
+            token: "client-token",
+          },
+        }),
+      });
+    });
 
-    // Click on register link
-    await page.getByRole('link', { name: /s'inscrire/i }).click();
+    await page.goto("/");
+    await page.getByRole("button", { name: "Connexion" }).click();
+    await page.getByRole("tab", { name: "S'inscrire" }).click();
 
-    // Fill registration form
-    await page.getByLabel(/prénom/i).fill('Jean');
-    await page.getByLabel(/nom/i).fill('Test');
-    await page.getByLabel(/email/i).fill(`jean.test.${Date.now()}@example.com`);
-    await page.getByLabel(/téléphone/i).fill('+221771234567');
-    await page.getByLabel(/mot de passe/i).fill('password123');
-    await page.getByLabel(/confirmer.*mot de passe/i).fill('password123');
-    await page.getByLabel(/rôle/i).selectOption('CLIENT');
+    await page.locator("#customer-name").fill("Jean Dupont");
+    await page.locator("#customer-email-signup").fill("jean.dupont@example.com");
+    await page.locator("#customer-phone").fill("+221771234567");
+    await page.locator("#customer-password-signup").fill("Password123");
+    await page.locator("#customer-confirmPassword").fill("Password123");
+    await page.getByRole("button", { name: "S'inscrire" }).click();
 
-    // Submit form
-    await page.getByRole('button', { name: /s'inscrire/i }).click();
-
-    // Should redirect to dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
-
-    // Should show success message
-    await expect(page.getByText(/inscription réussie/i)).toBeVisible();
+    await expect(page.getByText("Connexion")).not.toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem("token")))
+      .toBe("client-token");
+    await expect
+      .poll(() =>
+        page.evaluate(() => JSON.parse(localStorage.getItem("user") || "{}").role),
+      )
+      .toBe("client");
   });
 
-  test('should login with existing account', async ({ page }) => {
-    // First register a user
-    const testEmail = `login.test.${Date.now()}@example.com`;
+  test("logs in with an existing provider account", async ({ page }) => {
+    await page.route("**/api/auth/login", async (route) => {
+      const payload = route.request().postDataJSON();
 
-    await page.goto('/');
-    await page.getByRole('button', { name: /connexion/i }).click();
-    await page.getByRole('link', { name: /s'inscrire/i }).click();
+      expect(payload).toEqual({
+        email: "provider@example.com",
+        password: "Password123",
+      });
 
-    await page.getByLabel(/prénom/i).fill('Login');
-    await page.getByLabel(/nom/i).fill('Test');
-    await page.getByLabel(/email/i).fill(testEmail);
-    await page.getByLabel(/téléphone/i).fill('+221772345678');
-    await page.getByLabel(/mot de passe/i).fill('password123');
-    await page.getByLabel(/confirmer.*mot de passe/i).fill('password123');
-    await page.getByLabel(/rôle/i).selectOption('CLIENT');
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            user: {
+              id: "provider-1",
+              email: payload.email,
+              firstName: "Awa",
+              lastName: "Ndiaye",
+              phone: "+221771234567",
+              role: "prestataire",
+            },
+            token: "provider-token",
+          },
+        }),
+      });
+    });
 
-    await page.getByRole('button', { name: /s'inscrire/i }).click();
-    await expect(page).toHaveURL(/.*dashboard/);
+    await page.route("**/api/services", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true, data: [] }),
+      });
+    });
 
-    // Logout
-    await page.getByRole('button', { name: /déconnexion/i }).click();
+    await page.route("**/api/bookings", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ success: true, data: [] }),
+      });
+    });
 
-    // Now login
-    await page.getByRole('button', { name: /connexion/i }).click();
-    await page.getByLabel(/email/i).fill(testEmail);
-    await page.getByLabel(/mot de passe/i).fill('password123');
-    await page.getByRole('button', { name: /se connecter/i }).click();
+    await page.goto("/");
+    await page.getByRole("button", { name: "Connexion" }).click();
+    await page.getByRole("tab", { name: "Prestataire" }).click();
 
-    // Should redirect to dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.getByText(/bonjour.*login/i)).toBeVisible();
+    await page.locator("#provider-email").fill("provider@example.com");
+    await page.locator("#provider-password").fill("Password123");
+    await page.getByRole("button", { name: "Connexion Prestataire" }).click();
+
+    await expect(page.getByText("Espace Prestataire")).toBeVisible();
+    await expect(page.getByText("Bienvenue, Awa !")).toBeVisible();
   });
 
-  test('should show error for invalid credentials', async ({ page }) => {
-    await page.goto('/');
-    await page.getByRole('button', { name: /connexion/i }).click();
+  test("shows an error for invalid credentials", async ({ page }) => {
+    await page.route("**/api/auth/login", async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: false,
+          message: "Email ou mot de passe incorrect",
+        }),
+      });
+    });
 
-    await page.getByLabel(/email/i).fill('invalid@example.com');
-    await page.getByLabel(/mot de passe/i).fill('wrongpassword');
-    await page.getByRole('button', { name: /se connecter/i }).click();
+    await page.goto("/");
+    await page.getByRole("button", { name: "Connexion" }).click();
 
-    // Should show error message
-    await expect(page.getByText(/identifiants invalides/i)).toBeVisible();
+    await page.locator("#customer-email").fill("invalid@example.com");
+    await page.locator("#customer-password").fill("WrongPassword123");
+    await page.getByRole("button", { name: "Connexion" }).click();
+
+    await expect(page.getByText("Email ou mot de passe incorrect")).toBeVisible();
   });
 });

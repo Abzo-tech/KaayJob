@@ -1,0 +1,308 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1520" viewBox="0 0 2200 1520">
+  <defs>
+    <style>
+      .bg { fill: #f7f4ee; }
+      .title { font: 700 34px Arial, sans-serif; fill: #102a43; }
+      .subtitle { font: 400 18px Arial, sans-serif; fill: #486581; }
+      .section { font: 700 20px Arial, sans-serif; fill: #0b3c49; }
+      .actor-label { font: 700 18px Arial, sans-serif; fill: #102a43; text-anchor: middle; }
+      .actor-text { font: 400 14px Arial, sans-serif; fill: #334e68; text-anchor: middle; }
+      .class-name { font: 700 18px Arial, sans-serif; fill: #102a43; }
+      .class-attr { font: 400 14px Arial, sans-serif; fill: #243b53; }
+      .note-title { font: 700 16px Arial, sans-serif; fill: #7c2d12; }
+      .note-text { font: 400 13px Arial, sans-serif; fill: #7c2d12; }
+      .legend { font: 400 14px Arial, sans-serif; fill: #243b53; }
+      .box { fill: #ffffff; stroke: #1f2937; stroke-width: 1.5; rx: 12; ry: 12; }
+      .head { fill: #d9eaf7; stroke: #1f2937; stroke-width: 1.5; }
+      .actor-box { fill: #fffaf0; stroke: #8d6e63; stroke-width: 1.5; rx: 14; ry: 14; }
+      .note { fill: #fff3cd; stroke: #b7791f; stroke-width: 1.5; rx: 10; ry: 10; }
+      .line { stroke: #52606d; stroke-width: 2; fill: none; }
+      .assoc { stroke: #52606d; stroke-width: 1.7; fill: none; }
+      .actor-line { stroke: #b08968; stroke-width: 2; stroke-dasharray: 8 6; fill: none; }
+      .mult { font: 700 14px Arial, sans-serif; fill: #102a43; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#52606d" />
+    </marker>
+    <marker id="arrowActor" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#b08968" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="2200" height="1520"/>
+
+  <text x="70" y="65" class="title">KaayJob - Diagramme de classes avec acteurs</text>
+  <text x="70" y="95" class="subtitle">Base du schéma : backend/prisma/schema.prisma + backend/src/config/schema.ts + rôles visibles dans front/src/App.tsx</text>
+
+  <text x="90" y="145" class="section">Acteurs</text>
+  <text x="560" y="145" class="section">Classes métier principales</text>
+
+  <!-- Actors -->
+  <rect class="actor-box" x="50" y="180" width="360" height="180"/>
+  <circle cx="120" cy="240" r="22" fill="#fff" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="262" x2="120" y2="315" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="92" y1="282" x2="148" y2="282" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="315" x2="95" y2="345" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="315" x2="145" y2="345" stroke="#8d6e63" stroke-width="2"/>
+  <text x="260" y="235" class="actor-label">Visiteur</text>
+  <text x="260" y="265" class="actor-text">consulte les catégories</text>
+  <text x="260" y="287" class="actor-text">parcourt les services</text>
+  <text x="260" y="309" class="actor-text">voit les profils publics</text>
+
+  <rect class="actor-box" x="50" y="390" width="360" height="210"/>
+  <circle cx="120" cy="455" r="22" fill="#fff" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="477" x2="120" y2="535" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="92" y1="497" x2="148" y2="497" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="535" x2="95" y2="570" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="535" x2="145" y2="570" stroke="#8d6e63" stroke-width="2"/>
+  <text x="260" y="445" class="actor-label">Client</text>
+  <text x="260" y="475" class="actor-text">s'inscrit / se connecte</text>
+  <text x="260" y="497" class="actor-text">réserve un service</text>
+  <text x="260" y="519" class="actor-text">effectue un paiement</text>
+  <text x="260" y="541" class="actor-text">laisse un avis</text>
+  <text x="260" y="563" class="actor-text">reçoit des notifications</text>
+
+  <rect class="actor-box" x="50" y="635" width="360" height="230"/>
+  <circle cx="120" cy="705" r="22" fill="#fff" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="727" x2="120" y2="790" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="92" y1="748" x2="148" y2="748" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="790" x2="95" y2="828" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="790" x2="145" y2="828" stroke="#8d6e63" stroke-width="2"/>
+  <text x="260" y="695" class="actor-label">Prestataire</text>
+  <text x="260" y="725" class="actor-text">gère son profil pro</text>
+  <text x="260" y="747" class="actor-text">publie des services</text>
+  <text x="260" y="769" class="actor-text">traite les réservations</text>
+  <text x="260" y="791" class="actor-text">demande une vérification</text>
+  <text x="260" y="813" class="actor-text">souscrit à un abonnement</text>
+  <text x="260" y="835" class="actor-text">reçoit des notifications</text>
+
+  <rect class="actor-box" x="50" y="900" width="360" height="210"/>
+  <circle cx="120" cy="965" r="22" fill="#fff" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="987" x2="120" y2="1045" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="92" y1="1007" x2="148" y2="1007" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="1045" x2="95" y2="1080" stroke="#8d6e63" stroke-width="2"/>
+  <line x1="120" y1="1045" x2="145" y2="1080" stroke="#8d6e63" stroke-width="2"/>
+  <text x="260" y="955" class="actor-label">Administrateur</text>
+  <text x="260" y="985" class="actor-text">gère utilisateurs et rôles</text>
+  <text x="260" y="1007" class="actor-text">modère catégories</text>
+  <text x="260" y="1029" class="actor-text">pilote abonnements / plans</text>
+  <text x="260" y="1051" class="actor-text">consulte analytics et notifications</text>
+
+  <!-- Class boxes row 1 -->
+  <rect class="box" x="540" y="180" width="300" height="220"/>
+  <rect class="head" x="540" y="180" width="300" height="46"/>
+  <text x="560" y="210" class="class-name">User</text>
+  <text x="560" y="248" class="class-attr">+ id: UUID</text>
+  <text x="560" y="270" class="class-attr">+ email: String</text>
+  <text x="560" y="292" class="class-attr">+ password: String</text>
+  <text x="560" y="314" class="class-attr">+ firstName: String</text>
+  <text x="560" y="336" class="class-attr">+ lastName: String</text>
+  <text x="560" y="358" class="class-attr">+ phone: String</text>
+  <text x="560" y="380" class="class-attr">+ role: CLIENT | PRESTATAIRE | ADMIN</text>
+
+  <rect class="box" x="930" y="180" width="300" height="240"/>
+  <rect class="head" x="930" y="180" width="300" height="46"/>
+  <text x="950" y="210" class="class-name">ProviderProfile</text>
+  <text x="950" y="248" class="class-attr">+ id: UUID</text>
+  <text x="950" y="270" class="class-attr">+ userId: UUID</text>
+  <text x="950" y="292" class="class-attr">+ businessName: String?</text>
+  <text x="950" y="314" class="class-attr">+ specialty: String?</text>
+  <text x="950" y="336" class="class-attr">+ hourlyRate: Decimal?</text>
+  <text x="950" y="358" class="class-attr">+ serviceRadius: Int?</text>
+  <text x="950" y="380" class="class-attr">+ isAvailable: Boolean</text>
+  <text x="950" y="402" class="class-attr">+ rating: Decimal</text>
+
+  <rect class="box" x="1320" y="180" width="300" height="220"/>
+  <rect class="head" x="1320" y="180" width="300" height="46"/>
+  <text x="1340" y="210" class="class-name">Category</text>
+  <text x="1340" y="248" class="class-attr">+ id: UUID</text>
+  <text x="1340" y="270" class="class-attr">+ name: String</text>
+  <text x="1340" y="292" class="class-attr">+ slug: String</text>
+  <text x="1340" y="314" class="class-attr">+ description: String?</text>
+  <text x="1340" y="336" class="class-attr">+ parentId: UUID?</text>
+  <text x="1340" y="358" class="class-attr">+ isActive: Boolean</text>
+  <text x="1340" y="380" class="class-attr">+ displayOrder: Int</text>
+
+  <rect class="box" x="1710" y="180" width="300" height="240"/>
+  <rect class="head" x="1710" y="180" width="300" height="46"/>
+  <text x="1730" y="210" class="class-name">Service</text>
+  <text x="1730" y="248" class="class-attr">+ id: UUID</text>
+  <text x="1730" y="270" class="class-attr">+ providerId: UUID</text>
+  <text x="1730" y="292" class="class-attr">+ categoryId: UUID?</text>
+  <text x="1730" y="314" class="class-attr">+ name: String</text>
+  <text x="1730" y="336" class="class-attr">+ price: Decimal</text>
+  <text x="1730" y="358" class="class-attr">+ priceType: FIXED | HOURLY | QUOTE</text>
+  <text x="1730" y="380" class="class-attr">+ duration: Int?</text>
+  <text x="1730" y="402" class="class-attr">+ isActive: Boolean</text>
+
+  <!-- Class boxes row 2 -->
+  <rect class="box" x="540" y="520" width="300" height="260"/>
+  <rect class="head" x="540" y="520" width="300" height="46"/>
+  <text x="560" y="550" class="class-name">Booking</text>
+  <text x="560" y="588" class="class-attr">+ id: UUID</text>
+  <text x="560" y="610" class="class-attr">+ clientId: UUID</text>
+  <text x="560" y="632" class="class-attr">+ serviceId: UUID</text>
+  <text x="560" y="654" class="class-attr">+ bookingDate: DateTime</text>
+  <text x="560" y="676" class="class-attr">+ bookingTime: String</text>
+  <text x="560" y="698" class="class-attr">+ status: PENDING..REJECTED</text>
+  <text x="560" y="720" class="class-attr">+ address: String</text>
+  <text x="560" y="742" class="class-attr">+ totalAmount: Decimal?</text>
+  <text x="560" y="764" class="class-attr">+ paymentStatus: PENDING | PAID | REFUNDED</text>
+
+  <rect class="box" x="930" y="520" width="300" height="220"/>
+  <rect class="head" x="930" y="520" width="300" height="46"/>
+  <text x="950" y="550" class="class-name">Review</text>
+  <text x="950" y="588" class="class-attr">+ id: UUID</text>
+  <text x="950" y="610" class="class-attr">+ bookingId: UUID</text>
+  <text x="950" y="632" class="class-attr">+ clientId: UUID</text>
+  <text x="950" y="654" class="class-attr">+ providerId: UUID</text>
+  <text x="950" y="676" class="class-attr">+ serviceId: UUID?</text>
+  <text x="950" y="698" class="class-attr">+ rating: Int</text>
+  <text x="950" y="720" class="class-attr">+ comment: String?</text>
+
+  <rect class="box" x="1320" y="520" width="300" height="220"/>
+  <rect class="head" x="1320" y="520" width="300" height="46"/>
+  <text x="1340" y="550" class="class-name">Payment</text>
+  <text x="1340" y="588" class="class-attr">+ id: UUID</text>
+  <text x="1340" y="610" class="class-attr">+ bookingId: UUID?</text>
+  <text x="1340" y="632" class="class-attr">+ userId: UUID</text>
+  <text x="1340" y="654" class="class-attr">+ amount: Decimal</text>
+  <text x="1340" y="676" class="class-attr">+ paymentMethod: String?</text>
+  <text x="1340" y="698" class="class-attr">+ status: PENDING | PAID | REFUNDED</text>
+  <text x="1340" y="720" class="class-attr">+ transactionId: String?</text>
+
+  <rect class="box" x="1710" y="520" width="300" height="220"/>
+  <rect class="head" x="1710" y="520" width="300" height="46"/>
+  <text x="1730" y="550" class="class-name">Notification</text>
+  <text x="1730" y="588" class="class-attr">+ id: UUID</text>
+  <text x="1730" y="610" class="class-attr">+ userId: UUID</text>
+  <text x="1730" y="632" class="class-attr">+ title: String</text>
+  <text x="1730" y="654" class="class-attr">+ message: Text</text>
+  <text x="1730" y="676" class="class-attr">+ type: String</text>
+  <text x="1730" y="698" class="class-attr">+ read: Boolean</text>
+  <text x="1730" y="720" class="class-attr">+ link: String?</text>
+
+  <!-- Class boxes row 3 -->
+  <rect class="box" x="540" y="900" width="300" height="210"/>
+  <rect class="head" x="540" y="900" width="300" height="46"/>
+  <text x="560" y="930" class="class-name">Subscription</text>
+  <text x="560" y="968" class="class-attr">+ id: UUID</text>
+  <text x="560" y="990" class="class-attr">+ userId: UUID</text>
+  <text x="560" y="1012" class="class-attr">+ plan: String</text>
+  <text x="560" y="1034" class="class-attr">+ status: String</text>
+  <text x="560" y="1056" class="class-attr">+ startDate: DateTime</text>
+  <text x="560" y="1078" class="class-attr">+ endDate: DateTime</text>
+
+  <rect class="box" x="930" y="900" width="300" height="230"/>
+  <rect class="head" x="930" y="900" width="300" height="46"/>
+  <text x="950" y="930" class="class-name">SubscriptionPlan</text>
+  <text x="950" y="968" class="class-attr">+ id: UUID</text>
+  <text x="950" y="990" class="class-attr">+ name: String</text>
+  <text x="950" y="1012" class="class-attr">+ slug: String</text>
+  <text x="950" y="1034" class="class-attr">+ price: Decimal</text>
+  <text x="950" y="1056" class="class-attr">+ duration: Int</text>
+  <text x="950" y="1078" class="class-attr">+ features: Json</text>
+  <text x="950" y="1100" class="class-attr">+ isActive: Boolean</text>
+
+  <rect class="box" x="1320" y="900" width="300" height="210"/>
+  <rect class="head" x="1320" y="900" width="300" height="46"/>
+  <text x="1340" y="930" class="class-name">VerificationRequest</text>
+  <text x="1340" y="968" class="class-attr">+ id: UUID</text>
+  <text x="1340" y="990" class="class-attr">+ userId: UUID</text>
+  <text x="1340" y="1012" class="class-attr">+ documents: Json?</text>
+  <text x="1340" y="1034" class="class-attr">+ status: pending/approved/rejected</text>
+  <text x="1340" y="1056" class="class-attr">+ reviewedBy: UUID?</text>
+  <text x="1340" y="1078" class="class-attr">+ reviewedAt: DateTime?</text>
+
+  <rect class="note" x="1710" y="900" width="320" height="170"/>
+  <text x="1730" y="935" class="note-title">Note d’alignement</text>
+  <text x="1730" y="965" class="note-text">Le projet mélange deux sources de vérité :</text>
+  <text x="1730" y="989" class="note-text">1. Prisma pour le coeur du domaine</text>
+  <text x="1730" y="1013" class="note-text">2. schema.ts SQL pour Notification</text>
+  <text x="1730" y="1037" class="note-text">C’est pourquoi Notification est affichée</text>
+  <text x="1730" y="1061" class="note-text">dans ce diagramme même si elle n’est pas</text>
+  <text x="1730" y="1085" class="note-text">déclarée dans schema.prisma.</text>
+
+  <!-- Associations -->
+  <line class="assoc" x1="840" y1="290" x2="930" y2="300"/>
+  <text x="860" y="278" class="mult">1</text>
+  <text x="900" y="330" class="mult">0..1</text>
+
+  <line class="assoc" x1="1230" y1="310" x2="1320" y2="310"/>
+  <text x="1248" y="298" class="mult">1</text>
+  <text x="1288" y="298" class="mult">0..*</text>
+
+  <line class="assoc" x1="1620" y1="310" x2="1710" y2="310"/>
+  <text x="1638" y="298" class="mult">1</text>
+  <text x="1678" y="298" class="mult">0..*</text>
+
+  <line class="assoc" x1="1080" y1="420" x2="1080" y2="520"/>
+  <text x="1090" y="455" class="mult">1</text>
+  <text x="1090" y="505" class="mult">0..*</text>
+
+  <line class="assoc" x1="1860" y1="420" x2="690" y2="520"/>
+  <text x="1710" y="455" class="mult">1</text>
+  <text x="760" y="508" class="mult">0..*</text>
+
+  <line class="assoc" x1="690" y1="400" x2="690" y2="520"/>
+  <text x="700" y="445" class="mult">1</text>
+  <text x="700" y="500" class="mult">0..*</text>
+
+  <line class="assoc" x1="840" y1="635" x2="930" y2="630"/>
+  <text x="858" y="622" class="mult">1</text>
+  <text x="898" y="622" class="mult">0..1</text>
+
+  <line class="assoc" x1="840" y1="690" x2="1320" y2="690"/>
+  <text x="860" y="678" class="mult">1</text>
+  <text x="1270" y="678" class="mult">0..*</text>
+
+  <line class="assoc" x1="1230" y1="620" x2="1710" y2="620"/>
+  <text x="1250" y="608" class="mult">0..*</text>
+  <text x="1660" y="608" class="mult">1</text>
+
+  <line class="assoc" x1="840" y1="948" x2="930" y2="968"/>
+  <text x="860" y="944" class="mult">0..*</text>
+  <text x="900" y="956" class="mult">0..1</text>
+
+  <line class="assoc" x1="690" y1="780" x2="690" y2="900"/>
+  <text x="700" y="824" class="mult">1</text>
+  <text x="700" y="886" class="mult">0..*</text>
+
+  <line class="assoc" x1="1470" y1="740" x2="1470" y2="900"/>
+  <text x="1480" y="794" class="mult">1</text>
+  <text x="1480" y="886" class="mult">0..*</text>
+
+  <line class="assoc" x1="690" y1="400" x2="690" y2="900"/>
+  <text x="646" y="650" class="mult">User</text>
+
+  <line class="assoc" x1="1080" y1="740" x2="1080" y2="900"/>
+  <text x="1090" y="794" class="mult">Provider</text>
+
+  <line class="assoc" x1="2010" y1="620" x2="2010" y2="1010"/>
+  <line class="assoc" x1="2010" y1="1010" x2="1620" y2="1010"/>
+  <text x="2018" y="800" class="mult">lié à User</text>
+
+  <!-- Actor links -->
+  <line class="actor-line" x1="410" y1="270" x2="540" y2="300" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="495" x2="540" y2="640" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="530" x2="1320" y2="650" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="560" x2="930" y2="650" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="748" x2="930" y2="300" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="785" x2="1710" y2="300" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="820" x2="540" y2="980" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="840" x2="1320" y2="980" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="1005" x2="540" y2="260" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="1030" x2="1320" y2="270" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="1055" x2="930" y2="980" marker-end="url(#arrowActor)"/>
+  <line class="actor-line" x1="410" y1="1080" x2="1710" y2="640" marker-end="url(#arrowActor)"/>
+
+  <!-- Legend -->
+  <rect class="box" x="540" y="1210" width="1490" height="210"/>
+  <rect class="head" x="540" y="1210" width="1490" height="46"/>
+  <text x="560" y="1240" class="class-name">Légende et lecture rapide</text>
+  <text x="560" y="1285" class="legend">• Les acteurs proviennent des rôles visibles côté frontend et backend : Visiteur, Client, Prestataire, Administrateur.</text>
+  <text x="560" y="1315" class="legend">• Le coeur métier suit la chaîne : User → ProviderProfile → Service → Booking → Review / Payment.</text>
+  <text x="560" y="1345" class="legend">• La monétisation prestataire s’appuie sur Subscription et SubscriptionPlan.</text>
+  <text x="560" y="1375" class="legend">• VerificationRequest couvre le processus de validation prestataire.</text>
+  <text x="560" y="1405" class="legend">• Notification est utilisée massivement par les routes/services même si sa définition est portée par le schéma SQL.</text>
+</svg>

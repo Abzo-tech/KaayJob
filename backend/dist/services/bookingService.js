@@ -12,6 +12,29 @@ exports.getBookingStats = getBookingStats;
 const prisma_1 = require("../config/prisma");
 const database_1 = require("../config/database");
 const notificationService_1 = require("./notificationService");
+const normalizeBookingRow = (row) => ({
+    id: row.id,
+    clientId: row.client_id ?? row.clientId,
+    serviceId: row.service_id ?? row.serviceId,
+    providerId: row.provider_id ?? row.providerId ?? null,
+    bookingDate: row.booking_date ?? row.bookingDate,
+    bookingTime: row.booking_time ?? row.bookingTime,
+    duration: row.duration ?? null,
+    status: row.status,
+    address: row.address,
+    city: row.city,
+    phone: row.phone ?? null,
+    notes: row.notes ?? null,
+    totalAmount: row.total_amount ?? row.totalAmount ?? null,
+    paymentStatus: row.payment_status ?? row.paymentStatus ?? null,
+    createdAt: row.created_at ?? row.createdAt ?? null,
+    updatedAt: row.updated_at ?? row.updatedAt ?? null,
+    clientFirstName: row.client_first_name ?? row.clientFirstName ?? null,
+    clientLastName: row.client_last_name ?? row.clientLastName ?? null,
+    serviceName: row.service_name ?? row.serviceName ?? null,
+    providerFirstName: row.provider_first_name ?? row.providerFirstName ?? null,
+    providerLastName: row.provider_last_name ?? row.providerLastName ?? null,
+});
 /**
  * Liste des réservations avec pagination et filtres
  */
@@ -36,7 +59,10 @@ async function listBookings(filters) {
         params.push(clientId);
         paramIndex++;
     }
-    const countResult = await (0, database_1.query)(`SELECT COUNT(*) as count FROM bookings b WHERE ${whereClause}`, params);
+    const countResult = await (0, database_1.query)(`SELECT COUNT(*) as count
+     FROM bookings b
+     JOIN services s ON b.service_id = s.id
+     WHERE ${whereClause}`, params);
     const limitParamIndex = paramIndex;
     const offsetParamIndex = paramIndex + 1;
     const result = await (0, database_1.query)(`SELECT b.*, u.first_name as client_first_name, u.last_name as client_last_name,
@@ -49,7 +75,7 @@ async function listBookings(filters) {
      ORDER BY b.created_at DESC
      LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`, [...params, limit, offset]);
     return {
-        data: result.rows,
+        data: result.rows.map(normalizeBookingRow),
         pagination: {
             page,
             limit,
@@ -71,7 +97,7 @@ async function getBookingById(bookingId) {
     if (result.rows.length === 0) {
         throw new Error("Réservation non trouvée");
     }
-    return result.rows[0];
+    return normalizeBookingRow(result.rows[0]);
 }
 /**
  * Mettre à jour une réservation
@@ -135,7 +161,7 @@ async function updateBooking(bookingId, data, adminId) {
             await (0, notificationService_1.createNotification)(adminId, "Réservation mise à jour", `La réservation #${bookingId.slice(0, 8)} a été ${statusMessages[data.status] || "mise à jour"}`, data.status === "CANCELLED" ? "error" : "success", "/admin/bookings");
         }
     }
-    return result;
+    return normalizeBookingRow(result);
 }
 /**
  * Supprimer une réservation

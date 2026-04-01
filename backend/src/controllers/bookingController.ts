@@ -8,26 +8,30 @@ import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
 import { BookingStatus } from "@prisma/client";
 import { query } from "../config/database";
+import { createNotification } from "../services/notificationService";
 
-// Fonction utilitaire pour créer une notification (utilise query direct pour compatibilité)
-async function createNotification(
-  userId: string,
-  title: string,
-  message: string,
-  type: string = "info",
-  link?: string,
-  privateRecipients?: string[],
-) {
-  try {
-    const privateRecipientsJson = privateRecipients ? JSON.stringify(privateRecipients) : null;
-    await query(
-      "INSERT INTO notifications (id, user_id, title, message, type, link, private_recipients, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())",
-      [userId, title, message, type, link || null, privateRecipientsJson],
-    );
-  } catch (error) {
-    console.error("Erreur création notification:", error);
-  }
-}
+const normalizeBookingPayload = (booking: any) => ({
+  id: booking.id,
+  clientId: booking.clientId ?? booking.client_id ?? null,
+  serviceId: booking.serviceId ?? booking.service_id ?? null,
+  providerId: booking.providerId ?? booking.provider_id ?? null,
+  bookingDate: booking.bookingDate ?? booking.booking_date ?? null,
+  bookingTime: booking.bookingTime ?? booking.booking_time ?? null,
+  duration: booking.duration ?? null,
+  status: booking.status,
+  address: booking.address,
+  city: booking.city,
+  phone: booking.phone ?? null,
+  notes: booking.notes ?? null,
+  totalAmount: booking.totalAmount ?? booking.total_amount ?? null,
+  paymentStatus: booking.paymentStatus ?? booking.payment_status ?? null,
+  createdAt: booking.createdAt ?? booking.created_at ?? null,
+  updatedAt: booking.updatedAt ?? booking.updated_at ?? null,
+  client: booking.client,
+  service: booking.service,
+  review: booking.review,
+  payments: booking.payments,
+});
 
 export class BookingController {
   /**
@@ -295,7 +299,7 @@ export class BookingController {
       res.status(201).json({
         success: true,
         message: "Réservation créée",
-        data: booking,
+        data: normalizeBookingPayload(booking),
       });
     } catch (error) {
       console.error("Erreur création réservation:", error);
@@ -438,7 +442,7 @@ export class BookingController {
       res.json({
         success: true,
         message: "Statut mis à jour",
-        data: updated,
+        data: normalizeBookingPayload(updated),
       });
     } catch (error) {
       console.error("Erreur mise à jour statut:", error);

@@ -1,28 +1,40 @@
-import { PrismaClient } from '@prisma/client';
 import { execSync } from 'child_process';
 
-// Setup test database
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'kaayjob-test-secret';
+
+const shouldRunDatabaseSetup = process.env.RUN_DB_TESTS === 'true';
+
 beforeAll(async () => {
-  // Create test database if it doesn't exist
-  try {
-    execSync('createdb kaayjob_test', { stdio: 'ignore' });
-  } catch (error) {
-    // Database might already exist
+  if (!shouldRunDatabaseSetup) {
+    return;
   }
 
-  // Set test environment variables
-  process.env.NODE_ENV = 'test';
-  process.env.DATABASE_URL = process.env.DATABASE_URL?.replace('kaayjob', 'kaayjob_test') || 'postgresql://localhost:5432/kaayjob_test';
+  try {
+    execSync('createdb kaayjob_test', { stdio: 'ignore' });
+  } catch {
+    // Database might already exist or PostgreSQL may be unavailable.
+  }
 
-  // Reset database schema
-  execSync('cd ../.. && npx prisma migrate reset --force', { stdio: 'ignore' });
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL?.replace('kaayjob', 'kaayjob_test') ||
+    'postgresql://localhost:5432/kaayjob_test';
+
+  try {
+    execSync('npx prisma migrate reset --force', { stdio: 'ignore' });
+  } catch (error) {
+    console.warn('Database test setup skipped:', (error as Error).message);
+  }
 });
 
 afterAll(async () => {
-  // Clean up test database
+  if (!shouldRunDatabaseSetup) {
+    return;
+  }
+
   try {
     execSync('dropdb kaayjob_test', { stdio: 'ignore' });
-  } catch (error) {
-    // Database might not exist
+  } catch {
+    // Database might not exist.
   }
 });

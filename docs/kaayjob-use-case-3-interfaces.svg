@@ -1,0 +1,308 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2500" height="1800" viewBox="0 0 2500 1800">
+  <defs>
+    <style>
+      .bg { fill: #f8f6f1; }
+      .title { font: 700 34px Arial, sans-serif; fill: #102a43; }
+      .subtitle { font: 400 18px Arial, sans-serif; fill: #486581; }
+      .panel-title { font: 700 22px Arial, sans-serif; fill: #102a43; }
+      .panel-subtitle { font: 400 14px Arial, sans-serif; fill: #486581; }
+      .actor-name { font: 700 18px Arial, sans-serif; fill: #102a43; text-anchor: middle; }
+      .uc { font: 400 15px Arial, sans-serif; fill: #102a43; text-anchor: middle; }
+      .rel { font: 700 13px Arial, sans-serif; fill: #7c3aed; }
+      .legend { font: 400 14px Arial, sans-serif; fill: #243b53; }
+      .system { fill: #ffffff; stroke: #334e68; stroke-width: 2; rx: 18; ry: 18; }
+      .header-client { fill: #d6eaff; stroke: #334e68; stroke-width: 2; }
+      .header-provider { fill: #e8f5dd; stroke: #334e68; stroke-width: 2; }
+      .header-admin { fill: #ffe7cc; stroke: #334e68; stroke-width: 2; }
+      .ellipse-client { fill: #f8fbff; stroke: #2563eb; stroke-width: 1.8; }
+      .ellipse-provider { fill: #fbfff8; stroke: #2f855a; stroke-width: 1.8; }
+      .ellipse-admin { fill: #fffaf4; stroke: #c05621; stroke-width: 1.8; }
+      .line { stroke: #52606d; stroke-width: 1.8; fill: none; }
+      .dashed { stroke: #7c3aed; stroke-width: 1.6; fill: none; stroke-dasharray: 8 6; }
+      .legend-box { fill: #fff; stroke: #94a3b8; stroke-width: 1.5; rx: 12; ry: 12; }
+    </style>
+    <marker id="arrowGrey" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#52606d"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="2500" height="1800"/>
+
+  <text x="70" y="65" class="title">KaayJob - Diagramme de cas d’usage des 3 interfaces</text>
+  <text x="70" y="95" class="subtitle">Basé sur les écrans réels de front/src/App.tsx, les sidebars, les tests Playwright et USER_FLOWS.md</text>
+
+  <!-- CLIENT PANEL -->
+  <rect class="system" x="130" y="150" width="710" height="1320"/>
+  <rect class="header-client" x="130" y="150" width="710" height="58"/>
+  <text x="160" y="186" class="panel-title">Interface Client</text>
+  <text x="530" y="186" class="panel-subtitle">Accueil, catégories, prestataires, réservation, checkout, dashboard</text>
+
+  <!-- client actor -->
+  <circle cx="70" cy="380" r="22" fill="#fff" stroke="#334e68" stroke-width="2"/>
+  <line x1="70" y1="402" x2="70" y2="455" stroke="#334e68" stroke-width="2"/>
+  <line x1="42" y1="422" x2="98" y2="422" stroke="#334e68" stroke-width="2"/>
+  <line x1="70" y1="455" x2="45" y2="490" stroke="#334e68" stroke-width="2"/>
+  <line x1="70" y1="455" x2="95" y2="490" stroke="#334e68" stroke-width="2"/>
+  <text x="70" y="520" class="actor-name">Client</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="285" rx="125" ry="38"/>
+  <text x="340" y="290" class="uc">S'inscrire / Se connecter</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="285" rx="135" ry="38"/>
+  <text x="630" y="290" class="uc">Consulter pages publiques</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="415" rx="120" ry="38"/>
+  <text x="340" y="420" class="uc">Parcourir catégories</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="415" rx="145" ry="38"/>
+  <text x="630" y="420" class="uc">Lister prestataires</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="545" rx="135" ry="38"/>
+  <text x="340" y="550" class="uc">Voir carte des prestataires</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="545" rx="130" ry="38"/>
+  <text x="630" y="550" class="uc">Consulter détail service</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="675" rx="118" ry="38"/>
+  <text x="340" y="680" class="uc">Réserver un service</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="675" rx="120" ry="38"/>
+  <text x="630" y="680" class="uc">Choisir date / heure</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="805" rx="120" ry="38"/>
+  <text x="340" y="810" class="uc">Saisir adresse / notes</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="805" rx="110" ry="38"/>
+  <text x="630" y="810" class="uc">Passer au checkout</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="935" rx="100" ry="38"/>
+  <text x="340" y="940" class="uc">Payer</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="935" rx="132" ry="38"/>
+  <text x="630" y="940" class="uc">Consulter mon dashboard</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="1065" rx="135" ry="38"/>
+  <text x="340" y="1070" class="uc">Gérer mes réservations</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="1065" rx="110" ry="38"/>
+  <text x="630" y="1070" class="uc">Laisser un avis</text>
+
+  <ellipse class="ellipse-client" cx="340" cy="1195" rx="130" ry="38"/>
+  <text x="340" y="1200" class="uc">Voir mes notifications</text>
+
+  <ellipse class="ellipse-client" cx="630" cy="1195" rx="122" ry="38"/>
+  <text x="630" y="1200" class="uc">Contacter la plateforme</text>
+
+  <!-- client actor lines -->
+  <line class="line" x1="98" y1="422" x2="215" y2="285"/>
+  <line class="line" x1="98" y1="422" x2="205" y2="415"/>
+  <line class="line" x1="98" y1="422" x2="205" y2="545"/>
+  <line class="line" x1="98" y1="422" x2="222" y2="675"/>
+  <line class="line" x1="98" y1="422" x2="240" y2="935"/>
+  <line class="line" x1="98" y1="422" x2="205" y2="1065"/>
+  <line class="line" x1="98" y1="422" x2="205" y2="1195"/>
+  <line class="line" x1="98" y1="422" x2="495" y2="1195"/>
+
+  <!-- client relations -->
+  <line class="dashed" x1="431" y1="415" x2="485" y2="415" marker-end="url(#arrowPurple)"/>
+  <text x="438" y="404" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="455" y1="545" x2="500" y2="545" marker-end="url(#arrowPurple)"/>
+  <text x="450" y="533" class="rel">&lt;&lt;extend&gt;&gt;</text>
+
+  <line class="dashed" x1="340" y1="713" x2="340" y2="767" marker-end="url(#arrowPurple)"/>
+  <text x="352" y="744" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="430" y1="675" x2="510" y2="675" marker-end="url(#arrowPurple)"/>
+  <text x="440" y="664" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="630" y1="713" x2="630" y2="767" marker-end="url(#arrowPurple)"/>
+  <text x="642" y="744" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="540" y1="805" x2="430" y2="917" marker-end="url(#arrowPurple)"/>
+  <text x="470" y="852" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="630" y1="973" x2="630" y2="1027" marker-end="url(#arrowPurple)"/>
+  <text x="642" y="1004" class="rel">&lt;&lt;extend&gt;&gt;</text>
+
+  <line class="dashed" x1="540" y1="1065" x2="450" y2="1065" marker-end="url(#arrowPurple)"/>
+  <text x="468" y="1053" class="rel">&lt;&lt;extend&gt;&gt;</text>
+
+  <!-- PRESTATAIRE PANEL -->
+  <rect class="system" x="900" y="150" width="710" height="1320"/>
+  <rect class="header-provider" x="900" y="150" width="710" height="58"/>
+  <text x="930" y="186" class="panel-title">Interface Prestataire</text>
+  <text x="1290" y="186" class="panel-subtitle">Dashboard, services, réservations, abonnement, profil, paramètres</text>
+
+  <!-- provider actor -->
+  <circle cx="850" cy="380" r="22" fill="#fff" stroke="#334e68" stroke-width="2"/>
+  <line x1="850" y1="402" x2="850" y2="455" stroke="#334e68" stroke-width="2"/>
+  <line x1="822" y1="422" x2="878" y2="422" stroke="#334e68" stroke-width="2"/>
+  <line x1="850" y1="455" x2="825" y2="490" stroke="#334e68" stroke-width="2"/>
+  <line x1="850" y1="455" x2="875" y2="490" stroke="#334e68" stroke-width="2"/>
+  <text x="850" y="520" class="actor-name">Prestataire</text>
+
+  <ellipse class="ellipse-provider" cx="1110" cy="285" rx="125" ry="38"/>
+  <text x="1110" y="290" class="uc">S'inscrire / Se connecter</text>
+
+  <ellipse class="ellipse-provider" cx="1400" cy="285" rx="120" ry="38"/>
+  <text x="1400" y="290" class="uc">Voir tableau de bord</text>
+
+  <ellipse class="ellipse-provider" cx="1110" cy="415" rx="120" ry="38"/>
+  <text x="1110" y="420" class="uc">Gérer mon profil</text>
+
+  <ellipse class="ellipse-provider" cx="1400" cy="415" rx="130" ry="38"/>
+  <text x="1400" y="420" class="uc">Gérer disponibilités</text>
+
+  <ellipse class="ellipse-provider" cx="1110" cy="545" rx="135" ry="38"/>
+  <text x="1110" y="550" class="uc">Demander la vérification</text>
+
+  <ellipse class="ellipse-provider" cx="1400" cy="545" rx="105" ry="38"/>
+  <text x="1400" y="550" class="uc">Gérer mes services</text>
+
+  <ellipse class="ellipse-provider" cx="1110" cy="675" rx="118" ry="38"/>
+  <text x="1110" y="680" class="uc">Créer un service</text>
+
+  <ellipse class="ellipse-provider" cx="1400" cy="675" rx="118" ry="38"/>
+  <text x="1400" y="680" class="uc">Modifier / supprimer service</text>
+
+  <ellipse class="ellipse-provider" cx="1110" cy="805" rx="132" ry="38"/>
+  <text x="1110" y="810" class="uc">Gérer les réservations</text>
+
+  <ellipse class="ellipse-provider" cx="1400" cy="805" rx="118" ry="38"/>
+  <text x="1400" y="810" class="uc">Changer le statut</text>
+
+  <ellipse class="ellipse-provider" cx="1110" cy="935" rx="118" ry="38"/>
+  <text x="1110" y="940" class="uc">Gérer l'abonnement</text>
+
+  <ellipse class="ellipse-provider" cx="1400" cy="935" rx="102" ry="38"/>
+  <text x="1400" y="940" class="uc">Consulter les plans</text>
+
+  <ellipse class="ellipse-provider" cx="1110" cy="1065" rx="110" ry="38"/>
+  <text x="1110" y="1070" class="uc">Souscrire / annuler</text>
+
+  <ellipse class="ellipse-provider" cx="1400" cy="1065" rx="122" ry="38"/>
+  <text x="1400" y="1070" class="uc">Voir notifications</text>
+
+  <ellipse class="ellipse-provider" cx="1255" cy="1195" rx="118" ry="38"/>
+  <text x="1255" y="1200" class="uc">Gérer paramètres</text>
+
+  <!-- provider actor lines -->
+  <line class="line" x1="878" y1="422" x2="985" y2="285"/>
+  <line class="line" x1="878" y1="422" x2="990" y2="415"/>
+  <line class="line" x1="878" y1="422" x2="1280" y2="285"/>
+  <line class="line" x1="878" y1="422" x2="1275" y2="545"/>
+  <line class="line" x1="878" y1="422" x2="978" y2="805"/>
+  <line class="line" x1="878" y1="422" x2="992" y2="935"/>
+  <line class="line" x1="878" y1="422" x2="1278" y2="1065"/>
+  <line class="line" x1="878" y1="422" x2="1137" y2="1195"/>
+
+  <!-- provider relations -->
+  <line class="dashed" x1="1200" y1="415" x2="1270" y2="415" marker-end="url(#arrowPurple)"/>
+  <text x="1205" y="404" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="1110" y1="453" x2="1110" y2="507" marker-end="url(#arrowPurple)"/>
+  <text x="1122" y="484" class="rel">&lt;&lt;extend&gt;&gt;</text>
+
+  <line class="dashed" x1="1220" y1="545" x2="1295" y2="545" marker-end="url(#arrowPurple)"/>
+  <text x="1230" y="533" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="1400" y1="583" x2="1400" y2="637" marker-end="url(#arrowPurple)"/>
+  <text x="1412" y="614" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="1200" y1="805" x2="1282" y2="805" marker-end="url(#arrowPurple)"/>
+  <text x="1218" y="793" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="1200" y1="935" x2="1298" y2="935" marker-end="url(#arrowPurple)"/>
+  <text x="1220" y="923" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="1110" y1="973" x2="1110" y2="1027" marker-end="url(#arrowPurple)"/>
+  <text x="1122" y="1004" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- ADMIN PANEL -->
+  <rect class="system" x="1670" y="150" width="710" height="1320"/>
+  <rect class="header-admin" x="1670" y="150" width="710" height="58"/>
+  <text x="1700" y="186" class="panel-title">Interface Administrateur</text>
+  <text x="2070" y="186" class="panel-subtitle">Dashboard, utilisateurs, services, catégories, réservations, paiements, abonnements</text>
+
+  <!-- admin actor -->
+  <circle cx="1620" cy="380" r="22" fill="#fff" stroke="#334e68" stroke-width="2"/>
+  <line x1="1620" y1="402" x2="1620" y2="455" stroke="#334e68" stroke-width="2"/>
+  <line x1="1592" y1="422" x2="1648" y2="422" stroke="#334e68" stroke-width="2"/>
+  <line x1="1620" y1="455" x2="1595" y2="490" stroke="#334e68" stroke-width="2"/>
+  <line x1="1620" y1="455" x2="1645" y2="490" stroke="#334e68" stroke-width="2"/>
+  <text x="1620" y="520" class="actor-name">Administrateur</text>
+
+  <ellipse class="ellipse-admin" cx="1880" cy="285" rx="105" ry="38"/>
+  <text x="1880" y="290" class="uc">Se connecter</text>
+
+  <ellipse class="ellipse-admin" cx="2170" cy="285" rx="118" ry="38"/>
+  <text x="2170" y="290" class="uc">Voir tableau de bord</text>
+
+  <ellipse class="ellipse-admin" cx="1880" cy="415" rx="112" ry="38"/>
+  <text x="1880" y="420" class="uc">Gérer utilisateurs</text>
+
+  <ellipse class="ellipse-admin" cx="2170" cy="415" rx="120" ry="38"/>
+  <text x="2170" y="420" class="uc">Vérifier prestataire</text>
+
+  <ellipse class="ellipse-admin" cx="1880" cy="545" rx="100" ry="38"/>
+  <text x="1880" y="550" class="uc">Gérer services</text>
+
+  <ellipse class="ellipse-admin" cx="2170" cy="545" rx="110" ry="38"/>
+  <text x="2170" y="550" class="uc">Gérer catégories</text>
+
+  <ellipse class="ellipse-admin" cx="1880" cy="675" rx="118" ry="38"/>
+  <text x="1880" y="680" class="uc">Gérer réservations</text>
+
+  <ellipse class="ellipse-admin" cx="2170" cy="675" rx="112" ry="38"/>
+  <text x="2170" y="680" class="uc">Voir analytics</text>
+
+  <ellipse class="ellipse-admin" cx="1880" cy="805" rx="108" ry="38"/>
+  <text x="1880" y="810" class="uc">Gérer abonnements</text>
+
+  <ellipse class="ellipse-admin" cx="2170" cy="805" rx="118" ry="38"/>
+  <text x="2170" y="810" class="uc">Gérer plans d'abonnement</text>
+
+  <ellipse class="ellipse-admin" cx="1880" cy="935" rx="102" ry="38"/>
+  <text x="1880" y="940" class="uc">Voir paiements</text>
+
+  <ellipse class="ellipse-admin" cx="2170" cy="935" rx="120" ry="38"/>
+  <text x="2170" y="940" class="uc">Gérer notifications</text>
+
+  <ellipse class="ellipse-admin" cx="2025" cy="1065" rx="118" ry="38"/>
+  <text x="2025" y="1070" class="uc">Gérer paramètres</text>
+
+  <!-- admin actor lines -->
+  <line class="line" x1="1648" y1="422" x2="1775" y2="285"/>
+  <line class="line" x1="1648" y1="422" x2="2052" y2="285"/>
+  <line class="line" x1="1648" y1="422" x2="1768" y2="415"/>
+  <line class="line" x1="1648" y1="422" x2="1780" y2="545"/>
+  <line class="line" x1="1648" y1="422" x2="1762" y2="675"/>
+  <line class="line" x1="1648" y1="422" x2="1772" y2="805"/>
+  <line class="line" x1="1648" y1="422" x2="1778" y2="935"/>
+  <line class="line" x1="1648" y1="422" x2="1907" y2="1065"/>
+
+  <!-- admin relations -->
+  <line class="dashed" x1="1992" y1="415" x2="2050" y2="415" marker-end="url(#arrowPurple)"/>
+  <text x="1990" y="404" class="rel">&lt;&lt;extend&gt;&gt;</text>
+
+  <line class="dashed" x1="1990" y1="805" x2="2052" y2="805" marker-end="url(#arrowPurple)"/>
+  <text x="1988" y="793" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="2170" y1="323" x2="2170" y2="637" marker-end="url(#arrowPurple)"/>
+  <text x="2182" y="492" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <line class="dashed" x1="2170" y1="583" x2="2170" y2="897" marker-end="url(#arrowPurple)"/>
+  <text x="2182" y="746" class="rel">&lt;&lt;include&gt;&gt;</text>
+
+  <!-- Cross-panel note -->
+  <rect class="legend-box" x="130" y="1510" width="2250" height="200"/>
+  <text x="160" y="1545" class="panel-title">Lecture du diagramme</text>
+  <text x="160" y="1585" class="legend">• Les trois interfaces correspondent aux espaces réellement rendus par [front/src/App.tsx](/home/mame-diarra-bousso/Documents/projet_kaayjob/KaayJob/front/src/App.tsx) : client, prestataire, administrateur.</text>
+  <text x="160" y="1615" class="legend">• Les cas d’usage proviennent des écrans visibles dans les sidebars et pages, complétés par les flux décrits dans [USER_FLOWS.md](/home/mame-diarra-bousso/Documents/projet_kaayjob/KaayJob/USER_FLOWS.md) et les tests [provider-flow.spec.ts](/home/mame-diarra-bousso/Documents/projet_kaayjob/KaayJob/front/tests/provider-flow.spec.ts).</text>
+  <text x="160" y="1645" class="legend">• `&lt;&lt;include&gt;&gt;` indique une sous-action nécessaire dans le projet. `&lt;&lt;extend&gt;&gt;` indique une action optionnelle ou déclenchée selon le contexte.</text>
+  <text x="160" y="1675" class="legend">• Ce schéma ne mélange plus le diagramme de classes avec le diagramme de cas d’usage.</text>
+</svg>

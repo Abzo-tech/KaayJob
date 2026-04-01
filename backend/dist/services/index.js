@@ -32,4 +32,5 @@ __exportStar(require("./bookingService"), exports);
 __exportStar(require("./categoryService"), exports);
 __exportStar(require("./serviceService"), exports);
 __exportStar(require("./paymentService"), exports);
+__exportStar(require("./geolocationService"), exports);
 //# sourceMappingURL=index.js.map

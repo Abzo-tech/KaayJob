@@ -5,10 +5,10 @@
  * Utilise le proxy Vercel (/api -> backend) en production
  */
 
-// Utiliser l'URL complète de Render en production, proxy Vite en local
-const API_BASE_URL = import.meta.env.PROD
-  ? "https://kaayjob.onrender.com/api"
-  : "/api";
+// Par defaut, utiliser un chemin relatif pour eviter les problemes CORS
+// en local, en Docker et derriere un reverse proxy. Un endpoint absolu
+// reste possible via VITE_API_URL si un environnement de deploiement l'exige.
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
 
 // Cache simple pour éviter les requêtes répétées
 const cache = new Map<string, { data: any; timestamp: number }>();

@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { HeroSection, CategoryCard, ProviderCard, Loading } from "../common";
-import { ArrowRight, Star } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Headphones,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 import { Button } from "../ui/button";
 
 interface HomePageProps {
@@ -55,10 +61,30 @@ const steps = [
 
 // Trust section data
 const trustFeatures = [
-  { title: "Professionnel Vérifiés", icon: "✓" },
-  { title: "Prix Transparents", icon: "💰" },
-  { title: "Garantie de Qualité", icon: "🛡️" },
-  { title: "Support 24/7", icon: "📞" },
+  {
+    title: "Prestataires verifies",
+    description: "Des profils controles pour inspirer plus de confiance des le premier contact.",
+    stat: "Selection de confiance",
+    icon: BadgeCheck,
+  },
+  {
+    title: "Prix transparents",
+    description: "Des tarifs affiches clairement pour reserver sans mauvaise surprise.",
+    stat: "Tarifs visibles",
+    icon: Wallet,
+  },
+  {
+    title: "Qualite garantie",
+    description: "Des professionnels notes par les clients pour maintenir un haut niveau de service.",
+    stat: "Avis et notation",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Support reactif",
+    description: "Une assistance disponible pour accompagner clients et prestataires rapidement.",
+    stat: "Aide continue",
+    icon: Headphones,
+  },
 ];
 
 // Footer data
@@ -99,6 +125,87 @@ const footerSections = [
 
 const socialLinks = ["Facebook", "Instagram", "Twitter", "LinkedIn"];
 
+const defaultHomeCategories: Category[] = [
+  {
+    id: "plomberie",
+    name: "Plomberie",
+    image: "/images/plomberie.png",
+    description: "Installation, fuite, entretien et depannage a domicile.",
+    slug: "plomberie",
+  },
+  {
+    id: "menuiserie",
+    name: "Menuiserie",
+    image: "/images/menuiserie.png",
+    description: "Fabrication, reparation et ajustements sur mesure.",
+    slug: "menuiserie",
+  },
+  {
+    id: "cuisine",
+    name: "Cuisine",
+    image: "/images/cuisine.png",
+    description: "Chefs et cuisiniers pour vos besoins du quotidien et evenements.",
+    slug: "cuisine",
+  },
+  {
+    id: "mecanique",
+    name: "Mecanique",
+    image: "/images/mecanique.png",
+    description: "Diagnostic, entretien et reparation de vehicules.",
+    slug: "mecanique",
+  },
+  {
+    id: "education",
+    name: "Education",
+    image: "/images/education.png",
+    description: "Cours particuliers et accompagnement scolaire de proximite.",
+    slug: "education",
+  },
+  {
+    id: "reparation",
+    name: "Reparation",
+    image: "/images/Reparation.png",
+    description: "Interventions rapides pour vos pannes et petits travaux.",
+    slug: "reparation",
+  },
+];
+
+const senegalProviderShowcase = [
+  {
+    title: "Savoir-faire artisanal",
+    description: "Des prestations ancrées dans les talents et les besoins du quotidien au Senegal.",
+    image: "/images/menuiserie.png",
+  },
+  {
+    title: "Services de proximite",
+    description: "Des professionnels visibles, accessibles et proches de leurs clients a Dakar comme ailleurs.",
+    image: "/images/cuisine.png",
+  },
+  {
+    title: "Qualite locale",
+    description: "Une vitrine pour les meilleurs profils, avec une identite visuelle plus chaleureuse et locale.",
+    image: "/images/Reparation.png",
+  },
+];
+
+function normalizeCategoriesResponse(response: any): Category[] {
+  const categoriesData = response?.data?.data || response?.data || [];
+
+  if (!Array.isArray(categoriesData) || categoriesData.length === 0) {
+    return defaultHomeCategories;
+  }
+
+  return categoriesData.map((category: any, index: number) => ({
+    id: category.id || category.slug || `category-${index}`,
+    name: category.name || "Service",
+    image: category.image || defaultHomeCategories[index % defaultHomeCategories.length].image,
+    description:
+      category.description ||
+      defaultHomeCategories[index % defaultHomeCategories.length].description,
+    slug: category.slug || category.id || `category-${index}`,
+  }));
+}
+
 export function HomePage({ onNavigate }: HomePageProps) {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,11 +220,14 @@ export function HomePage({ onNavigate }: HomePageProps) {
       try {
         setIsLoadingCategories(true);
         const response = await api.get("/categories");
-        if (response.success && response.data) {
-          setCategories(response.data);
+        if (response?.success) {
+          setCategories(normalizeCategoriesResponse(response));
+        } else {
+          setCategories(defaultHomeCategories);
         }
       } catch (err) {
         console.error("Erreur lors du chargement des catégories:", err);
+        setCategories(defaultHomeCategories);
       } finally {
         setIsLoadingCategories(false);
       }
@@ -244,6 +354,33 @@ export function HomePage({ onNavigate }: HomePageProps) {
             </p>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {senegalProviderShowcase.map((item, index) => (
+              <div
+                key={item.title}
+                className="group relative overflow-hidden rounded-[28px] min-h-[260px] shadow-lg"
+                style={{
+                  animation: `scale-in 0.45s ease-out ${index * 0.12}s both`,
+                }}
+              >
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#000080] via-[#000080]/65 to-[#000080]/15" />
+                <div className="relative flex h-full flex-col justify-end p-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm leading-6 text-white/90 max-w-sm">
+                    {item.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {/* Carousel */}
           <div className="relative">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -349,24 +486,54 @@ export function HomePage({ onNavigate }: HomePageProps) {
       </section>
 
       {/* Trust Section */}
-      <section className="py-20 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-[#000080] mb-4">
-              Pourquoi Nous Choisir
-            </h2>
-          </div>
+      <section className="relative py-20 px-4 overflow-hidden bg-gradient-to-b from-[#f8faff] via-white to-[#f3f6ff]">
+        <div className="absolute top-10 left-0 h-48 w-48 rounded-full bg-[#000080]/6 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-blue-200/30 blur-3xl" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {trustFeatures.map((item, index) => (
-              <div
-                key={index}
-                className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 text-center group"
-              >
-                <div className="text-4xl mb-3">{item.icon}</div>
-                <h3 className="font-bold text-[#000080]">{item.title}</h3>
-              </div>
-            ))}
+        <div className="max-w-7xl mx-auto">
+          <div className="relative z-10">
+            <div className="text-center mb-16">
+              <span className="inline-flex items-center rounded-full bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-[#000080] shadow-sm border border-[#000080]/10">
+                KaayJob confiance
+              </span>
+              <h2 className="mt-5 text-4xl md:text-5xl font-bold text-[#000080] mb-4">
+                Pourquoi Nous Choisir
+              </h2>
+              <p className="mx-auto max-w-2xl text-lg text-gray-600 leading-8">
+                Une experience plus rassurante, plus simple et plus elegante pour trouver
+                les meilleurs professionnels pres de chez vous.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+              {trustFeatures.map((item, index) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="group relative overflow-hidden rounded-[28px] border border-[#000080]/10 bg-white p-7 shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition-all duration-500 hover:-translate-y-2 hover:border-[#000080]/20 hover:shadow-[0_24px_60px_rgba(0,0,128,0.14)]"
+                    style={{
+                      animation: `slide-up 0.55s ease-out ${index * 0.12}s both`,
+                    }}
+                  >
+                    <div className="absolute inset-x-0 top-0 h-1 bg-[#000080]" />
+                    <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#000080] text-white shadow-lg">
+                      <Icon className="h-8 w-8" strokeWidth={2.2} />
+                    </div>
+                    <div className="mb-3 inline-flex rounded-full bg-[#FFF4EA] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#000080]">
+                      {item.stat}
+                    </div>
+                    <h3 className="mb-3 text-2xl font-bold text-[#000080]">
+                      {item.title}
+                    </h3>
+                    <p className="text-gray-600 leading-7">
+                      {item.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>

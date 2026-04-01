@@ -45,6 +45,28 @@ router.post("/setup-geolocation", async (req, res) => {
              longitude = COALESCE(longitude, NULL)
       WHERE bio IS NULL OR specialization IS NULL OR address IS NULL OR zone IS NULL
     `);
+        // Créer des index pour optimiser les performances
+        console.log("Création des index de performance...");
+        try {
+            // Index sur role pour les filtres fréquents
+            await (0, database_1.query)(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`);
+            // Index sur email pour les connexions
+            await (0, database_1.query)(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+            // Index sur specialization pour les filtres par catégorie
+            await (0, database_1.query)(`CREATE INDEX IF NOT EXISTS idx_users_specialization ON users(specialization)`);
+            // Index composé sur latitude/longitude pour les requêtes géographiques
+            await (0, database_1.query)(`CREATE INDEX IF NOT EXISTS idx_users_location ON users(latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL`);
+            // Index sur provider_profiles.user_id
+            await (0, database_1.query)(`CREATE INDEX IF NOT EXISTS idx_provider_profiles_user_id ON provider_profiles(user_id)`);
+            // Index sur services.provider_id et is_active
+            await (0, database_1.query)(`CREATE INDEX IF NOT EXISTS idx_services_provider_active ON services(provider_id, is_active) WHERE is_active = true`);
+            // Index sur reviews pour les statistiques
+            await (0, database_1.query)(`CREATE INDEX IF NOT EXISTS idx_reviews_provider_rating ON reviews(provider_id, rating)`);
+            console.log("✅ Index de performance créés");
+        }
+        catch (indexError) {
+            console.log("⚠️ Certains index existaient déjà ou erreur lors de la création:", indexError);
+        }
         // Insérer des données de test pour la démonstration
         const testProviders = [
             {
@@ -124,13 +146,22 @@ router.post("/setup-geolocation", async (req, res) => {
                     provider.is_verified
                 ]);
                 // Créer un profil prestataire
+                const profileId = 'profile-' + provider.id;
                 await (0, database_1.query)(`
           INSERT INTO provider_profiles (
             id, user_id, hourly_rate, years_experience, is_available, created_at, updated_at
           ) VALUES (
-            gen_random_uuid(), $1, $2, $3, true, NOW(), NOW()
+            $1, $2, $3, $4, true, NOW(), NOW()
           )
-        `, [provider.id, Math.floor(Math.random() * 50) + 20, Math.floor(Math.random() * 15) + 2]);
+        `, [profileId, provider.id, Math.floor(Math.random() * 50) + 20, Math.floor(Math.random() * 15) + 2]);
+                // Créer un service actif pour ce prestataire
+                await (0, database_1.query)(`
+          INSERT INTO services (
+            id, provider_id, category_id, name, description, price, price_type, duration, is_active, created_at, updated_at
+          ) VALUES (
+            gen_random_uuid(), $1, NULL, $2, $3, $4, 'FIXED', 60, true, NOW(), NOW()
+          )
+        `, [profileId, `Service de ${provider.specialization}`, `Service professionnel de ${provider.specialization.toLowerCase()}`, Math.floor(Math.random() * 100) + 50]);
             }
         }
         // Créer des profils prestataires pour les utilisateurs existants qui n'en ont pas
@@ -160,11 +191,34 @@ router.post("/setup-geolocation", async (req, res) => {
                 console.error(`Erreur création profil pour ${provider.first_name}:`, err);
             }
         }
+        // Créer des catégories de base si elles n'existent pas
+        const categories = [
+            { name: 'Plomberie', slug: 'plomberie', description: 'Services de plomberie et réparation', icon: '🔧' },
+            { name: 'Électricité', slug: 'electricite', description: 'Installation et réparation électrique', icon: '⚡' },
+            { name: 'Menuiserie', slug: 'menuiserie', description: 'Travaux de bois et menuiserie', icon: '🔨' },
+            { name: 'Peinture', slug: 'peinture', description: 'Peinture intérieure et extérieure', icon: '🎨' },
+            { name: 'Jardinage', slug: 'jardinage', description: 'Entretien d\'espaces verts', icon: '🌿' },
+            { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage', icon: '🧽' },
+            { name: 'Réparation', slug: 'reparation', description: 'Réparations diverses', icon: '🔧' },
+            { name: 'Transport', slug: 'transport', description: 'Services de transport', icon: '🚚' }
+        ];
+        let categoriesCreated = 0;
+        for (const category of categories) {
+            const existingCategory = await (0, database_1.query)('SELECT id FROM categories WHERE slug = $1', [category.slug]);
+            if (existingCategory.rows.length === 0) {
+                await (0, database_1.query)(`
+          INSERT INTO categories (name, slug, description, icon, is_active, created_at)
+          VALUES ($1, $2, $3, $4, true, NOW())
+        `, [category.name, category.slug, category.description, category.icon]);
+                categoriesCreated++;
+            }
+        }
         res.json({
             success: true,
             message: "Configuration de géolocalisation terminée avec succès",
             testProviders: testProviders.length,
             profilesCreated,
+            categoriesCreated,
             existingUsersMigrated: existingProviders.rows.length
         });
     }
@@ -176,10 +230,66 @@ router.post("/setup-geolocation", async (req, res) => {
         });
     }
 });
+// POST /api/providers/init-database - Initialisation complète de la base de données
+router.post("/init-database", async (req, res) => {
+    try {
+        console.log("Initialisation complète de la base de données...");
+        // Créer les catégories de base
+        const categories = [
+            { name: 'Plomberie', slug: 'plomberie', description: 'Services de plomberie et réparation', icon: '🔧' },
+            { name: 'Électricité', slug: 'electricite', description: 'Installation et réparation électrique', icon: '⚡' },
+            { name: 'Menuiserie', slug: 'menuiserie', description: 'Travaux de bois et menuiserie', icon: '🔨' },
+            { name: 'Peinture', slug: 'peinture', description: 'Peinture intérieure et extérieure', icon: '🎨' },
+            { name: 'Jardinage', slug: 'jardinage', description: 'Entretien d\'espaces verts', icon: '🌿' },
+            { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage', icon: '🧽' },
+            { name: 'Réparation', slug: 'reparation', description: 'Réparations diverses', icon: '🔧' },
+            { name: 'Transport', slug: 'transport', description: 'Services de transport', icon: '🚚' }
+        ];
+        let categoriesCreated = 0;
+        for (const category of categories) {
+            try {
+                const existingCategory = await (0, database_1.query)('SELECT id FROM categories WHERE slug = $1', [category.slug]);
+                if (existingCategory.rows.length === 0) {
+                    await (0, database_1.query)(`
+            INSERT INTO categories (id, name, slug, description, icon, is_active, created_at)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, true, NOW())
+          `, [category.name, category.slug, category.description, category.icon]);
+                    categoriesCreated++;
+                }
+            }
+            catch (err) {
+                console.log(`Catégorie ${category.name} déjà existante ou erreur:`, err);
+            }
+        }
+        // Créer des utilisateurs admin si aucun n'existe
+        const adminCheck = await (0, database_1.query)("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1");
+        if (adminCheck.rows.length === 0) {
+            await (0, database_1.query)(`
+        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at)
+        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'ADMIN', true, NOW())
+      `, ['admin@kaayjob.com', '$2b$10$hashedpassword', 'Admin', 'KaayJob', '+221000000000']);
+            console.log("✅ Admin créé");
+        }
+        res.json({
+            success: true,
+            message: "Base de données initialisée avec succès",
+            categoriesCreated,
+            adminCreated: adminCheck.rows.length === 0
+        });
+    }
+    catch (error) {
+        console.error("Erreur initialisation base de données:", error);
+        res.status(500).json({
+            success: false,
+            message: "Erreur lors de l'initialisation de la base de données",
+        });
+    }
+});
 // GET /api/providers/map - Prestataires pour la carte (avec géolocalisation)
 router.get("/map", async (req, res) => {
     try {
         const { category, lat, lng, radius = 50, limit = 100, availableOnly = true } = req.query;
+        const shouldFilterAvailableOnly = availableOnly !== "false";
         let queryStr = `
       SELECT
         u.id,
@@ -195,28 +305,24 @@ router.get("/map", async (req, res) => {
         COALESCE(pp.hourly_rate, 0) as "hourlyRate",
         COALESCE(pp.years_experience, 0) as "yearsExperience",
         u.created_at,
-        CASE WHEN pp.availability->>'isAvailable' = 'true' THEN true ELSE false END as "isAvailable",
+        COALESCE(pp.is_available, true) as "isAvailable",
         COALESCE(rating_stats.avg_rating, 0) as rating,
         COALESCE(rating_stats.review_count, 0) as "totalReviews",
-        0 as "totalBookings"
+        0 as "totalBookings",
+        NULL::float as distance
       FROM users u
-      LEFT JOIN provider_profiles pp ON u.id = pp.user_id
+      INNER JOIN provider_profiles pp ON u.id = pp.user_id
       LEFT JOIN (
         SELECT
-          p.user_id,
-          AVG(r.rating) as avg_rating,
-          COUNT(r.id) as review_count
-        FROM provider_profiles p
-        LEFT JOIN reviews r ON p.user_id = r.provider_id
-        GROUP BY p.user_id
-      ) rating_stats ON u.id = rating_stats.user_id
+          provider_id,
+          AVG(rating)::float as avg_rating,
+          COUNT(*)::int as review_count
+        FROM reviews
+        GROUP BY provider_id
+      ) rating_stats ON u.id = rating_stats.provider_id
       WHERE u.role = 'PRESTATAIRE'
         AND u.latitude IS NOT NULL
         AND u.longitude IS NOT NULL
-        AND EXISTS (
-          SELECT 1 FROM services s
-          WHERE s.provider_id = u.id AND s.is_active = true
-        )
     `;
         const params = [];
         let paramIndex = 1;
@@ -226,22 +332,25 @@ router.get("/map", async (req, res) => {
             params.push(`%${category}%`);
             paramIndex++;
         }
-        // Filtre par disponibilité
-        if (availableOnly === 'true') {
-            queryStr += ` AND (pp.availability->>'isAvailable' = 'true' OR pp.availability IS NULL)`;
+        if (shouldFilterAvailableOnly) {
+            queryStr += ` AND pp.is_available = true`;
         }
         // Filtre par rayon si coordonnées fournies
         if (lat && lng) {
             const latitude = parseFloat(lat);
             const longitude = parseFloat(lng);
             const radiusKm = parseInt(radius) || 50;
+            const distanceExpression = `
+        6371 * acos(
+          cos(radians($${paramIndex})) * cos(radians(u.latitude)) *
+          cos(radians(u.longitude) - radians($${paramIndex + 1})) +
+          sin(radians($${paramIndex})) * sin(radians(u.latitude))
+        )
+      `;
+            queryStr = queryStr.replace("NULL::float as distance", `${distanceExpression} as distance`);
             queryStr += `
         AND (
-          6371 * acos(
-            cos(radians($${paramIndex})) * cos(radians(u.latitude)) *
-            cos(radians(u.longitude) - radians($${paramIndex + 1})) +
-            sin(radians($${paramIndex})) * sin(radians(u.latitude))
-          )
+          ${distanceExpression}
         ) <= $${paramIndex + 2}
       `;
             params.push(latitude, longitude, radiusKm);
@@ -270,6 +379,7 @@ router.get("/map", async (req, res) => {
             totalReviews: parseInt(row.totalReviews) || 0,
             totalBookings: parseInt(row.totalBookings) || 0,
             isVerified: row.isVerified,
+            distance: row.distance !== null ? parseFloat(row.distance) : undefined,
             user: {
                 id: row.id,
                 firstName: row.first_name,
@@ -471,7 +581,7 @@ router.post("/profile/verification", auth_1.authenticate, [(0, express_validator
     }
     const user = userResult.rows[0];
     // Notifier les administrateurs de la demande de vérification (privé admin-prestataire)
-    const admins = await (0, database_1.query)("SELECT id, role FROM users WHERE role = 'admin'", []);
+    const admins = await (0, database_1.query)("SELECT id, role FROM users WHERE role = 'ADMIN'", []);
     for (const admin of admins.rows) {
         await (0, notificationService_1.createFormattedNotification)({ id: admin.id, role: admin.role, firstName: "Admin", lastName: "" }, "Demande de vérification", `${user.first_name} ${user.last_name} a demandé la vérification de son profil.`, "info", "/admin/providers", [admin.id, userId], // Privé entre admin et prestataire
         {
@@ -740,7 +850,7 @@ router.post("/me/subscription/cancel", auth_1.authenticate, async (req, res) => 
             return res.status(401).json({ success: false, message: "Utilisateur non identifié" });
         }
         // Vérifier si l'utilisateur est un prestataire
-        const userCheck = await (0, database_1.query)("SELECT role FROM users WHERE id = $1", [userId]);
+        const userCheck = await (0, database_1.query)("SELECT role, first_name, last_name FROM users WHERE id = $1", [userId]);
         if (userCheck.rows.length === 0) {
             return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
         }
@@ -759,7 +869,7 @@ router.post("/me/subscription/cancel", auth_1.authenticate, async (req, res) => 
             });
         }
         // Notifier les administrateurs de l'annulation d'abonnement (privé admin-prestataire)
-        const admins = await (0, database_1.query)("SELECT id, role FROM users WHERE role = 'admin'", []);
+        const admins = await (0, database_1.query)("SELECT id, role FROM users WHERE role = 'ADMIN'", []);
         for (const admin of admins.rows) {
             await (0, notificationService_1.createFormattedNotification)({ id: admin.id, role: admin.role, firstName: "Admin", lastName: "" }, "Annulation d'abonnement", `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name} a annulé son abonnement.`, "warning", "/admin/subscriptions", [admin.id, userId], // Privé entre admin et prestataire
             {

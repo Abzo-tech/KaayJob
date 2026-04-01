@@ -12,6 +12,46 @@ exports.deleteUser = deleteUser;
 exports.getUserById = getUserById;
 const database_1 = require("../config/database");
 const notificationService_1 = require("./notificationService");
+const normalizeUserRow = (row) => ({
+    id: row.id,
+    email: row.email,
+    firstName: row.first_name ?? row.firstName ?? null,
+    lastName: row.last_name ?? row.lastName ?? null,
+    phone: row.phone ?? null,
+    role: row.role,
+    isActive: row.is_active ?? row.isActive ?? undefined,
+    isVerified: row.is_verified ?? row.isVerified ?? false,
+    bookingCount: row.booking_count !== undefined || row.bookingCount !== undefined
+        ? Number(row.booking_count ?? row.bookingCount)
+        : undefined,
+    createdAt: row.created_at ?? row.createdAt ?? null,
+    updatedAt: row.updated_at ?? row.updatedAt ?? undefined,
+});
+const normalizeProviderProfileRow = (row) => ({
+    id: row.id,
+    userId: row.user_id ?? row.userId,
+    businessName: row.business_name ?? row.businessName ?? null,
+    specialty: row.specialty ?? null,
+    bio: row.bio ?? null,
+    hourlyRate: row.hourly_rate ?? row.hourlyRate ?? null,
+    yearsExperience: row.years_experience ?? row.yearsExperience ?? null,
+    location: row.location ?? null,
+    address: row.address ?? null,
+    city: row.city ?? null,
+    region: row.region ?? null,
+    postalCode: row.postal_code ?? row.postalCode ?? null,
+    serviceRadius: row.service_radius ?? row.serviceRadius ?? null,
+    isAvailable: row.is_available ?? row.isAvailable ?? true,
+    rating: row.rating ?? 0,
+    totalReviews: row.total_reviews ?? row.totalReviews ?? 0,
+    totalBookings: row.total_bookings ?? row.totalBookings ?? 0,
+    isVerified: row.is_verified ?? row.isVerified ?? false,
+    profileImage: row.profile_image ?? row.profileImage ?? null,
+    specialties: row.specialties ?? null,
+    availability: row.availability ?? null,
+    createdAt: row.created_at ?? row.createdAt ?? null,
+    updatedAt: row.updated_at ?? row.updatedAt ?? null,
+});
 /**
  * Liste des utilisateurs avec pagination et filtres
  */
@@ -41,7 +81,7 @@ async function listUsers(filters) {
      ORDER BY u.created_at DESC
      LIMIT ${limit} OFFSET ${offset}`, params);
     return {
-        data: result.rows,
+        data: result.rows.map(normalizeUserRow),
         pagination: {
             page,
             limit,
@@ -77,7 +117,7 @@ async function createUser(data, adminId) {
     if (adminId) {
         await (0, notificationService_1.createFormattedNotification)({ id: adminId, role: "ADMIN" }, "Utilisateur créé", `${firstName} ${lastName} (${email}) a été créé avec succès`, "success", "/admin/users", undefined, { target: { firstName, lastName, role } });
     }
-    return user;
+    return normalizeUserRow(user);
 }
 /**
  * Mettre à jour un utilisateur
@@ -133,7 +173,7 @@ async function updateUser(userId, data, adminId) {
         const userName = `${result.rows[0].first_name} ${result.rows[0].last_name}`;
         await (0, notificationService_1.createFormattedNotification)({ id: adminId, role: "ADMIN" }, "Utilisateur mis à jour", `${userName} a été mis à jour avec succès`, "info", "/admin/users", undefined, { target: { firstName: result.rows[0].first_name, lastName: result.rows[0].last_name, role: result.rows[0].role } });
     }
-    return result.rows[0];
+    return normalizeUserRow(result.rows[0]);
 }
 /**
  * Vérifier un prestataire
@@ -160,7 +200,7 @@ async function verifyProvider(providerId, adminId) {
     const userName = `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name}`;
     await (0, notificationService_1.createFormattedNotification)({ id: providerId, role: "PRESTATAIRE", firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name }, "Compte vérifié", "Votre compte prestataire a été vérifié par l'administrateur. Vous pouvez maintenant offrir vos services sur la plateforme.", "success", "/prestataire/dashboard");
     await (0, notificationService_1.createFormattedNotification)({ id: adminId, role: "ADMIN" }, "Prestataire vérifié", `${userName} a été vérifié avec succès`, "success", "/admin/users", undefined, { target: { firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name, role: "PRESTATAIRE" } });
-    return result.rows[0];
+    return normalizeProviderProfileRow(result.rows[0]);
 }
 /**
  * Supprimer un utilisateur
@@ -204,6 +244,6 @@ async function getUserById(userId) {
     if (result.rows.length === 0) {
         throw new Error("Utilisateur non trouvé");
     }
-    return result.rows[0];
+    return normalizeUserRow(result.rows[0]);
 }
 //# sourceMappingURL=userService.js.map

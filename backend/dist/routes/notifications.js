@@ -7,38 +7,52 @@ exports.createNotification = createNotification;
 const express_1 = require("express");
 const database_1 = require("../config/database");
 const auth_1 = require("../middleware/auth");
+const notificationService_1 = require("../services/notificationService");
 const router = (0, express_1.Router)();
 // Toutes les routes nécessitent authentification
 router.use(auth_1.authenticate);
 // GET /api/notifications - Liste des notifications de l'utilisateur
 router.get("/", async (req, res) => {
     try {
+        await (0, notificationService_1.ensureNotificationSchema)();
         const user = req.user;
         const userId = user?.id;
-        const userRole = user?.role;
         const { limit = 20, offset = 0, unreadOnly } = req.query;
-        let whereClause = "";
-        let params = [];
-        // Tous les utilisateurs voient leurs notifications directes + celles où ils sont dans private_recipients
-        whereClause = "user_id = $1 OR EXISTS (SELECT 1 FROM json_array_elements_text(private_recipients::json) AS elem WHERE elem::text = $1)";
-        params = [userId];
+        const parsedLimit = Number(limit);
+        const parsedOffset = Number(offset);
+        const params = [userId];
+        let whereClause = `
+      (
+        user_id = $1
+        OR COALESCE(private_recipients, '[]'::jsonb) ? $1
+      )
+    `;
+        // Tous les utilisateurs voient leurs notifications directes + celles
+        // où leur ID est présent dans le tableau JSONB private_recipients.
         if (unreadOnly === "true") {
-            whereClause += (whereClause === "1=1" ? " AND" : " AND") + " read = false";
+            whereClause += " AND read = false";
         }
-        // Compter les notifications non lues
-        const countQuery = `SELECT COUNT(*) as count FROM notifications WHERE ${whereClause}`;
-        const countResult = await (0, database_1.query)(countQuery, params);
+        const unreadCountQuery = `
+      SELECT COUNT(*) as count
+      FROM notifications
+      WHERE (
+        user_id = $1
+        OR COALESCE(private_recipients, '[]'::jsonb) ? $1
+      )
+      AND read = false
+    `;
+        const unreadCountResult = await (0, database_1.query)(unreadCountQuery, params);
         // Récupérer les notifications
         const selectQuery = `SELECT id, title, message, type, read, link, created_at
        FROM notifications
        WHERE ${whereClause}
        ORDER BY created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-        const result = await (0, database_1.query)(selectQuery, [...params, Number(limit), Number(offset)]);
+        const result = await (0, database_1.query)(selectQuery, [...params, parsedLimit, parsedOffset]);
         res.json({
             success: true,
             data: result.rows,
-            unreadCount: parseInt(countResult.rows[0].count),
+            unreadCount: parseInt(unreadCountResult.rows[0].count, 10),
         });
     }
     catch (error) {
@@ -122,6 +136,7 @@ router.post("/test", async (req, res) => {
 // Fonction utilitaire pour créer une notification (à utiliser par d'autres routes)
 async function createNotification(userId, title, message, type = "info", link) {
     try {
+        await (0, notificationService_1.ensureNotificationSchema)();
         await (0, database_1.query)("INSERT INTO notifications (id, user_id, title, message, type, link, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())", [userId, title, message, type, link || null]);
     }
     catch (error) {

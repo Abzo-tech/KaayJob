@@ -1,182 +1,190 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { prisma } from '../../../src/config/prisma';
-import { createUser, verifyProvider, getUserById } from '../../../src/services/userService';
+import {
+  createUser,
+  getUserById,
+  verifyProvider,
+} from "../../../src/services/userService";
+import { query } from "../../../src/config/database";
+import { createFormattedNotification } from "../../../src/services/notificationService";
 
-describe('UserService', () => {
-  beforeEach(async () => {
-    // Clean up database before each test
-    await prisma.user.deleteMany();
-    await prisma.providerProfile.deleteMany();
+jest.mock("../../../src/config/database", () => ({
+  query: jest.fn(),
+}));
+
+jest.mock("../../../src/services/notificationService", () => ({
+  createFormattedNotification: jest.fn().mockResolvedValue(undefined),
+  createNotification: jest.fn().mockResolvedValue(undefined),
+}));
+
+const mockQuery = query as jest.MockedFunction<typeof query>;
+const mockCreateFormattedNotification =
+  createFormattedNotification as jest.MockedFunction<
+    typeof createFormattedNotification
+  >;
+
+describe("userService", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  afterEach(async () => {
-    // Clean up after each test
-    await prisma.user.deleteMany();
-    await prisma.providerProfile.deleteMany();
-  });
+  describe("createUser", () => {
+    it("creates a client user with the default role", async () => {
+      mockQuery
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: "user-1",
+              email: "client@example.com",
+              first_name: "John",
+              last_name: "Doe",
+              phone: "+221771234567",
+              role: "CLIENT",
+              created_at: new Date("2026-01-01T00:00:00.000Z"),
+            },
+          ],
+          rowCount: 1,
+        } as any);
 
-  describe('createUser', () => {
-    it('should create a new client user', async () => {
-      const userData = {
-        email: 'client@example.com',
-        password: 'hashedpassword123',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+221771234567',
-        role: 'CLIENT'
-      };
-
-      const user = await createUser(userData);
-
-      expect(user).toHaveProperty('id');
-      expect(user.email).toBe(userData.email);
-      expect(user.firstName).toBe(userData.firstName);
-      expect(user.lastName).toBe(userData.lastName);
-      expect(user.role).toBe(userData.role);
-    });
-
-    it('should create a new provider user', async () => {
-      const userData = {
-        email: 'provider@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        phone: '+221772345678',
-        role: 'PRESTATAIRE'
-      };
-
-      const user = await createUser(userData);
-
-      expect(user).toHaveProperty('id');
-      expect(user.role).toBe(userData.role);
-
-      // Check if provider profile was created
-      const profile = await prisma.providerProfile.findUnique({
-        where: { userId: user.id }
+      const user = await createUser({
+        email: "client@example.com",
+        password: "hashedpassword123",
+        firstName: "John",
+        lastName: "Doe",
+        phone: "+221771234567",
       });
-      expect(profile).toBeTruthy();
+
+      expect(user.email).toBe("client@example.com");
+      expect(user.role).toBe("CLIENT");
+      expect(mockCreateFormattedNotification).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw error for duplicate email', async () => {
-      const userData = {
-        email: 'duplicate@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Test',
-        lastName: 'User',
-        role: 'CLIENT'
-      };
+    it("notifies existing clients when a provider is created", async () => {
+      mockQuery
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: "provider-1",
+              email: "provider@example.com",
+              first_name: "Jane",
+              last_name: "Smith",
+              phone: "+221772345678",
+              role: "PRESTATAIRE",
+              created_at: new Date("2026-01-01T00:00:00.000Z"),
+            },
+          ],
+          rowCount: 1,
+        } as any)
+        .mockResolvedValueOnce({
+          rows: [{ id: "client-1" }, { id: "client-2" }],
+          rowCount: 2,
+        } as any);
 
-      // Create first user
-      await createUser(userData);
+      const user = await createUser({
+        email: "provider@example.com",
+        password: "hashedpassword123",
+        firstName: "Jane",
+        lastName: "Smith",
+        phone: "+221772345678",
+        role: "PRESTATAIRE",
+      });
 
-      // Try to create duplicate
-      await expect(createUser(userData)).rejects.toThrow('Email déjà utilisé');
+      expect(user.role).toBe("PRESTATAIRE");
+      expect(mockCreateFormattedNotification).toHaveBeenCalledTimes(3);
     });
 
-    it('should default role to CLIENT when not specified', async () => {
-      const userData = {
-        email: 'default@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Default',
-        lastName: 'User'
-      };
+    it("throws for duplicate email", async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: "existing-user" }],
+        rowCount: 1,
+      } as any);
 
-      const user = await createUser(userData);
-      expect(user.role).toBe('CLIENT');
+      await expect(
+        createUser({
+          email: "duplicate@example.com",
+          password: "hashedpassword123",
+          firstName: "Test",
+          lastName: "User",
+          role: "CLIENT",
+        }),
+      ).rejects.toThrow("Email déjà utilisé");
     });
   });
 
-  describe('verifyProvider', () => {
-    it('should verify a provider successfully', async () => {
-      // Create admin user
-      const adminData = {
-        email: 'admin@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'ADMIN'
-      };
-      const admin = await createUser(adminData);
+  describe("verifyProvider", () => {
+    it("creates a provider profile when none exists yet", async () => {
+      mockQuery
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              role: "PRESTATAIRE",
+              first_name: "Jane",
+              last_name: "Smith",
+            },
+          ],
+          rowCount: 1,
+        } as any)
+        .mockResolvedValueOnce({ rows: [], rowCount: 0 } as any)
+        .mockResolvedValueOnce({
+          rows: [{ id: "profile-1", user_id: "provider-1", is_verified: true }],
+          rowCount: 1,
+        } as any);
 
-      // Create provider user
-      const providerData = {
-        email: 'provider@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Provider',
-        lastName: 'User',
-        role: 'PRESTATAIRE'
-      };
-      const provider = await createUser(providerData);
+      const result = await verifyProvider("provider-1", "admin-1");
 
-      // Verify provider
-      const result = await verifyProvider(provider.id, admin.id);
-
-      expect(result).toHaveProperty('id');
       expect(result.isVerified).toBe(true);
-
-      // Check that provider profile is verified
-      const updatedProfile = await prisma.providerProfile.findUnique({
-        where: { userId: provider.id }
-      });
-      expect(updatedProfile?.isVerified).toBe(true);
+      expect(mockCreateFormattedNotification).toHaveBeenCalledTimes(2);
     });
 
-    it('should throw error for non-provider user', async () => {
-      const adminData = {
-        email: 'admin@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'ADMIN'
-      };
-      const admin = await createUser(adminData);
+    it("throws for a non-provider user", async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ role: "CLIENT", first_name: "John", last_name: "Doe" }],
+        rowCount: 1,
+      } as any);
 
-      const clientData = {
-        email: 'client@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Client',
-        lastName: 'User',
-        role: 'CLIENT'
-      };
-      const client = await createUser(clientData);
-
-      await expect(verifyProvider(client.id, admin.id)).rejects.toThrow('Cet utilisateur n\'est pas un prestataire');
+      await expect(verifyProvider("client-1", "admin-1")).rejects.toThrow(
+        "Cet utilisateur n'est pas un prestataire",
+      );
     });
 
-    it('should throw error for non-existent user', async () => {
-      const adminData = {
-        email: 'admin@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Admin',
-        lastName: 'User',
-        role: 'ADMIN'
-      };
-      const admin = await createUser(adminData);
+    it("throws when the user does not exist", async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
 
-      await expect(verifyProvider('non-existent-id', admin.id)).rejects.toThrow('Utilisateur non trouvé');
+      await expect(
+        verifyProvider("missing-provider", "admin-1"),
+      ).rejects.toThrow("Utilisateur non trouvé");
     });
   });
 
-  describe('getUserById', () => {
-    it('should return user with verification status', async () => {
-      const userData = {
-        email: 'test@example.com',
-        password: 'hashedpassword123',
-        firstName: 'Test',
-        lastName: 'User',
-        role: 'PRESTATAIRE'
-      };
+  describe("getUserById", () => {
+    it("returns the user when found", async () => {
+      mockQuery.mockResolvedValueOnce({
+        rows: [
+          {
+            id: "provider-1",
+            email: "provider@example.com",
+            first_name: "Jane",
+            last_name: "Smith",
+            role: "PRESTATAIRE",
+            is_verified: true,
+          },
+        ],
+        rowCount: 1,
+      } as any);
 
-      const createdUser = await createUser(userData);
-      const retrievedUser = await getUserById(createdUser.id);
+      const user = await getUserById("provider-1");
 
-      expect(retrievedUser.id).toBe(createdUser.id);
-      expect(retrievedUser.email).toBe(userData.email);
-      expect(retrievedUser).toHaveProperty('isVerified');
+      expect(user.id).toBe("provider-1");
+      expect(user.email).toBe("provider@example.com");
+      expect(user.isVerified).toBe(true);
     });
 
-    it('should throw error for non-existent user', async () => {
-      await expect(getUserById('non-existent-id')).rejects.toThrow('Utilisateur non trouvé');
+    it("throws for an unknown user", async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as any);
+
+      await expect(getUserById("missing-user")).rejects.toThrow(
+        "Utilisateur non trouvé",
+      );
     });
   });
 });

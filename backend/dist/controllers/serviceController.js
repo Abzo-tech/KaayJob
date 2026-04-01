@@ -7,6 +7,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServiceController = void 0;
 const prisma_1 = require("../config/prisma");
+const normalizePriceTypeInput = (priceType) => {
+    return priceType?.toUpperCase() || "FIXED";
+};
+const normalizeServiceOutput = (service) => ({
+    ...service,
+    priceType: service.priceType ? service.priceType.toLowerCase() : service.priceType,
+});
 class ServiceController {
     /**
      * Liste des services avec filtres et pagination
@@ -75,7 +82,7 @@ class ServiceController {
             const totalFiltered = services.length;
             res.json({
                 success: true,
-                data: services,
+                data: services.map((service) => normalizeServiceOutput(service)),
                 pagination: {
                     page: Number(page),
                     limit: Number(limit),
@@ -141,7 +148,7 @@ class ServiceController {
             res.json({
                 success: true,
                 data: {
-                    ...service,
+                    ...normalizeServiceOutput(service),
                     reviews,
                 },
             });
@@ -195,7 +202,7 @@ class ServiceController {
                     name,
                     description,
                     price,
-                    priceType: priceType?.toUpperCase() || "FIXED",
+                    priceType: normalizePriceTypeInput(priceType),
                     duration,
                     isActive: true,
                 },
@@ -203,7 +210,7 @@ class ServiceController {
             res.status(201).json({
                 success: true,
                 message: "Service créé",
-                data: service,
+                data: normalizeServiceOutput(service),
             });
         }
         catch (error) {
@@ -249,7 +256,7 @@ class ServiceController {
             if (updates.price)
                 updateData.price = updates.price;
             if (updates.priceType)
-                updateData.priceType = updates.priceType.toUpperCase();
+                updateData.priceType = normalizePriceTypeInput(updates.priceType);
             if (updates.duration !== undefined)
                 updateData.duration = updates.duration;
             if (updates.isActive !== undefined)
@@ -261,7 +268,7 @@ class ServiceController {
             res.json({
                 success: true,
                 message: "Service mis à jour",
-                data: service,
+                data: normalizeServiceOutput(service),
             });
         }
         catch (error) {
@@ -318,7 +325,10 @@ class ServiceController {
                     category: true,
                 },
             });
-            res.json({ success: true, data: services });
+            res.json({
+                success: true,
+                data: services.map((service) => normalizeServiceOutput(service)),
+            });
         }
         catch (error) {
             console.error("Erreur récupération services prestataire:", error);

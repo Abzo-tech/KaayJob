@@ -258,16 +258,16 @@ exports.isBookingStatus = isBookingStatus;
 // Type de prix
 const isPriceType = (fieldName, required = false) => {
     const validTypes = ["fixed", "hourly", "quote"];
+    const validTypesUpper = validTypes.map((type) => type.toUpperCase());
+    const allValidTypes = [...validTypes, ...validTypesUpper];
+    const validator = (0, express_validator_1.body)(fieldName)
+        .optional()
+        .customSanitizer((value) => typeof value === "string" ? value.toLowerCase() : value)
+        .isIn(allValidTypes)
+        .withMessage(`${fieldName} invalide: ${validTypes.join(", ")}`);
     return required
-        ? (0, express_validator_1.body)(fieldName)
-            .notEmpty()
-            .withMessage(`${fieldName} est requis`)
-            .isIn(validTypes)
-            .withMessage(`${fieldName} invalide: ${validTypes.join(", ")}`)
-        : (0, express_validator_1.body)(fieldName)
-            .optional()
-            .isIn(validTypes)
-            .withMessage(`${fieldName} invalide: ${validTypes.join(", ")}`);
+        ? validator.notEmpty().withMessage(`${fieldName} est requis`)
+        : validator;
 };
 exports.isPriceType = isPriceType;
 // Rôle utilisateur

@@ -25,6 +25,30 @@ export interface UpdateBookingData {
   notes?: string;
 }
 
+const normalizeBookingRow = (row: any) => ({
+  id: row.id,
+  clientId: row.client_id ?? row.clientId,
+  serviceId: row.service_id ?? row.serviceId,
+  providerId: row.provider_id ?? row.providerId ?? null,
+  bookingDate: row.booking_date ?? row.bookingDate,
+  bookingTime: row.booking_time ?? row.bookingTime,
+  duration: row.duration ?? null,
+  status: row.status,
+  address: row.address,
+  city: row.city,
+  phone: row.phone ?? null,
+  notes: row.notes ?? null,
+  totalAmount: row.total_amount ?? row.totalAmount ?? null,
+  paymentStatus: row.payment_status ?? row.paymentStatus ?? null,
+  createdAt: row.created_at ?? row.createdAt ?? null,
+  updatedAt: row.updated_at ?? row.updatedAt ?? null,
+  clientFirstName: row.client_first_name ?? row.clientFirstName ?? null,
+  clientLastName: row.client_last_name ?? row.clientLastName ?? null,
+  serviceName: row.service_name ?? row.serviceName ?? null,
+  providerFirstName: row.provider_first_name ?? row.providerFirstName ?? null,
+  providerLastName: row.provider_last_name ?? row.providerLastName ?? null,
+});
+
 /**
  * Liste des réservations avec pagination et filtres
  */
@@ -55,7 +79,10 @@ export async function listBookings(filters: BookingFilters) {
   }
 
   const countResult = await query(
-    `SELECT COUNT(*) as count FROM bookings b WHERE ${whereClause}`,
+    `SELECT COUNT(*) as count
+     FROM bookings b
+     JOIN services s ON b.service_id = s.id
+     WHERE ${whereClause}`,
     params,
   );
 
@@ -76,7 +103,7 @@ export async function listBookings(filters: BookingFilters) {
   );
 
   return {
-    data: result.rows,
+    data: result.rows.map(normalizeBookingRow),
     pagination: {
       page,
       limit,
@@ -104,7 +131,7 @@ export async function getBookingById(bookingId: string) {
     throw new Error("Réservation non trouvée");
   }
 
-  return result.rows[0];
+  return normalizeBookingRow(result.rows[0]);
 }
 
 /**
@@ -193,7 +220,7 @@ export async function updateBooking(
     }
   }
 
-  return result;
+  return normalizeBookingRow(result);
 }
 
 /**
