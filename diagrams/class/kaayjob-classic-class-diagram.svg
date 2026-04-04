@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="5600" height="3600" viewBox="0 0 5600 3600">
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#ececec" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="8" dy="8" stdDeviation="4" flood-color="#c9c9c9" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <style>
+    text { font-family: Arial, Helvetica, sans-serif; fill: #111; }
+    .main-title { font-size: 42px; font-weight: 700; }
+    .sub-title { font-size: 20px; fill: #555; }
+    .box { fill: #fff; stroke: #111; stroke-width: 2.1; filter: url(#shadow); }
+    .enum { fill: #fcfcfc; }
+    .sep { stroke: #111; stroke-width: 1.7; }
+    .title { font-size: 26px; font-weight: 700; text-anchor: middle; }
+    .stereo { font-size: 18px; font-style: italic; text-anchor: middle; fill: #444; }
+    .attr { font-size: 21px; }
+    .assoc { stroke: #111; stroke-width: 2; fill: none; }
+    .arrow { stroke: #111; stroke-width: 2; fill: none; }
+    .diamond-open { fill: #fff; stroke: #111; stroke-width: 1.7; }
+    .diamond-filled { fill: #111; stroke: #111; stroke-width: 1.7; }
+    .mult { font-size: 19px; font-weight: 600; }
+  </style>
+  <rect width="100%" height="100%" fill="#fbfbfb"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+  <text x="70" y="60" class="main-title">KaayJob - Diagramme De Classe</text>
+  <text x="70" y="92" class="sub-title">Version classique, aérée, avec multiplicités et relations UML</text>
+  
+  <line x1="560" y1="417" x2="380" y2="269" class="assoc"/>
+  
+  <path d="M 391.8379135183399 270.9656560055882 L 380 269 L 384.2166487232291 280.2347618374797" class="arrow"/>
+  <text x="498" y="407" class="mult">*</text>
+  <text x="392" y="259" class="mult">1</text>
+
+  <line x1="1120" y1="417" x2="1450" y2="375" class="assoc"/>
+  <polygon points="1120,417 1108,405 1096,417 1108,429" class="diamond-filled"/>
+  <path d="M 1440.4483809733983 382.2640604327511 L 1450 375 L 1438.9333296173113 370.3600854920677" class="arrow"/>
+  <text x="1132" y="407" class="mult">1</text>
+  <text x="1388" y="365" class="mult">0..1</text>
+
+  <line x1="2070" y1="375" x2="3220" y2="347" class="assoc"/>
+  <polygon points="2070,375 2058,363 2046,375 2058,387" class="diamond-filled"/>
+  <path d="M 3209.7568178256647 353.2511774045676 L 3220 347 L 3209.4647304769132 341.25473272371744" class="arrow"/>
+  <text x="2082" y="365" class="mult">1</text>
+  <text x="3158" y="337" class="mult">0..*</text>
+
+  <path d="M 2900 330 C 3070 330, 3070 550, 2900 550" class="assoc"/>
+  <text x="2924" y="320" class="mult">parent 0..1</text>
+  <text x="2924" y="576" class="mult">children 0..*</text>
+
+  <line x1="2900" y1="359" x2="3220" y2="347" class="assoc"/>
+  
+  <path d="M 3209.83983650979 353.3852233987705 L 3220 347 L 3209.390152582721 341.3936520102603" class="arrow"/>
+  <text x="2912" y="349" class="mult">1</text>
+  <text x="3158" y="337" class="mult">0..*</text>
+
+  <line x1="3740" y1="347" x2="4040" y2="309" class="assoc"/>
+  
+  <path d="M 4030.444050059267 316.258362124488 L 4040 309 L 4028.93609903996 304.35348565627663" class="arrow"/>
+  <text x="3752" y="337" class="mult">*</text>
+  <text x="3978" y="299" class="mult">1</text>
+
+  <line x1="820" y1="654" x2="1260" y2="1130" class="assoc"/>
+  
+  <path d="M 1248.5398004717576 1126.4413729089893 L 1260 1130 L 1257.3517616992897 1118.2958625305985" class="arrow"/>
+  <text x="832" y="676" class="mult">1</text>
+  <text x="1272" y="1120" class="mult">0..*</text>
+
+  <line x1="3220" y1="347" x2="1550" y2="1353" class="assoc"/>
+  
+  <path d="M 1555.805885969459 1342.4980150395443 L 1550 1353 L 1561.9979287506462 1352.7770522607993" class="arrow"/>
+  <text x="3158" y="337" class="mult">1</text>
+  <text x="1562" y="1343" class="mult">0..*</text>
+
+  <line x1="930" y1="1353" x2="450" y2="1217" class="assoc"/>
+  
+  <path d="M 461.63432967452513 1214.0602086767146 L 450 1217 L 458.3630988050528 1225.6057293924991" class="arrow"/>
+  <text x="868" y="1343" class="mult">*</text>
+  <text x="462" y="1207" class="mult">1</text>
+
+  <line x1="1550" y1="1353" x2="1960" y2="1333" class="assoc"/>
+  <polygon points="1550,1353 1538,1341 1526,1353 1538,1365" class="diamond-filled"/>
+  <path d="M 1949.9123728860266 1339.4992137377862 L 1960 1333 L 1949.3277022414657 1327.5134655242873" class="arrow"/>
+  <text x="1562" y="1343" class="mult">1</text>
+  <text x="1898" y="1323" class="mult">0..1</text>
+
+  <line x1="710" y1="654" x2="2340" y2="1180" class="assoc"/>
+  
+  <path d="M 2328.267266315327 1182.5185234333908 L 2340 1180 L 2331.9525278843207 1171.098416289931" class="arrow"/>
+  <text x="722" y="676" class="mult">1</text>
+  <text x="2352" y="1170" class="mult">0..*</text>
+
+  <line x1="1840" y1="570" x2="2130" y2="1180" class="assoc"/>
+  
+  <path d="M 2120.1191685483955 1173.190508842433 L 2130 1180 L 2130.956776603496 1168.0382033736148" class="arrow"/>
+  <text x="1852" y="592" class="mult">1</text>
+  <text x="2142" y="1170" class="mult">0..*</text>
+
+  <line x1="3630" y1="514" x2="2060" y2="1180" class="assoc"/>
+  
+  <path d="M 2067.223980909361 1170.418032570438 L 2060 1180 L 2071.910217666916 1181.4651672691793" class="arrow"/>
+  <text x="3642" y="536" class="mult">0..1</text>
+  <text x="2072" y="1170" class="mult">0..*</text>
+
+  <line x1="1550" y1="1353" x2="2830" y2="1319" class="assoc"/>
+  
+  <path d="M 2819.770678251153 1325.2738326849362 L 2830 1319 L 2819.452040641329 1313.2780638444822" class="arrow"/>
+  <text x="1562" y="1343" class="mult">1</text>
+  <text x="2768" y="1309" class="mult">0..*</text>
+
+  <line x1="910" y1="654" x2="2995" y2="1180" class="assoc"/>
+  
+  <path d="M 2983.4557234412778 1183.2756188324856 L 2995 1180 L 2986.3910925985915 1171.640172648076" class="arrow"/>
+  <text x="922" y="676" class="mult">1</text>
+  <text x="3007" y="1170" class="mult">0..*</text>
+
+  <line x1="1550" y1="1353" x2="3540" y2="1329" class="assoc"/>
+  
+  <path d="M 3529.680807404128 1335.1248889107721 L 3540 1329 L 3529.5360943099777 1323.1257615208165" class="arrow"/>
+  <text x="1562" y="1343" class="mult">*</text>
+  <text x="3478" y="1319" class="mult">1</text>
+
+  <line x1="3300" y1="1319" x2="3540" y2="1329" class="assoc"/>
+  
+  <path d="M 3529.3669212550167 1334.5621611270244 L 3540 1329 L 3529.8664877915626 1322.5725642499162" class="arrow"/>
+  <text x="3312" y="1309" class="mult">*</text>
+  <text x="3478" y="1319" class="mult">1</text>
+
+  <line x1="670" y1="654" x2="950" y2="2620" class="assoc"/>
+  
+  <path d="M 942.5946431950257 2610.5575061243853 L 950 2620 L 954.4747611688741 2608.865525944997" class="arrow"/>
+  <text x="682" y="676" class="mult">1</text>
+  <text x="962" y="2610" class="mult">0..*</text>
+
+  <line x1="560" y1="417" x2="750" y2="2620" class="assoc"/>
+  
+  <path d="M 743.1292113993406 2610.1616940480058 L 750 2620 L 755.0848285843011 2609.1305695517995" class="arrow"/>
+  <text x="498" y="407" class="mult">0..1</text>
+  <text x="762" y="2610" class="mult">0..*</text>
+
+  <line x1="840" y1="654" x2="1785" y2="2620" class="assoc"/>
+  
+  <path d="M 1775.090095249106 2613.232889255509 L 1785 2620 L 1785.9055374395052 2608.034215364396" class="arrow"/>
+  <text x="852" y="676" class="mult">1</text>
+  <text x="1797" y="2610" class="mult">0..*</text>
+
+  <line x1="2370" y1="2759" x2="2020" y2="2745" class="assoc"/>
+  <polygon points="2370,2759 2382,2747 2394,2759 2382,2771" class="diamond-open"/>
+  <path d="M 2030.6238091949592 2739.420154286264 L 2020 2745 L 2030.1441927347728 2751.4105657909254" class="arrow"/>
+  <text x="2308" y="2749" class="mult">1</text>
+  <text x="2032" y="2735" class="mult">0..*</text>
+
+  <line x1="1010" y1="654" x2="3360" y2="2620" class="assoc"/>
+  
+  <path d="M 3348.1792541955833 2617.9336097591786 L 3360 2620 L 3355.879173540475 2608.729738721286" class="arrow"/>
+  <text x="1022" y="676" class="mult">1</text>
+  <text x="3372" y="2610" class="mult">0..*</text>
+  
+  <g>
+    <rect x="120" y="180" width="260" height="178" class="box enum"/>
+    <line x1="120" y1="238" x2="380" y2="238" class="sep"/>
+    
+    <text x="250" y="204" class="stereo">&lt;&lt;enumeration&gt;&gt;</text>
+    <text x="250" y="230" class="title">Role</text>
+    <text x="136" y="274" class="attr">CLIENT</text>
+<text x="136" y="306" class="attr">PRESTATAIRE</text>
+<text x="136" y="338" class="attr">ADMIN</text>
+  </g>
+
+  <g>
+    <rect x="560" y="180" width="560" height="474" class="box "/>
+    <line x1="560" y1="238" x2="1120" y2="238" class="sep"/>
+    <text x="840" y="218" class="title">User</text>
+    <text x="576" y="266" class="attr">+id: UUID</text>
+<text x="576" y="294" class="attr">+email: String</text>
+<text x="576" y="322" class="attr">+password: String</text>
+<text x="576" y="350" class="attr">+firstName: String</text>
+<text x="576" y="378" class="attr">+lastName: String</text>
+<text x="576" y="406" class="attr">+phone: String</text>
+<text x="576" y="434" class="attr">+role: Role</text>
+<text x="576" y="462" class="attr">+avatar: String?</text>
+<text x="576" y="490" class="attr">+bio: String?</text>
+<text x="576" y="518" class="attr">+address: String?</text>
+<text x="576" y="546" class="attr">+latitude: Float?</text>
+<text x="576" y="574" class="attr">+longitude: Float?</text>
+<text x="576" y="602" class="attr">+isVerified: Boolean</text>
+<text x="576" y="630" class="attr">+isActive: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="1450" y="180" width="620" height="390" class="box "/>
+    <line x1="1450" y1="238" x2="2070" y2="238" class="sep"/>
+    <text x="1760" y="218" class="title">ProviderProfile</text>
+    <text x="1466" y="266" class="attr">+id: UUID</text>
+<text x="1466" y="294" class="attr">+userId: UUID</text>
+<text x="1466" y="322" class="attr">+businessName: String?</text>
+<text x="1466" y="350" class="attr">+specialty: String?</text>
+<text x="1466" y="378" class="attr">+hourlyRate: Decimal?</text>
+<text x="1466" y="406" class="attr">+location: String?</text>
+<text x="1466" y="434" class="attr">+serviceRadius: Int?</text>
+<text x="1466" y="462" class="attr">+isAvailable: Boolean</text>
+<text x="1466" y="490" class="attr">+rating: Decimal</text>
+<text x="1466" y="518" class="attr">+totalReviews: Int</text>
+<text x="1466" y="546" class="attr">+totalBookings: Int</text>
+  </g>
+
+  <g>
+    <rect x="2430" y="220" width="470" height="278" class="box "/>
+    <line x1="2430" y1="278" x2="2900" y2="278" class="sep"/>
+    <text x="2665" y="258" class="title">Category</text>
+    <text x="2446" y="306" class="attr">+id: UUID</text>
+<text x="2446" y="334" class="attr">+name: String</text>
+<text x="2446" y="362" class="attr">+slug: String</text>
+<text x="2446" y="390" class="attr">+description: String?</text>
+<text x="2446" y="418" class="attr">+isActive: Boolean</text>
+<text x="2446" y="446" class="attr">+displayOrder: Int</text>
+<text x="2446" y="474" class="attr">+parentId: UUID?</text>
+  </g>
+
+  <g>
+    <rect x="3220" y="180" width="520" height="334" class="box "/>
+    <line x1="3220" y1="238" x2="3740" y2="238" class="sep"/>
+    <text x="3480" y="218" class="title">Service</text>
+    <text x="3236" y="266" class="attr">+id: UUID</text>
+<text x="3236" y="294" class="attr">+providerId: UUID</text>
+<text x="3236" y="322" class="attr">+categoryId: UUID?</text>
+<text x="3236" y="350" class="attr">+name: String</text>
+<text x="3236" y="378" class="attr">+description: String?</text>
+<text x="3236" y="406" class="attr">+price: Decimal</text>
+<text x="3236" y="434" class="attr">+priceType: TypePrix</text>
+<text x="3236" y="462" class="attr">+duration: Int?</text>
+<text x="3236" y="490" class="attr">+isActive: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="4040" y="220" width="280" height="178" class="box enum"/>
+    <line x1="4040" y1="278" x2="4320" y2="278" class="sep"/>
+    
+    <text x="4180" y="244" class="stereo">&lt;&lt;enumeration&gt;&gt;</text>
+    <text x="4180" y="270" class="title">TypePrix</text>
+    <text x="4056" y="314" class="attr">FIXED</text>
+<text x="4056" y="346" class="attr">HOURLY</text>
+<text x="4056" y="378" class="attr">QUOTE</text>
+  </g>
+
+  <g>
+    <rect x="120" y="1080" width="330" height="274" class="box enum"/>
+    <line x1="120" y1="1138" x2="450" y2="1138" class="sep"/>
+    
+    <text x="285" y="1104" class="stereo">&lt;&lt;enumeration&gt;&gt;</text>
+    <text x="285" y="1130" class="title">StatutReservation</text>
+    <text x="136" y="1174" class="attr">PENDING</text>
+<text x="136" y="1206" class="attr">CONFIRMED</text>
+<text x="136" y="1238" class="attr">IN_PROGRESS</text>
+<text x="136" y="1270" class="attr">COMPLETED</text>
+<text x="136" y="1302" class="attr">CANCELLED</text>
+<text x="136" y="1334" class="attr">REJECTED</text>
+  </g>
+
+  <g>
+    <rect x="930" y="1130" width="620" height="446" class="box "/>
+    <line x1="930" y1="1188" x2="1550" y2="1188" class="sep"/>
+    <text x="1240" y="1168" class="title">Booking</text>
+    <text x="946" y="1216" class="attr">+id: UUID</text>
+<text x="946" y="1244" class="attr">+clientId: UUID</text>
+<text x="946" y="1272" class="attr">+serviceId: UUID</text>
+<text x="946" y="1300" class="attr">+bookingDate: DateTime</text>
+<text x="946" y="1328" class="attr">+bookingTime: String</text>
+<text x="946" y="1356" class="attr">+duration: Int</text>
+<text x="946" y="1384" class="attr">+status: StatutReservation</text>
+<text x="946" y="1412" class="attr">+address: String</text>
+<text x="946" y="1440" class="attr">+city: String</text>
+<text x="946" y="1468" class="attr">+phone: String?</text>
+<text x="946" y="1496" class="attr">+notes: String?</text>
+<text x="946" y="1524" class="attr">+totalAmount: Decimal?</text>
+<text x="946" y="1552" class="attr">+paymentStatus: StatutPaiement</text>
+  </g>
+
+  <g>
+    <rect x="1960" y="1180" width="500" height="306" class="box "/>
+    <line x1="1960" y1="1238" x2="2460" y2="1238" class="sep"/>
+    <text x="2210" y="1218" class="title">Review</text>
+    <text x="1976" y="1266" class="attr">+id: UUID</text>
+<text x="1976" y="1294" class="attr">+bookingId: UUID</text>
+<text x="1976" y="1322" class="attr">+clientId: UUID</text>
+<text x="1976" y="1350" class="attr">+providerId: UUID</text>
+<text x="1976" y="1378" class="attr">+serviceId: UUID?</text>
+<text x="1976" y="1406" class="attr">+rating: Int</text>
+<text x="1976" y="1434" class="attr">+comment: String?</text>
+<text x="1976" y="1462" class="attr">+isVerified: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="2830" y="1180" width="470" height="278" class="box "/>
+    <line x1="2830" y1="1238" x2="3300" y2="1238" class="sep"/>
+    <text x="3065" y="1218" class="title">Payment</text>
+    <text x="2846" y="1266" class="attr">+id: UUID</text>
+<text x="2846" y="1294" class="attr">+bookingId: UUID?</text>
+<text x="2846" y="1322" class="attr">+userId: UUID</text>
+<text x="2846" y="1350" class="attr">+amount: Decimal</text>
+<text x="2846" y="1378" class="attr">+paymentMethod: String?</text>
+<text x="2846" y="1406" class="attr">+status: StatutPaiement</text>
+<text x="2846" y="1434" class="attr">+transactionId: String?</text>
+  </g>
+
+  <g>
+    <rect x="3540" y="1240" width="320" height="178" class="box enum"/>
+    <line x1="3540" y1="1298" x2="3860" y2="1298" class="sep"/>
+    
+    <text x="3700" y="1264" class="stereo">&lt;&lt;enumeration&gt;&gt;</text>
+    <text x="3700" y="1290" class="title">StatutPaiement</text>
+    <text x="3556" y="1334" class="attr">PENDING</text>
+<text x="3556" y="1366" class="attr">PAID</text>
+<text x="3556" y="1398" class="attr">REFUNDED</text>
+  </g>
+
+  <g>
+    <rect x="520" y="2620" width="520" height="250" class="box "/>
+    <line x1="520" y1="2678" x2="1040" y2="2678" class="sep"/>
+    <text x="780" y="2658" class="title">VerificationRequest</text>
+    <text x="536" y="2706" class="attr">+id: UUID</text>
+<text x="536" y="2734" class="attr">+userId: UUID</text>
+<text x="536" y="2762" class="attr">+documents: Json?</text>
+<text x="536" y="2790" class="attr">+status: String</text>
+<text x="536" y="2818" class="attr">+reviewedBy: UUID?</text>
+<text x="536" y="2846" class="attr">+reviewedAt: DateTime?</text>
+  </g>
+
+  <g>
+    <rect x="1550" y="2620" width="470" height="250" class="box "/>
+    <line x1="1550" y1="2678" x2="2020" y2="2678" class="sep"/>
+    <text x="1785" y="2658" class="title">Subscription</text>
+    <text x="1566" y="2706" class="attr">+id: UUID</text>
+<text x="1566" y="2734" class="attr">+userId: UUID</text>
+<text x="1566" y="2762" class="attr">+plan: String</text>
+<text x="1566" y="2790" class="attr">+status: String</text>
+<text x="1566" y="2818" class="attr">+startDate: DateTime</text>
+<text x="1566" y="2846" class="attr">+endDate: DateTime</text>
+  </g>
+
+  <g>
+    <rect x="2370" y="2620" width="520" height="278" class="box "/>
+    <line x1="2370" y1="2678" x2="2890" y2="2678" class="sep"/>
+    <text x="2630" y="2658" class="title">SubscriptionPlan</text>
+    <text x="2386" y="2706" class="attr">+id: UUID</text>
+<text x="2386" y="2734" class="attr">+name: String</text>
+<text x="2386" y="2762" class="attr">+slug: String</text>
+<text x="2386" y="2790" class="attr">+price: Decimal</text>
+<text x="2386" y="2818" class="attr">+duration: Int</text>
+<text x="2386" y="2846" class="attr">+features: Json</text>
+<text x="2386" y="2874" class="attr">+isActive: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="3290" y="2620" width="480" height="278" class="box "/>
+    <line x1="3290" y1="2678" x2="3770" y2="2678" class="sep"/>
+    <text x="3530" y="2658" class="title">Notification</text>
+    <text x="3306" y="2706" class="attr">+id: UUID</text>
+<text x="3306" y="2734" class="attr">+userId: UUID</text>
+<text x="3306" y="2762" class="attr">+title: String</text>
+<text x="3306" y="2790" class="attr">+message: String</text>
+<text x="3306" y="2818" class="attr">+type: String</text>
+<text x="3306" y="2846" class="attr">+read: Boolean</text>
+<text x="3306" y="2874" class="attr">+link: String?</text>
+  </g>
+</svg>

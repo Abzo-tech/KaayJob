@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1280" viewBox="0 0 2000 1280">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e9e9e9" stroke-width="1" />
+    </pattern>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="5" dy="6" stdDeviation="3" flood-color="#b8b8b8" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <style>
+    text { font-family: Arial, Helvetica, sans-serif; fill: #111; }
+    .title { font-size: 34px; font-weight: 700; }
+    .section-title { font-size: 26px; font-weight: 700; }
+    .actor-label { font-size: 22px; font-weight: 700; text-anchor: middle; }
+    .usecase ellipse { fill: #fff; stroke: #222; stroke-width: 2; filter: url(#softShadow); }
+    .usecase-label { font-size: 19px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+    .mini-label { font-size: 15px; font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
+    .actor circle, .actor line { stroke: #111; stroke-width: 2.5; fill: none; }
+    .assoc { stroke: #111; stroke-width: 2; }
+    .include { stroke: #444; stroke-width: 1.8; stroke-dasharray: 7 6; fill: none; }
+    .include-label { font-size: 15px; fill: #333; }
+    .note { font-size: 17px; fill: #444; }
+  </style>
+
+  <rect width="100%" height="100%" fill="#fafafa" />
+  <rect width="100%" height="100%" fill="url(#grid)" />
+
+  <rect x="220" y="80" width="1560" height="1120" fill="#fff" stroke="#6a6a6a" stroke-width="2.4" />
+  <text x="1000" y="115" class="title" text-anchor="middle">Diagramme de Cas d'utilisation - KaayJob</text>
+
+  <line x1="740" y1="140" x2="740" y2="910" stroke="#d0d0d0" stroke-width="2" />
+  <line x1="1260" y1="140" x2="1260" y2="910" stroke="#d0d0d0" stroke-width="2" />
+  <line x1="280" y1="910" x2="1720" y2="910" stroke="#d0d0d0" stroke-width="2" />
+
+  <text x="500" y="150" class="section-title" text-anchor="middle">Espace Client</text>
+  <text x="1520" y="150" class="section-title" text-anchor="middle">Espace Prestataire</text>
+  <text x="1000" y="945" class="section-title" text-anchor="middle">Espace Administrateur</text>
+
+  <line class="assoc" x1="120" y1="515" x2="260" y2="170" />
+<line class="assoc" x1="120" y1="515" x2="250" y2="290" />
+<line class="assoc" x1="120" y1="515" x2="455" y2="290" />
+<line class="assoc" x1="120" y1="515" x2="335" y2="420" />
+<line class="assoc" x1="120" y1="515" x2="260" y2="550" />
+<line class="assoc" x1="120" y1="515" x2="465" y2="560" />
+<line class="assoc" x1="120" y1="515" x2="300" y2="700" />
+<line class="assoc" x1="120" y1="515" x2="485" y2="705" />
+<line class="assoc" x1="1880" y1="515" x2="1740" y2="170" />
+<line class="assoc" x1="1880" y1="515" x2="1715" y2="300" />
+<line class="assoc" x1="1880" y1="515" x2="1510" y2="430" />
+<line class="assoc" x1="1880" y1="515" x2="1770" y2="430" />
+<line class="assoc" x1="1880" y1="515" x2="1695" y2="575" />
+<line class="assoc" x1="1880" y1="515" x2="1455" y2="705" />
+<line class="assoc" x1="1880" y1="515" x2="1750" y2="705" />
+<line class="assoc" x1="1880" y1="515" x2="1645" y2="840" />
+<line class="assoc" x1="1000" y1="1075" x2="952" y2="965" />
+<line class="assoc" x1="1000" y1="1075" x2="935" y2="960" />
+<line class="assoc" x1="1000" y1="1075" x2="870" y2="1080" />
+<line class="assoc" x1="1000" y1="1075" x2="1060" y2="1080" />
+<line class="assoc" x1="1000" y1="1075" x2="1050" y2="1080" />
+<line class="assoc" x1="1000" y1="1075" x2="1215" y2="1080" />
+<line class="assoc" x1="1000" y1="1075" x2="995" y2="1195" />
+  
+    <g class="usecase" id="uc_auth_client">
+      <ellipse cx="380" cy="170" rx="120" ry="42" />
+      <text x="380" y="160" class="usecase-label"><tspan x="380" dy="0">S'inscrire /</tspan><tspan x="380" dy="20">Se connecter</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_browse_categories">
+      <ellipse cx="360" cy="290" rx="110" ry="38" />
+      <text x="360" y="280" class="usecase-label"><tspan x="360" dy="0">Parcourir</tspan><tspan x="360" dy="20">catégories</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_search_providers">
+      <ellipse cx="600" cy="290" rx="145" ry="40" />
+      <text x="600" y="280" class="usecase-label"><tspan x="600" dy="0">Rechercher et filtrer</tspan><tspan x="600" dy="20">les prestataires</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_view_provider">
+      <ellipse cx="480" cy="420" rx="145" ry="40" />
+      <text x="480" y="410" class="usecase-label"><tspan x="480" dy="0">Voir profil, services</tspan><tspan x="480" dy="20">et avis prestataire</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_book_service">
+      <ellipse cx="360" cy="550" rx="100" ry="38" />
+      <text x="360" y="540" class="usecase-label"><tspan x="360" dy="0">Réserver un</tspan><tspan x="360" dy="20">service</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_bookings">
+      <ellipse cx="610" cy="560" rx="145" ry="40" />
+      <text x="610" y="550" class="usecase-label"><tspan x="610" dy="0">Consulter / annuler</tspan><tspan x="610" dy="20">mes réservations</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_leave_review">
+      <ellipse cx="420" cy="700" rx="120" ry="38" />
+      <text x="420" y="690" class="usecase-label"><tspan x="420" dy="0">Laisser une note</tspan><tspan x="420" dy="20">et un avis</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_client_profile">
+      <ellipse cx="620" cy="705" rx="135" ry="40" />
+      <text x="620" y="695" class="usecase-label"><tspan x="620" dy="0">Gérer profil et</tspan><tspan x="620" dy="20">notifications</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_auth_provider">
+      <ellipse cx="1620" cy="170" rx="120" ry="42" />
+      <text x="1620" y="160" class="usecase-label"><tspan x="1620" dy="0">S'inscrire /</tspan><tspan x="1620" dy="20">Se connecter</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_provider_dashboard">
+      <ellipse cx="1560" cy="300" rx="155" ry="40" />
+      <text x="1560" y="290" class="usecase-label"><tspan x="1560" dy="0">Consulter tableau de bord</tspan><tspan x="1560" dy="20">et statistiques</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_profile">
+      <ellipse cx="1350" cy="430" rx="160" ry="42" />
+      <text x="1350" y="420" class="usecase-label"><tspan x="1350" dy="0">Gérer profil,</tspan><tspan x="1350" dy="20">géolocalisation et dispo</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_services">
+      <ellipse cx="1615" cy="430" rx="155" ry="42" />
+      <text x="1615" y="420" class="usecase-label"><tspan x="1615" dy="0">Créer / modifier /</tspan><tspan x="1615" dy="20">supprimer mes services</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_provider_bookings">
+      <ellipse cx="1510" cy="575" rx="185" ry="44" />
+      <text x="1510" y="565" class="usecase-label"><tspan x="1510" dy="0">Gérer réservations</tspan><tspan x="1510" dy="20">(confirmer, refuser, terminer)</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_request_verification">
+      <ellipse cx="1345" cy="705" rx="110" ry="38" />
+      <text x="1345" y="695" class="usecase-label"><tspan x="1345" dy="0">Demander</tspan><tspan x="1345" dy="20">vérification</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_subscription">
+      <ellipse cx="1605" cy="705" rx="145" ry="40" />
+      <text x="1605" y="695" class="usecase-label"><tspan x="1605" dy="0">Souscrire / annuler</tspan><tspan x="1605" dy="20">un abonnement</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_provider_notifications">
+      <ellipse cx="1485" cy="840" rx="160" ry="42" />
+      <text x="1485" y="830" class="usecase-label"><tspan x="1485" dy="0">Consulter notifications</tspan><tspan x="1485" dy="20">et historique paiements</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_admin_login">
+      <ellipse cx="860" cy="965" rx="92" ry="34" />
+      <text x="860" y="965" class="usecase-label"><tspan x="860" dy="0">Se connecter</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_admin_dashboard">
+      <ellipse cx="1085" cy="960" rx="150" ry="40" />
+      <text x="1085" y="950" class="usecase-label"><tspan x="1085" dy="0">Consulter tableau de bord</tspan><tspan x="1085" dy="20">et analyses</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_users">
+      <ellipse cx="760" cy="1080" rx="110" ry="36" />
+      <text x="760" y="1080" class="usecase-label"><tspan x="760" dy="0">Gérer utilisateurs</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_verify_providers">
+      <ellipse cx="955" cy="1080" rx="105" ry="36" />
+      <text x="955" y="1070" class="usecase-label"><tspan x="955" dy="0">Vérifier</tspan><tspan x="955" dy="20">prestataires</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_categories">
+      <ellipse cx="1145" cy="1080" rx="95" ry="36" />
+      <text x="1145" y="1070" class="usecase-label"><tspan x="1145" dy="0">Gérer</tspan><tspan x="1145" dy="20">catégories</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_monitor_services">
+      <ellipse cx="1335" cy="1080" rx="120" ry="38" />
+      <text x="1335" y="1070" class="usecase-label"><tspan x="1335" dy="0">Gérer services</tspan><tspan x="1335" dy="20">et réservations</tspan></text>
+    </g>
+
+    <g class="usecase" id="uc_manage_subscriptions">
+      <ellipse cx="1150" cy="1195" rx="155" ry="40" />
+      <text x="1150" y="1185" class="usecase-label"><tspan x="1150" dy="0">Gérer abonnements,</tspan><tspan x="1150" dy="20">plans et paiements</tspan></text>
+    </g>
+  
+    <g class="usecase mini" id="mini_uc_search_providers_Filtrer_par_cat_gorie">
+      <ellipse cx="780" cy="210" rx="95" ry="28" />
+      <text x="780" y="214" class="mini-label">Filtrer par catégorie</text>
+    </g>
+    <g>
+      <line class="include" x1="721.8" y1="282" x2="685" y2="210" />
+      <line class="include" x1="685" y1="210" x2="693.39" y2="215.44" />
+      <line class="include" x1="685" y1="210" x2="684.49" y2="219.99" />
+      <text x="675.4" y="238" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_search_providers_Filtrer_par_localisation">
+      <ellipse cx="810" cy="290" rx="95" ry="28" />
+      <text x="810" y="294" class="mini-label">Filtrer par localisation</text>
+    </g>
+    <g>
+      <line class="include" x1="721.8" y1="290" x2="715" y2="290" />
+      <line class="include" x1="715" y1="290" x2="723.66" y2="285.00" />
+      <line class="include" x1="715" y1="290" x2="723.66" y2="295.00" />
+      <text x="690.4" y="282" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_search_providers_Filtrer_par_note">
+      <ellipse cx="790" cy="370" rx="85" ry="28" />
+      <text x="790" y="374" class="mini-label">Filtrer par note</text>
+    </g>
+    <g>
+      <line class="include" x1="721.8" y1="298" x2="705" y2="370" />
+      <line class="include" x1="705" y1="370" x2="702.10" y2="360.43" />
+      <line class="include" x1="705" y1="370" x2="711.84" y2="362.70" />
+      <text x="685.4" y="326" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_book_service_Choisir_date">
+      <ellipse cx="515" cy="520" rx="80" ry="26" />
+      <text x="515" y="524" class="mini-label">Choisir date</text>
+    </g>
+    <g>
+      <line class="include" x1="444" y1="547" x2="435" y2="520" />
+      <line class="include" x1="435" y1="520" x2="442.48" y2="526.63" />
+      <line class="include" x1="435" y1="520" x2="433.00" y2="529.80" />
+      <text x="411.5" y="525.5" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_book_service_Choisir_cr_neau">
+      <ellipse cx="520" cy="590" rx="90" ry="26" />
+      <text x="520" y="594" class="mini-label">Choisir créneau</text>
+    </g>
+    <g>
+      <line class="include" x1="444" y1="554" x2="430" y2="590" />
+      <line class="include" x1="430" y1="590" x2="428.48" y2="580.12" />
+      <line class="include" x1="430" y1="590" x2="437.80" y2="583.74" />
+      <text x="409" y="564" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_book_service_Ajouter_adresse">
+      <ellipse cx="505" cy="660" rx="90" ry="26" />
+      <text x="505" y="664" class="mini-label">Ajouter adresse</text>
+    </g>
+    <g>
+      <line class="include" x1="444" y1="561" x2="415" y2="660" />
+      <line class="include" x1="415" y1="660" x2="412.64" y2="650.28" />
+      <line class="include" x1="415" y1="660" x2="422.23" y2="653.09" />
+      <text x="401.5" y="602.5" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_leave_review_Noter_prestataire">
+      <ellipse cx="560" cy="770" rx="95" ry="28" />
+      <text x="560" y="774" class="mini-label">Noter prestataire</text>
+    </g>
+    <g>
+      <line class="include" x1="520.8" y1="707" x2="465" y2="770" />
+      <line class="include" x1="465" y1="770" x2="467.00" y2="760.20" />
+      <line class="include" x1="465" y1="770" x2="474.48" y2="766.83" />
+      <text x="464.9" y="730.5" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_leave_review__crire_commentaire">
+      <ellipse cx="365" cy="820" rx="105" ry="28" />
+      <text x="365" y="824" class="mini-label">Écrire commentaire</text>
+    </g>
+    <g>
+      <line class="include" x1="319.2" y1="712" x2="470" y2="820" />
+      <line class="include" x1="470" y1="820" x2="460.05" y2="819.02" />
+      <line class="include" x1="470" y1="820" x2="465.87" y2="810.89" />
+      <text x="366.6" y="758" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_manage_profile_Mettre_jour_disponibilit_">
+      <ellipse cx="1190" cy="505" rx="120" ry="28" />
+      <text x="1190" y="509" class="mini-label">Mettre à jour disponibilité</text>
+    </g>
+    <g>
+      <line class="include" x1="1215.6" y1="437.5" x2="1310" y2="505" />
+      <line class="include" x1="1310" y1="505" x2="1300.05" y2="504.03" />
+      <line class="include" x1="1310" y1="505" x2="1305.86" y2="495.90" />
+      <text x="1234.8" y="463.25" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_manage_subscription_Choisir_plan">
+      <ellipse cx="1770" cy="650" rx="75" ry="24" />
+      <text x="1770" y="654" class="mini-label">Choisir plan</text>
+    </g>
+    <g>
+      <line class="include" x1="1726.8" y1="699.5" x2="1695" y2="650" />
+      <line class="include" x1="1695" y1="650" x2="1703.89" y2="654.58" />
+      <line class="include" x1="1695" y1="650" x2="1695.47" y2="659.99" />
+      <text x="1682.9" y="666.75" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_manage_subscription_Payer_abonnement">
+      <ellipse cx="1785" cy="730" rx="90" ry="26" />
+      <text x="1785" y="734" class="mini-label">Payer abonnement</text>
+    </g>
+    <g>
+      <line class="include" x1="1726.8" y1="707.5" x2="1695" y2="730" />
+      <line class="include" x1="1695" y1="730" x2="1699.18" y2="720.92" />
+      <line class="include" x1="1695" y1="730" x2="1704.96" y2="729.08" />
+      <text x="1682.9" y="710.75" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+
+    <g class="usecase mini" id="mini_uc_verify_providers_Valider_demande">
+      <ellipse cx="955" cy="920" rx="95" ry="26" />
+      <text x="955" y="924" class="mini-label">Valider demande</text>
+    </g>
+    <g>
+      <line class="include" x1="866.8" y1="1064" x2="1050" y2="920" />
+      <line class="include" x1="1050" y1="920" x2="1046.28" y2="929.28" />
+      <line class="include" x1="1050" y1="920" x2="1040.10" y2="921.42" />
+      <text x="930.4" y="984" class="include-label">&lt;&lt;include&gt;&gt;</text>
+    </g>
+  
+    <g class="actor" id="client">
+      <circle cx="120" cy="440" r="34" />
+      <line x1="120" y1="474" x2="120" y2="566" />
+      <line x1="70" y1="515" x2="170" y2="515" />
+      <line x1="120" y1="566" x2="75" y2="630" />
+      <line x1="120" y1="566" x2="165" y2="630" />
+      <text x="120" y="672" class="actor-label">Client</text>
+    </g>
+
+    <g class="actor" id="prestataire">
+      <circle cx="1880" cy="440" r="34" />
+      <line x1="1880" y1="474" x2="1880" y2="566" />
+      <line x1="1830" y1="515" x2="1930" y2="515" />
+      <line x1="1880" y1="566" x2="1835" y2="630" />
+      <line x1="1880" y1="566" x2="1925" y2="630" />
+      <text x="1880" y="672" class="actor-label">Prestataire</text>
+    </g>
+
+    <g class="actor" id="admin">
+      <circle cx="1000" cy="1000" r="34" />
+      <line x1="1000" y1="1034" x2="1000" y2="1126" />
+      <line x1="950" y1="1075" x2="1050" y2="1075" />
+      <line x1="1000" y1="1126" x2="955" y2="1190" />
+      <line x1="1000" y1="1126" x2="1045" y2="1190" />
+      <text x="1000" y="1232" class="actor-label">Administrateur</text>
+    </g>
+
+  <text x="250" y="1238" class="note">Sources analysées : documentation métier, schéma Prisma, routes backend et interfaces front.</text>
+</svg>

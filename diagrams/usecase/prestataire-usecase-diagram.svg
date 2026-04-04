@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="2300" viewBox="0 0 3200 2300">
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#e7e7e7" stroke-width="1" />
+    </pattern>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="8" dy="8" stdDeviation="4" flood-color="#c7c7c7" flood-opacity="0.38"/>
+    </filter>
+  </defs>
+  <style>
+    text { font-family: Arial, Helvetica, sans-serif; fill: #111; }
+    .frame-title { font-size: 42px; font-weight: 700; }
+    .actor-label { font-size: 36px; font-weight: 700; text-anchor: middle; }
+    .actor circle, .actor line { stroke: #111; stroke-width: 3; fill: none; }
+    .assoc { stroke: #111; stroke-width: 2.8; }
+    .usecase ellipse { fill: #fff; stroke: #111; stroke-width: 2.3; filter: url(#softShadow); }
+    .usecase-label { font-size: 28px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; }
+    .mini-label { font-size: 22px; font-weight: 500; text-anchor: middle; dominant-baseline: middle; }
+    .include, .extend { stroke: #444; stroke-width: 2.1; stroke-dasharray: 9 7; fill: none; }
+    .relation-label { font-size: 20px; fill: #333; }
+  </style>
+  <rect width="100%" height="100%" fill="#fbfbfb"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+  <rect x="470" y="110" width="2580" height="2030" fill="#fff" stroke="#666" stroke-width="3"/>
+  <text x="1760" y="170" text-anchor="middle" class="frame-title">Gestion Prestataire</text>
+  <line class="assoc" x1="180" y1="1020" x2="848.84" y2="314.00" />
+<line class="assoc" x1="180" y1="1020" x2="816.48" y2="578.00" />
+<line class="assoc" x1="180" y1="1020" x2="723.27" y2="854.00" />
+<line class="assoc" x1="180" y1="1020" x2="685.00" y2="1069.10" />
+<line class="assoc" x1="180" y1="1020" x2="784.00" y2="1322.00" />
+<line class="assoc" x1="180" y1="1020" x2="839.25" y2="1606.00" />
+<line class="assoc" x1="180" y1="1020" x2="853.08" y2="1852.00" />
+<line class="assoc" x1="180" y1="1020" x2="1507.46" y2="1852.00" />
+  
+  <g class="usecase">
+    <ellipse cx="900" cy="260" rx="190" ry="54" />
+    <text x="900" y="260" class="usecase-label"><tspan x="900" dy="0">Se connecter</tspan></text>
+  </g>
+
+  <g class="usecase">
+    <ellipse cx="900" cy="520" rx="240" ry="58" />
+    <text x="900" y="504" class="usecase-label"><tspan x="900" dy="0">Consulter tableau</tspan><tspan x="900" dy="26">de bord</tspan></text>
+  </g>
+
+  <g class="usecase">
+    <ellipse cx="900" cy="800" rx="185" ry="54" />
+    <text x="900" y="800" class="usecase-label"><tspan x="900" dy="0">Gérer profil</tspan></text>
+  </g>
+
+  <g class="usecase">
+    <ellipse cx="900" cy="1090" rx="215" ry="58" />
+    <text x="900" y="1090" class="usecase-label"><tspan x="900" dy="0">Gérer services</tspan></text>
+  </g>
+
+  <g class="usecase">
+    <ellipse cx="900" cy="1380" rx="220" ry="58" />
+    <text x="900" y="1380" class="usecase-label"><tspan x="900" dy="0">Gérer réservations</tspan></text>
+  </g>
+
+  <g class="usecase">
+    <ellipse cx="900" cy="1660" rx="205" ry="54" />
+    <text x="900" y="1660" class="usecase-label"><tspan x="900" dy="0">Gérer abonnement</tspan></text>
+  </g>
+
+  <g class="usecase">
+    <ellipse cx="900" cy="1910" rx="220" ry="58" />
+    <text x="900" y="1910" class="usecase-label"><tspan x="900" dy="0">Demander vérification</tspan></text>
+  </g>
+
+  <g class="usecase">
+    <ellipse cx="1600" cy="1910" rx="235" ry="58" />
+    <text x="1600" y="1910" class="usecase-label"><tspan x="1600" dy="0">Consulter notifications</tspan></text>
+  </g>
+  
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="260" rx="155" ry="40" />
+    <text x="1600" y="260" class="mini-label"><tspan x="1600" dy="0">Mot de passe oublié</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1445.00" y1="260.00" x2="1090.00" y2="260.00" />
+    <line class="extend" x1="1090.00" y1="260.00" x2="1102.12" y2="253.00" />
+    <line class="extend" x1="1090.00" y1="260.00" x2="1102.12" y2="267.00" />
+    <text x="1212.5" y="248" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="740" rx="170" ry="40" />
+    <text x="1600" y="740" class="mini-label"><tspan x="1600" dy="0">Gérer disponibilité</tspan></text>
+  </g>
+  <g>
+    <line class="include" x1="1430.00" y1="754.57" x2="1085.00" y2="784.14" />
+    <line class="include" x1="1085.00" y1="784.14" x2="1096.48" y2="776.13" />
+    <line class="include" x1="1085.00" y1="784.14" x2="1097.68" y2="790.08" />
+    <text x="1202.5" y="757.3571428571429" class="relation-label">&lt;&lt;include&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="840" rx="165" ry="40" />
+    <text x="1600" y="840" class="mini-label"><tspan x="1600" dy="0">Gérer localisation</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1435.00" y1="830.57" x2="1085.00" y2="810.57" />
+    <line class="extend" x1="1085.00" y1="810.57" x2="1097.50" y2="804.27" />
+    <line class="extend" x1="1085.00" y1="810.57" x2="1096.71" y2="818.25" />
+    <text x="1205" y="808.5714285714286" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="1000" rx="130" ry="40" />
+    <text x="1600" y="1000" class="mini-label"><tspan x="1600" dy="0">Créer service</tspan></text>
+  </g>
+  <g>
+    <line class="include" x1="1470.00" y1="1016.71" x2="1115.00" y2="1062.36" />
+    <line class="include" x1="1115.00" y1="1062.36" x2="1126.13" y2="1053.87" />
+    <line class="include" x1="1115.00" y1="1062.36" x2="1127.92" y2="1067.75" />
+    <text x="1237.5" y="1027.5357142857142" class="relation-label">&lt;&lt;include&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="1100" rx="150" ry="40" />
+    <text x="1600" y="1100" class="mini-label"><tspan x="1600" dy="0">Modifier service</tspan></text>
+  </g>
+  <g>
+    <line class="include" x1="1450.00" y1="1097.86" x2="1115.00" y2="1093.07" />
+    <line class="include" x1="1115.00" y1="1093.07" x2="1127.22" y2="1086.25" />
+    <line class="include" x1="1115.00" y1="1093.07" x2="1127.02" y2="1100.24" />
+    <text x="1227.5" y="1083.4642857142858" class="relation-label">&lt;&lt;include&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="2140" cy="1090" rx="160" ry="38" />
+    <text x="2140" y="1090" class="mini-label"><tspan x="2140" dy="0">Supprimer service</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1980.00" y1="1090.00" x2="1115.00" y2="1090.00" />
+    <line class="extend" x1="1115.00" y1="1090.00" x2="1127.12" y2="1083.00" />
+    <line class="extend" x1="1115.00" y1="1090.00" x2="1127.12" y2="1097.00" />
+    <text x="1492.5" y="1078" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="1320" rx="165" ry="40" />
+    <text x="1600" y="1320" class="mini-label"><tspan x="1600" dy="0">Accepter réservation</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1435.00" y1="1334.14" x2="1120.00" y2="1361.14" />
+    <line class="extend" x1="1120.00" y1="1361.14" x2="1131.48" y2="1353.13" />
+    <line class="extend" x1="1120.00" y1="1361.14" x2="1132.68" y2="1367.08" />
+    <text x="1222.5" y="1335.642857142857" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="1420" rx="165" ry="40" />
+    <text x="1600" y="1420" class="mini-label"><tspan x="1600" dy="0">Refuser réservation</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1435.00" y1="1410.57" x2="1120.00" y2="1392.57" />
+    <line class="extend" x1="1120.00" y1="1392.57" x2="1132.50" y2="1386.27" />
+    <line class="extend" x1="1120.00" y1="1392.57" x2="1131.71" y2="1400.25" />
+    <text x="1222.5" y="1389.5714285714287" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="2140" cy="1380" rx="160" ry="38" />
+    <text x="2140" y="1380" class="mini-label"><tspan x="2140" dy="0">Terminer prestation</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1980.00" y1="1380.00" x2="1120.00" y2="1380.00" />
+    <line class="extend" x1="1120.00" y1="1380.00" x2="1132.12" y2="1373.00" />
+    <line class="extend" x1="1120.00" y1="1380.00" x2="1132.12" y2="1387.00" />
+    <text x="1495" y="1368" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="1600" rx="145" ry="40" />
+    <text x="1600" y="1600" class="mini-label"><tspan x="1600" dy="0">Souscrire plan</tspan></text>
+  </g>
+  <g>
+    <line class="include" x1="1455.00" y1="1612.43" x2="1105.00" y2="1642.43" />
+    <line class="include" x1="1105.00" y1="1642.43" x2="1116.48" y2="1634.42" />
+    <line class="include" x1="1105.00" y1="1642.43" x2="1117.68" y2="1648.37" />
+    <text x="1225" y="1615.4285714285713" class="relation-label">&lt;&lt;include&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="1700" rx="160" ry="40" />
+    <text x="1600" y="1700" class="mini-label"><tspan x="1600" dy="0">Annuler abonnement</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1440.00" y1="1690.86" x2="1105.00" y2="1671.71" />
+    <line class="extend" x1="1105.00" y1="1671.71" x2="1117.50" y2="1665.42" />
+    <line class="extend" x1="1105.00" y1="1671.71" x2="1116.71" y2="1679.39" />
+    <text x="1217.5" y="1669.2857142857142" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="1600" cy="1860" rx="180" ry="40" />
+    <text x="1600" y="1860" class="mini-label"><tspan x="1600" dy="0">Télécharger documents</tspan></text>
+  </g>
+  <g>
+    <line class="include" x1="1420.00" y1="1872.86" x2="1120.00" y2="1894.29" />
+    <line class="include" x1="1120.00" y1="1894.29" x2="1131.59" y2="1886.44" />
+    <line class="include" x1="1120.00" y1="1894.29" x2="1132.59" y2="1900.40" />
+    <text x="1215" y="1871.5714285714284" class="relation-label">&lt;&lt;include&gt;&gt;</text>
+  </g>
+
+  <g class="usecase mini">
+    <ellipse cx="2140" cy="1910" rx="165" ry="38" />
+    <text x="2140" y="1910" class="mini-label"><tspan x="2140" dy="0">Suivre statut</tspan></text>
+  </g>
+  <g>
+    <line class="extend" x1="1975.00" y1="1910.00" x2="1120.00" y2="1910.00" />
+    <line class="extend" x1="1120.00" y1="1910.00" x2="1132.12" y2="1903.00" />
+    <line class="extend" x1="1120.00" y1="1910.00" x2="1132.12" y2="1917.00" />
+    <text x="1492.5" y="1898" class="relation-label">&lt;&lt;extend&gt;&gt;</text>
+  </g>
+  
+  <g class="actor">
+    <circle cx="180" cy="910" r="48" />
+    <line x1="180" y1="958" x2="180" y2="1094" />
+    <line x1="110" y1="1020" x2="250" y2="1020" />
+    <line x1="180" y1="1094" x2="118" y2="1186" />
+    <line x1="180" y1="1094" x2="242" y2="1186" />
+    <text x="180" y="1242" class="actor-label">Prestataire</text>
+  </g>
+</svg>

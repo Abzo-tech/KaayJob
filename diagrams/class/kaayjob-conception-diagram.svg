@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="6600" height="4300" viewBox="0 0 6600 4300">
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#ececec" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="8" dy="8" stdDeviation="4" flood-color="#c9c9c9" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <style>
+    text { font-family: Arial, Helvetica, sans-serif; fill: #111; }
+    .main-title { font-size: 42px; font-weight: 700; }
+    .sub-title { font-size: 20px; fill: #555; }
+    .uml-box { fill: #fff; stroke: #202020; stroke-width: 2; filter: url(#shadow); }
+    .uml-box.enum { fill: #fbfbfb; }
+    .uml-box.domain { fill: #fcfcfc; }
+    .uml-sep { stroke: #202020; stroke-width: 1.7; }
+    .uml-title { font-size: 24px; font-weight: 700; text-anchor: middle; }
+    .stereotype { font-size: 18px; font-style: italic; text-anchor: middle; fill: #4a4a4a; }
+    .uml-line { font-size: 19px; }
+    .assoc-line { stroke: #121212; stroke-width: 2.1; fill: none; }
+    .dep-line { stroke: #555; stroke-width: 1.9; stroke-dasharray: 9 7; fill: none; }
+    .nav-line { stroke: #254d7a; stroke-width: 2; stroke-dasharray: 7 5; fill: none; }
+    .dep-arrow { stroke: #555; stroke-width: 1.9; fill: none; }
+    .nav-arrow { stroke: #254d7a; stroke-width: 2; fill: none; }
+    .diamond-open { fill: #fff; stroke: #121212; stroke-width: 1.8; }
+    .diamond-filled { fill: #121212; stroke: #121212; stroke-width: 1.8; }
+    .mult { font-size: 18px; font-weight: 600; }
+    .rel-type { font-size: 16px; font-style: italic; fill: #444; }
+    .package-frame { fill: rgba(255,255,255,0.78); stroke: #7b7b7b; stroke-width: 2; }
+    .package-title { font-size: 24px; font-weight: 700; fill: #3c3c3c; }
+  </style>
+  <rect width="100%" height="100%" fill="#fafafa"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+  <text x="90" y="70" class="main-title">KaayJob - Diagramme De Conception</text>
+  <text x="90" y="102" class="sub-title">Classes et modules backend reels avec methodes, dependances et navigabilite</text>
+  
+  <g>
+    <rect x="280" y="130" width="6100" height="720" class="package-frame"/>
+    <text x="298" y="162" class="package-title">Couche Controleurs</text>
+  </g>
+
+  <g>
+    <rect x="280" y="980" width="6100" height="880" class="package-frame"/>
+    <text x="298" y="1012" class="package-title">Couche Services / Utilitaires</text>
+  </g>
+
+  <g>
+    <rect x="280" y="1980" width="2000" height="520" class="package-frame"/>
+    <text x="298" y="2012" class="package-title">Acces Aux Donnees</text>
+  </g>
+
+  <g>
+    <rect x="2430" y="1980" width="3950" height="2080" class="package-frame"/>
+    <text x="2448" y="2012" class="package-title">Modele Domaine</text>
+  </g>
+  
+    <line x1="617" y1="448" x2="763" y2="2090" class="nav-line"/>
+    <path d="M 756.6779039484784 2080.9982723038665 L 763 2090 L 767.6346768370407 2080.0240403661505" class="nav-arrow"/>
+    <text x="700" y="1261" class="rel-type">uses</text>
+
+    <line x1="1195" y1="496" x2="745" y2="2090" class="nav-line"/>
+    <path d="M 742.2950739003825 2079.3377593914033 L 745 2090 L 752.881308178498 2082.3263449780734" class="nav-arrow"/>
+    <text x="980" y="1285" class="rel-type">uses</text>
+
+    <line x1="1773" y1="472" x2="727" y2="2090" class="nav-line"/>
+    <path d="M 727.5530219379589 2079.013910307296 L 727 2090 L 736.7907437311154 2084.9858862007704" class="nav-arrow"/>
+    <text x="1260" y="1273" class="rel-type">uses</text>
+
+    <line x1="2342" y1="616" x2="763" y2="2090" class="nav-line"/>
+    <path d="M 766.210536877003 2079.4789519076567 L 763 2090 L 773.7167633609088 2087.5198824490994" class="nav-arrow"/>
+    <text x="1562.5" y="1345" class="rel-type">uses</text>
+
+    <line x1="2800" y1="346" x2="1070" y2="2228" class="nav-line"/>
+    <path d="M 1072.397758895505 2217.264509686138 L 1070 2228 L 1080.496086781639 2224.7087749587263" class="nav-arrow"/>
+    <text x="1945" y="1279" class="rel-type">uses</text>
+
+    <line x1="3053" y1="472" x2="1557" y2="2090" class="nav-line"/>
+    <path d="M 1559.428873695702 2079.2715065097505 L 1557 2090 L 1567.505584754743 2086.7392195779366" class="nav-arrow"/>
+    <text x="2315" y="1273" class="rel-type">queries</text>
+
+    <line x1="3017" y1="472" x2="3558" y2="1080" class="nav-line"/>
+    <path d="M 3547.5585661445293 1076.53929789756 L 3558 1080 L 3555.776339007908 1069.2271019780076" class="nav-arrow"/>
+    <text x="3297.5" y="768" class="rel-type">notifies</text>
+
+    <line x1="3440" y1="358" x2="1070" y2="2228" class="nav-line"/>
+    <path d="M 1074.07176568287 2217.7813540904967 L 1070 2228 L 1080.8854897913425 2226.416929564871" class="nav-arrow"/>
+    <text x="2265" y="1285" class="rel-type">uses</text>
+
+    <line x1="673" y1="1332" x2="727" y2="2090" class="nav-line"/>
+    <path d="M 720.8369662231316 2080.888632667641 L 727 2090 L 731.8091586846003 2080.106972518671" class="nav-arrow"/>
+    <text x="710" y="1703" class="rel-type">uses</text>
+
+    <line x1="637" y1="1332" x2="1593" y2="2090" class="nav-line"/>
+    <path d="M 1582.1182973915825 2088.391103377479 L 1593 2090 L 1588.9524940429576 2079.7717207934224" class="nav-arrow"/>
+    <text x="1125" y="1703" class="rel-type">queries</text>
+
+    <line x1="890" y1="1206" x2="3290" y2="1182" class="nav-line"/>
+    <path d="M 3280.5291940868287 1187.594983052257 L 3290 1182 L 3280.4191995864167 1176.5955330110105" class="nav-arrow"/>
+    <text x="2100" y="1186" class="rel-type">notifies</text>
+
+    <line x1="890" y1="1206" x2="4560" y2="1158" class="nav-line"/>
+    <path d="M 4550.546463693158 1163.6241133785888 L 4560 1158 L 4550.402606786957 1152.625054091971" class="nav-arrow"/>
+    <text x="2735" y="1174" class="rel-type">formats</text>
+
+    <line x1="1232" y1="1308" x2="763" y2="2090" class="nav-line"/>
+    <path d="M 763.1829506999381 2079.0015215124367 L 763 2090 L 772.6164371231755 2084.659200710005" class="nav-arrow"/>
+    <text x="1007.5" y="1691" class="rel-type">uses</text>
+
+    <line x1="1470" y1="1194" x2="3290" y2="1182" class="nav-line"/>
+    <path d="M 3280.5101905676856 1187.562689721561 L 3290 1182 L 3280.4376646716005 1176.562928815323" class="nav-arrow"/>
+    <text x="2390" y="1180" class="rel-type">notifies</text>
+
+    <line x1="1600" y1="1182" x2="1070" y2="2228" class="nav-line"/>
+    <path d="M 1069.3995689630885 2217.016399380444 L 1070 2228 L 1079.2118616431023 2221.988211159036" class="nav-arrow"/>
+    <text x="1345" y="1697" class="rel-type">uses</text>
+
+    <line x1="1807" y1="1284" x2="1593" y2="2090" class="nav-line"/>
+    <path d="M 1590.1287893809142 2079.381330140698 L 1593 2090 L 1600.7604325430127 2082.204123734605" class="nav-arrow"/>
+    <text x="1710" y="1679" class="rel-type">queries</text>
+
+    <line x1="2050" y1="1182" x2="3290" y2="1182" class="nav-line"/>
+    <path d="M 3280.473720558371 1187.5 L 3290 1182 L 3280.473720558371 1176.5" class="nav-arrow"/>
+    <text x="2680" y="1174" class="rel-type">notifies</text>
+
+    <line x1="2180" y1="1194" x2="1070" y2="2228" class="nav-line"/>
+    <path d="M 1073.221625063336 2217.482341897966 L 1070 2228 L 1080.7193716363488 2225.5311800953004" class="nav-arrow"/>
+    <text x="1635" y="1703" class="rel-type">uses</text>
+
+    <line x1="2387" y1="1308" x2="1593" y2="2090" class="nav-line"/>
+    <path d="M 1595.927827042075 2079.396801010464 L 1593 2090 L 1603.646553207357 2087.2339731015563" class="nav-arrow"/>
+    <text x="2000" y="1691" class="rel-type">queries</text>
+
+    <line x1="2630" y1="1194" x2="3290" y2="1182" class="nav-line"/>
+    <path d="M 3280.5752782348986 1187.6722675933372 L 3290 1182 L 3280.375311284556 1176.6740853244908" class="nav-arrow"/>
+    <text x="2970" y="1180" class="rel-type">notifies</text>
+
+    <line x1="2760" y1="1146" x2="1900" y2="2180" class="nav-line"/>
+    <path d="M 1901.8630383870377 2169.1589166607564 L 1900 2180 L 1910.320172769848 2176.1928969017786" class="nav-arrow"/>
+    <text x="2340" y="1655" class="rel-type">queries</text>
+
+    <line x1="3150" y1="1146" x2="3290" y2="1182" class="nav-line"/>
+    <path d="M 3279.4041399678813 1184.9542765916128 L 3290 1182 L 3282.1435914057984 1174.3008543330475" class="nav-arrow"/>
+    <text x="3230" y="1156" class="rel-type">notifies</text>
+
+    <line x1="3290" y1="1182" x2="1900" y2="2180" class="nav-line"/>
+    <path d="M 1904.530541555846 2169.9763183804175 L 1900 2180 L 1910.9460336999284 2178.9117232704725" class="nav-arrow"/>
+    <text x="2605" y="1673" class="rel-type">persists</text>
+
+    <line x1="3790" y1="1182" x2="4560" y2="1158" class="nav-line"/>
+    <path d="M 4550.649689921817 1163.7941092017527 L 4560 1158 L 4550.30699919989 1152.7994485399083" class="nav-arrow"/>
+    <text x="4185" y="1162" class="rel-type">formats</text>
+
+    <line x1="850" y1="334" x2="2610" y2="2226" class="dep-line"/>
+    <path d="M 2599.4845864552694 2222.771056212429 L 2610 2226 L 2607.5386405750633 2215.2789128451786" class="dep-arrow"/>
+    <text x="1740" y="1272" class="rel-type">manipule</text>
+
+    <line x1="2360" y1="616" x2="3425" y2="2100" class="dep-line"/>
+    <path d="M 3414.9773071651034 2095.4672714247026 L 3425 2100 L 3423.914111677219 2089.0537291030028" class="dep-arrow"/>
+    <text x="2902.5" y="1350" class="rel-type">manipule</text>
+
+    <line x1="2378" y1="616" x2="3387" y2="3050" class="dep-line"/>
+    <path d="M 3378.27122536279 3043.3060853506486 L 3387 3050 L 3388.432712818498 3039.093702095591" class="dep-arrow"/>
+    <text x="2892.5" y="1825" class="rel-type">cree</text>
+
+    <line x1="1970" y1="346" x2="4370" y2="2214" class="dep-line"/>
+    <path d="M 4359.1042590368415 2212.489096672933 L 4370 2214 L 4365.8606101823225 2203.8085598693165" class="dep-arrow"/>
+    <text x="3180" y="1272" class="rel-type">manipule</text>
+
+    <line x1="1410" y1="358" x2="3820" y2="2202" class="dep-line"/>
+    <path d="M 3809.0921430980234 2200.579205220308 L 3820 2202 L 3815.7765159217897 2191.8431214321968" class="dep-arrow"/>
+    <text x="2625" y="1272" class="rel-type">manipule</text>
+
+    <line x1="3270" y1="346" x2="4910" y2="2214" class="dep-line"/>
+    <path d="M 4899.581836616848 2210.4698623650147 L 4910 2214 L 4907.848107179177 2203.2125370319204" class="dep-arrow"/>
+    <text x="4100" y="1272" class="rel-type">manipule</text>
+
+    <line x1="3910" y1="358" x2="5480" y2="2202" class="dep-line"/>
+    <path d="M 5469.636633765546 2198.312095406523 L 5480 2202 L 5478.012135947458 2191.181109275503" class="dep-arrow"/>
+    <text x="4705" y="1272" class="rel-type">manipule</text>
+
+    <line x1="890" y1="1206" x2="2610" y2="2226" class="dep-line"/>
+    <path d="M 2599.0007496688895 2225.8715782200575 L 2610 2226 L 2604.6115913582744 2216.4101589007023" class="dep-arrow"/>
+    <text x="1760" y="1708" class="rel-type">gère</text>
+
+    <line x1="890" y1="1206" x2="3190" y2="2226" class="dep-line"/>
+    <path d="M 3179.0619516275783 2227.1658035008354 L 3190 2226 L 3183.5213603662446 2217.1102739920775" class="dep-arrow"/>
+    <text x="2050" y="1708" class="rel-type">vérifie</text>
+
+    <line x1="1470" y1="1194" x2="3820" y2="2202" class="dep-line"/>
+    <path d="M 3809.077010603196 2203.2993470041915 L 3820 2202 L 3813.4132377876367 2193.190087199195" class="dep-arrow"/>
+    <text x="2655" y="1690" class="rel-type">gère</text>
+
+    <line x1="2050" y1="1182" x2="4370" y2="2214" class="dep-line"/>
+    <path d="M 4359.060644713735 2215.1534755831312 L 4370 2214 L 4363.531383199232 2205.102978212637" class="dep-arrow"/>
+    <text x="3220" y="1690" class="rel-type">gère</text>
+
+    <line x1="2630" y1="1194" x2="4910" y2="2214" class="dep-line"/>
+    <path d="M 4899.058224922709 2215.13029118283 L 4910 2214 L 4903.5502515833505 2205.089290411986" class="dep-arrow"/>
+    <text x="3780" y="1696" class="rel-type">gère</text>
+
+    <line x1="2630" y1="1194" x2="5480" y2="2202" class="dep-line"/>
+    <path d="M 5469.184970624869 2204.00876569441 L 5480 2202 L 5472.852843190824 2193.638292665666" class="dep-arrow"/>
+    <text x="4065" y="1690" class="rel-type">corrèle</text>
+
+    <line x1="2955" y1="1212" x2="2805" y2="3050" class="dep-line"/>
+    <path d="M 2800.293092527879 3040.057916614266 L 2805 3050 L 2811.256643042528 3040.952656863013" class="dep-arrow"/>
+    <text x="2890" y="2123" class="rel-type">crée</text>
+
+    <line x1="3558" y1="1284" x2="5182" y2="3050" class="dep-line"/>
+    <path d="M 5171.503275898374 3046.710808133546 L 5182 3050 L 5179.600161663458 3039.2649743382485" class="dep-arrow"/>
+    <text x="4380" y="2159" class="rel-type">crée</text>
+
+  <line x1="3040" y1="2226" x2="3190" y2="2226" class="assoc-line"/>
+  <polygon points="3040,2226 3028,2214 3016,2226 3028,2238" class="diamond-filled"/>
+  <text x="3052" y="2216" class="mult">1</text>
+  <text x="3130" y="2216" class="mult">0..1</text>
+  <text x="3127" y="2218" class="rel-type">compose</text>
+
+  <line x1="3660" y1="2226" x2="4370" y2="2214" class="assoc-line"/>
+  <polygon points="3660,2226 3648,2214 3636,2226 3648,2238" class="diamond-filled"/>
+  <text x="3672" y="2216" class="mult">1</text>
+  <text x="4310" y="2204" class="mult">0..*</text>
+  <text x="4027" y="2212" class="rel-type">services</text>
+
+  <line x1="3040" y1="2226" x2="4910" y2="2214" class="assoc-line"/>
+  
+  <text x="3052" y="2216" class="mult">1</text>
+  <text x="4850" y="2204" class="mult">0..*</text>
+  <text x="3987" y="2212" class="rel-type">bookings</text>
+
+  <line x1="4770" y1="2214" x2="4910" y2="2214" class="assoc-line"/>
+  
+  <text x="4782" y="2204" class="mult">1</text>
+  <text x="4850" y="2204" class="mult">0..*</text>
+  <text x="4852" y="2206" class="rel-type">bookings</text>
+
+  <line x1="5340" y1="2214" x2="5480" y2="2202" class="assoc-line"/>
+  <polygon points="5340,2214 5328,2202 5316,2214 5328,2226" class="diamond-filled"/>
+  <text x="5352" y="2204" class="mult">1</text>
+  <text x="5420" y="2192" class="mult">0..1</text>
+  <text x="5422" y="2200" class="rel-type">review</text>
+
+  <line x1="4910" y1="2214" x2="3000" y2="3164" class="assoc-line"/>
+  
+  <text x="4850" y="2204" class="mult">1</text>
+  <text x="3012" y="3154" class="mult">0..*</text>
+  <text x="3967" y="2681" class="rel-type">payments</text>
+
+  <line x1="4210" y1="2202" x2="4370" y2="2214" class="assoc-line"/>
+  
+  <text x="4222" y="2192" class="mult">1</text>
+  <text x="4310" y="2204" class="mult">0..*</text>
+  <text x="4302" y="2200" class="rel-type">services</text>
+
+  <line x1="4370" y1="3164" x2="4190" y2="3152" class="assoc-line"/>
+  <polygon points="4370,3164 4382,3152 4394,3164 4382,3176" class="diamond-open"/>
+  <text x="4310" y="3154" class="mult">1</text>
+  <text x="4202" y="3142" class="mult">0..*</text>
+  <text x="4292" y="3150" class="rel-type">plans</text>
+
+  <line x1="2905" y1="2352" x2="5120" y2="3050" class="assoc-line"/>
+  
+  <text x="2917" y="2372" class="mult">1</text>
+  <text x="5132" y="3040" class="mult">0..*</text>
+  <text x="4024.5" y="2693" class="rel-type">notifications</text>
+
+  <line x1="2745" y1="2352" x2="4075" y2="3050" class="assoc-line"/>
+  
+  <text x="2757" y="2372" class="mult">1</text>
+  <text x="4087" y="3040" class="mult">0..*</text>
+  <text x="3422" y="2693" class="rel-type">subscriptions</text>
+  
+  <g>
+    <rect x="420" y="220" width="430" height="228" class="uml-box class domain"/>
+    <line x1="420" y1="290" x2="850" y2="290" class="uml-sep"/>
+    <text x="635" y="246" class="stereotype">&lt;&lt;controller&gt;&gt;</text>
+    <text x="635" y="272" class="uml-title">AuthController</text>
+    <text x="436" y="318" class="uml-line">+ register(req, res)</text>
+<text x="436" y="342" class="uml-line">+ login(req, res)</text>
+<text x="436" y="366" class="uml-line">+ getMe(req, res)</text>
+<text x="436" y="390" class="uml-line">+ updateProfile(req, res)</text>
+<text x="436" y="414" class="uml-line">+ changePassword(req, res)</text>
+  </g>
+
+  <g>
+    <rect x="980" y="220" width="430" height="276" class="uml-box class domain"/>
+    <line x1="980" y1="290" x2="1410" y2="290" class="uml-sep"/>
+    <text x="1195" y="246" class="stereotype">&lt;&lt;controller&gt;&gt;</text>
+    <text x="1195" y="272" class="uml-title">CategoryController</text>
+    <text x="996" y="318" class="uml-line">+ getAll(req, res)</text>
+<text x="996" y="342" class="uml-line">+ getById(req, res)</text>
+<text x="996" y="366" class="uml-line">+ getBySlug(req, res)</text>
+<text x="996" y="390" class="uml-line">+ create(req, res)</text>
+<text x="996" y="414" class="uml-line">+ update(req, res)</text>
+<text x="996" y="438" class="uml-line">+ delete(req, res)</text>
+<text x="996" y="462" class="uml-line">+ getServices(req, res)</text>
+  </g>
+
+  <g>
+    <rect x="1540" y="220" width="430" height="252" class="uml-box class domain"/>
+    <line x1="1540" y1="290" x2="1970" y2="290" class="uml-sep"/>
+    <text x="1755" y="246" class="stereotype">&lt;&lt;controller&gt;&gt;</text>
+    <text x="1755" y="272" class="uml-title">ServiceController</text>
+    <text x="1556" y="318" class="uml-line">+ getAll(req, res)</text>
+<text x="1556" y="342" class="uml-line">+ getById(req, res)</text>
+<text x="1556" y="366" class="uml-line">+ create(req, res)</text>
+<text x="1556" y="390" class="uml-line">+ update(req, res)</text>
+<text x="1556" y="414" class="uml-line">+ delete(req, res)</text>
+<text x="1556" y="438" class="uml-line">+ getByProvider(req, res)</text>
+  </g>
+
+  <g>
+    <rect x="2100" y="220" width="520" height="396" class="uml-box class domain"/>
+    <line x1="2100" y1="290" x2="2620" y2="290" class="uml-sep"/>
+    <text x="2360" y="246" class="stereotype">&lt;&lt;controller&gt;&gt;</text>
+    <text x="2360" y="272" class="uml-title">ProviderController</text>
+    <text x="2116" y="318" class="uml-line">+ getAll(req, res)</text>
+<text x="2116" y="342" class="uml-line">+ getById(req, res)</text>
+<text x="2116" y="366" class="uml-line">+ getServices(req, res)</text>
+<text x="2116" y="390" class="uml-line">+ getReviews(req, res)</text>
+<text x="2116" y="414" class="uml-line">+ getCategories(req, res)</text>
+<text x="2116" y="438" class="uml-line">+ getMyProfile(req, res)</text>
+<text x="2116" y="462" class="uml-line">+ updateProfile(req, res)</text>
+<text x="2116" y="486" class="uml-line">+ updateAvailability(req, res)</text>
+<text x="2116" y="510" class="uml-line">+ toggleAvailability(req, res)</text>
+<text x="2116" y="534" class="uml-line">+ getDashboard(req, res)</text>
+<text x="2116" y="558" class="uml-line">+ getStats(req, res)</text>
+<text x="2116" y="582" class="uml-line">+ requestVerification(req, res)</text>
+  </g>
+
+  <g>
+    <rect x="2800" y="220" width="470" height="252" class="uml-box class domain"/>
+    <line x1="2800" y1="290" x2="3270" y2="290" class="uml-sep"/>
+    <text x="3035" y="246" class="stereotype">&lt;&lt;controller&gt;&gt;</text>
+    <text x="3035" y="272" class="uml-title">BookingController</text>
+    <text x="2816" y="318" class="uml-line">+ getMyBookings(req, res)</text>
+<text x="2816" y="342" class="uml-line">+ getAll(req, res)</text>
+<text x="2816" y="366" class="uml-line">+ getById(req, res)</text>
+<text x="2816" y="390" class="uml-line">+ create(req, res)</text>
+<text x="2816" y="414" class="uml-line">+ updateStatus(req, res)</text>
+<text x="2816" y="438" class="uml-line">+ cancel(req, res)</text>
+  </g>
+
+  <g>
+    <rect x="3440" y="220" width="470" height="276" class="uml-box class domain"/>
+    <line x1="3440" y1="290" x2="3910" y2="290" class="uml-sep"/>
+    <text x="3675" y="246" class="stereotype">&lt;&lt;controller&gt;&gt;</text>
+    <text x="3675" y="272" class="uml-title">ReviewController</text>
+    <text x="3456" y="318" class="uml-line">+ getAll(req, res)</text>
+<text x="3456" y="342" class="uml-line">+ getByService(req, res)</text>
+<text x="3456" y="366" class="uml-line">+ getByProvider(req, res)</text>
+<text x="3456" y="390" class="uml-line">+ getByBooking(req, res)</text>
+<text x="3456" y="414" class="uml-line">+ create(req, res)</text>
+<text x="3456" y="438" class="uml-line">+ update(req, res)</text>
+<text x="3456" y="462" class="uml-line">+ delete(req, res)</text>
+  </g>
+
+  <g>
+    <rect x="420" y="1080" width="470" height="252" class="uml-box class domain"/>
+    <line x1="420" y1="1150" x2="890" y2="1150" class="uml-sep"/>
+    <text x="655" y="1106" class="stereotype">&lt;&lt;service&gt;&gt;</text>
+    <text x="655" y="1132" class="uml-title">UserService</text>
+    <text x="436" y="1178" class="uml-line">+ listUsers(filters)</text>
+<text x="436" y="1202" class="uml-line">+ createUser(data, adminId?)</text>
+<text x="436" y="1226" class="uml-line">+ updateUser(id, data, adminId?)</text>
+<text x="436" y="1250" class="uml-line">+ verifyProvider(providerId, adminId)</text>
+<text x="436" y="1274" class="uml-line">+ deleteUser(userId, adminId?)</text>
+<text x="436" y="1298" class="uml-line">+ getUserById(userId)</text>
+  </g>
+
+  <g>
+    <rect x="1030" y="1080" width="440" height="228" class="uml-box class domain"/>
+    <line x1="1030" y1="1150" x2="1470" y2="1150" class="uml-sep"/>
+    <text x="1250" y="1106" class="stereotype">&lt;&lt;service&gt;&gt;</text>
+    <text x="1250" y="1132" class="uml-title">CategoryService</text>
+    <text x="1046" y="1178" class="uml-line">+ listCategories()</text>
+<text x="1046" y="1202" class="uml-line">+ getCategoryById(id)</text>
+<text x="1046" y="1226" class="uml-line">+ createCategory(data, adminId?)</text>
+<text x="1046" y="1250" class="uml-line">+ updateCategory(id, data, adminId?)</text>
+<text x="1046" y="1274" class="uml-line">+ deleteCategory(id, adminId?)</text>
+  </g>
+
+  <g>
+    <rect x="1600" y="1080" width="450" height="204" class="uml-box class domain"/>
+    <line x1="1600" y1="1150" x2="2050" y2="1150" class="uml-sep"/>
+    <text x="1825" y="1106" class="stereotype">&lt;&lt;service&gt;&gt;</text>
+    <text x="1825" y="1132" class="uml-title">ServiceService</text>
+    <text x="1616" y="1178" class="uml-line">+ listServices(filters)</text>
+<text x="1616" y="1202" class="uml-line">+ getServiceById(id)</text>
+<text x="1616" y="1226" class="uml-line">+ updateService(id, data, adminId?)</text>
+<text x="1616" y="1250" class="uml-line">+ deleteService(id, adminId?)</text>
+  </g>
+
+  <g>
+    <rect x="2180" y="1080" width="450" height="228" class="uml-box class domain"/>
+    <line x1="2180" y1="1150" x2="2630" y2="1150" class="uml-sep"/>
+    <text x="2405" y="1106" class="stereotype">&lt;&lt;service&gt;&gt;</text>
+    <text x="2405" y="1132" class="uml-title">BookingService</text>
+    <text x="2196" y="1178" class="uml-line">+ listBookings(filters)</text>
+<text x="2196" y="1202" class="uml-line">+ getBookingById(id)</text>
+<text x="2196" y="1226" class="uml-line">+ updateBooking(id, data, adminId?)</text>
+<text x="2196" y="1250" class="uml-line">+ deleteBooking(id)</text>
+<text x="2196" y="1274" class="uml-line">+ getBookingStats()</text>
+  </g>
+
+  <g>
+    <rect x="2760" y="1080" width="390" height="132" class="uml-box class domain"/>
+    <line x1="2760" y1="1150" x2="3150" y2="1150" class="uml-sep"/>
+    <text x="2955" y="1106" class="stereotype">&lt;&lt;service&gt;&gt;</text>
+    <text x="2955" y="1132" class="uml-title">PaymentService</text>
+    <text x="2776" y="1178" class="uml-line">+ processSubscriptionPayment(userId, amount, method, planName)</text>
+  </g>
+
+  <g>
+    <rect x="3290" y="1080" width="500" height="204" class="uml-box class domain"/>
+    <line x1="3290" y1="1150" x2="3790" y2="1150" class="uml-sep"/>
+    <text x="3540" y="1106" class="stereotype">&lt;&lt;service&gt;&gt;</text>
+    <text x="3540" y="1132" class="uml-title">NotificationService</text>
+    <text x="3306" y="1178" class="uml-line">+ createNotification(userId, title, message, ...)</text>
+<text x="3306" y="1202" class="uml-line">+ createFormattedNotification(recipient, ...)</text>
+<text x="3306" y="1226" class="uml-line">+ createStandardNotification(recipient, ...)</text>
+<text x="3306" y="1250" class="uml-line">- getNotificationTitle(action)</text>
+  </g>
+
+  <g>
+    <rect x="3940" y="1080" width="470" height="204" class="uml-box class domain"/>
+    <line x1="3940" y1="1150" x2="4410" y2="1150" class="uml-sep"/>
+    <text x="4175" y="1106" class="stereotype">&lt;&lt;service&gt;&gt;</text>
+    <text x="4175" y="1132" class="uml-title">EmailService</text>
+    <text x="3956" y="1178" class="uml-line">+ sendWelcomeEmail(email, firstName)</text>
+<text x="3956" y="1202" class="uml-line">+ sendBookingConfirmation(email, firstName, details)</text>
+<text x="3956" y="1226" class="uml-line">+ sendBookingStatusUpdate(email, firstName, status, details)</text>
+<text x="3956" y="1250" class="uml-line">+ sendPasswordReset(email, resetToken)</text>
+  </g>
+
+  <g>
+    <rect x="4560" y="1080" width="560" height="156" class="uml-box class domain"/>
+    <line x1="4560" y1="1150" x2="5120" y2="1150" class="uml-sep"/>
+    <text x="4840" y="1106" class="stereotype">&lt;&lt;utility&gt;&gt;</text>
+    <text x="4840" y="1132" class="uml-title">NotificationFormatter</text>
+    <text x="4576" y="1178" class="uml-line">+ formatNotificationMessage(baseMessage, recipient, context?)</text>
+<text x="4576" y="1202" class="uml-line">+ createStandardNotificationMessage(action, entity, recipient, context?)</text>
+  </g>
+
+  <g>
+    <rect x="420" y="2090" width="650" height="276" class="uml-box class domain"/>
+    <line x1="420" y1="2160" x2="1070" y2="2160" class="uml-sep"/>
+    <text x="745" y="2116" class="stereotype">&lt;&lt;gateway&gt;&gt;</text>
+    <text x="745" y="2142" class="uml-title">PrismaClient</text>
+    <text x="436" y="2188" class="uml-line">+ user.findMany(...)</text>
+<text x="436" y="2212" class="uml-line">+ providerProfile.findMany(...)</text>
+<text x="436" y="2236" class="uml-line">+ service.findMany(...)</text>
+<text x="436" y="2260" class="uml-line">+ booking.findMany(...)</text>
+<text x="436" y="2284" class="uml-line">+ review.create(...)</text>
+<text x="436" y="2308" class="uml-line">+ subscriptionPlan.create(...)</text>
+<text x="436" y="2332" class="uml-line">+ $transaction(...)</text>
+  </g>
+
+  <g>
+    <rect x="1250" y="2090" width="650" height="180" class="uml-box class domain"/>
+    <line x1="1250" y1="2160" x2="1900" y2="2160" class="uml-sep"/>
+    <text x="1575" y="2116" class="stereotype">&lt;&lt;gateway&gt;&gt;</text>
+    <text x="1575" y="2142" class="uml-title">DatabaseGateway</text>
+    <text x="1266" y="2188" class="uml-line">+ query(sql, params?)</text>
+<text x="1266" y="2212" class="uml-line">+ testConnection()</text>
+<text x="1266" y="2236" class="uml-line">+ pool: Pool</text>
+  </g>
+
+  <g>
+    <rect x="2610" y="2100" width="430" height="252" class="uml-box class domain"/>
+    <line x1="2610" y1="2170" x2="3040" y2="2170" class="uml-sep"/>
+    <text x="2825" y="2126" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="2825" y="2152" class="uml-title">User</text>
+    <text x="2626" y="2198" class="uml-line">+ id: String</text>
+<text x="2626" y="2222" class="uml-line">+ email: String</text>
+<text x="2626" y="2246" class="uml-line">+ role: Role</text>
+<text x="2626" y="2270" class="uml-line">+ firstName: String</text>
+<text x="2626" y="2294" class="uml-line">+ lastName: String</text>
+<text x="2626" y="2318" class="uml-line">+ phone: String</text>
+  </g>
+
+  <g>
+    <rect x="3190" y="2100" width="470" height="252" class="uml-box class domain"/>
+    <line x1="3190" y1="2170" x2="3660" y2="2170" class="uml-sep"/>
+    <text x="3425" y="2126" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="3425" y="2152" class="uml-title">ProviderProfile</text>
+    <text x="3206" y="2198" class="uml-line">+ id: String</text>
+<text x="3206" y="2222" class="uml-line">+ userId: String</text>
+<text x="3206" y="2246" class="uml-line">+ specialty: String?</text>
+<text x="3206" y="2270" class="uml-line">+ hourlyRate: Decimal?</text>
+<text x="3206" y="2294" class="uml-line">+ isAvailable: Boolean</text>
+<text x="3206" y="2318" class="uml-line">+ rating: Decimal</text>
+  </g>
+
+  <g>
+    <rect x="3820" y="2100" width="390" height="204" class="uml-box class domain"/>
+    <line x1="3820" y1="2170" x2="4210" y2="2170" class="uml-sep"/>
+    <text x="4015" y="2126" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="4015" y="2152" class="uml-title">Category</text>
+    <text x="3836" y="2198" class="uml-line">+ id: String</text>
+<text x="3836" y="2222" class="uml-line">+ name: String</text>
+<text x="3836" y="2246" class="uml-line">+ slug: String</text>
+<text x="3836" y="2270" class="uml-line">+ parentId: String?</text>
+  </g>
+
+  <g>
+    <rect x="4370" y="2100" width="400" height="228" class="uml-box class domain"/>
+    <line x1="4370" y1="2170" x2="4770" y2="2170" class="uml-sep"/>
+    <text x="4570" y="2126" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="4570" y="2152" class="uml-title">Service</text>
+    <text x="4386" y="2198" class="uml-line">+ id: String</text>
+<text x="4386" y="2222" class="uml-line">+ providerId: String</text>
+<text x="4386" y="2246" class="uml-line">+ categoryId: String?</text>
+<text x="4386" y="2270" class="uml-line">+ name: String</text>
+<text x="4386" y="2294" class="uml-line">+ price: Decimal</text>
+  </g>
+
+  <g>
+    <rect x="4910" y="2100" width="430" height="228" class="uml-box class domain"/>
+    <line x1="4910" y1="2170" x2="5340" y2="2170" class="uml-sep"/>
+    <text x="5125" y="2126" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="5125" y="2152" class="uml-title">Booking</text>
+    <text x="4926" y="2198" class="uml-line">+ id: String</text>
+<text x="4926" y="2222" class="uml-line">+ clientId: String</text>
+<text x="4926" y="2246" class="uml-line">+ serviceId: String</text>
+<text x="4926" y="2270" class="uml-line">+ bookingDate: DateTime</text>
+<text x="4926" y="2294" class="uml-line">+ status: BookingStatus</text>
+  </g>
+
+  <g>
+    <rect x="5480" y="2100" width="380" height="204" class="uml-box class domain"/>
+    <line x1="5480" y1="2170" x2="5860" y2="2170" class="uml-sep"/>
+    <text x="5670" y="2126" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="5670" y="2152" class="uml-title">Review</text>
+    <text x="5496" y="2198" class="uml-line">+ id: String</text>
+<text x="5496" y="2222" class="uml-line">+ bookingId: String</text>
+<text x="5496" y="2246" class="uml-line">+ rating: Int</text>
+<text x="5496" y="2270" class="uml-line">+ comment: String?</text>
+  </g>
+
+  <g>
+    <rect x="2610" y="3050" width="390" height="228" class="uml-box class domain"/>
+    <line x1="2610" y1="3120" x2="3000" y2="3120" class="uml-sep"/>
+    <text x="2805" y="3076" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="2805" y="3102" class="uml-title">Payment</text>
+    <text x="2626" y="3148" class="uml-line">+ id: String</text>
+<text x="2626" y="3172" class="uml-line">+ bookingId: String?</text>
+<text x="2626" y="3196" class="uml-line">+ userId: String</text>
+<text x="2626" y="3220" class="uml-line">+ amount: Decimal</text>
+<text x="2626" y="3244" class="uml-line">+ status: PaymentStatus</text>
+  </g>
+
+  <g>
+    <rect x="3170" y="3050" width="470" height="204" class="uml-box class domain"/>
+    <line x1="3170" y1="3120" x2="3640" y2="3120" class="uml-sep"/>
+    <text x="3405" y="3076" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="3405" y="3102" class="uml-title">VerificationRequest</text>
+    <text x="3186" y="3148" class="uml-line">+ id: String</text>
+<text x="3186" y="3172" class="uml-line">+ userId: String</text>
+<text x="3186" y="3196" class="uml-line">+ status: String</text>
+<text x="3186" y="3220" class="uml-line">+ reviewedBy: String?</text>
+  </g>
+
+  <g>
+    <rect x="3800" y="3050" width="390" height="204" class="uml-box class domain"/>
+    <line x1="3800" y1="3120" x2="4190" y2="3120" class="uml-sep"/>
+    <text x="3995" y="3076" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="3995" y="3102" class="uml-title">Subscription</text>
+    <text x="3816" y="3148" class="uml-line">+ id: String</text>
+<text x="3816" y="3172" class="uml-line">+ userId: String</text>
+<text x="3816" y="3196" class="uml-line">+ plan: String</text>
+<text x="3816" y="3220" class="uml-line">+ status: String</text>
+  </g>
+
+  <g>
+    <rect x="4370" y="3050" width="470" height="228" class="uml-box class domain"/>
+    <line x1="4370" y1="3120" x2="4840" y2="3120" class="uml-sep"/>
+    <text x="4605" y="3076" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="4605" y="3102" class="uml-title">SubscriptionPlan</text>
+    <text x="4386" y="3148" class="uml-line">+ id: String</text>
+<text x="4386" y="3172" class="uml-line">+ slug: String</text>
+<text x="4386" y="3196" class="uml-line">+ price: Decimal</text>
+<text x="4386" y="3220" class="uml-line">+ duration: Int</text>
+<text x="4386" y="3244" class="uml-line">+ isActive: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="5000" y="3050" width="400" height="228" class="uml-box class domain"/>
+    <line x1="5000" y1="3120" x2="5400" y2="3120" class="uml-sep"/>
+    <text x="5200" y="3076" class="stereotype">&lt;&lt;entity&gt;&gt;</text>
+    <text x="5200" y="3102" class="uml-title">Notification</text>
+    <text x="5016" y="3148" class="uml-line">+ id: String</text>
+<text x="5016" y="3172" class="uml-line">+ userId: String</text>
+<text x="5016" y="3196" class="uml-line">+ title: String</text>
+<text x="5016" y="3220" class="uml-line">+ type: String</text>
+<text x="5016" y="3244" class="uml-line">+ read: Boolean</text>
+  </g>
+</svg>

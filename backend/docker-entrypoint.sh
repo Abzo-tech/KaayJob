@@ -65,7 +65,7 @@ fi
 # Exécuter les migrations Prisma si DATABASE_URL est disponible
 if [ -n "$DATABASE_URL" ]; then
     echo "🔄 Configuration de la base de données Prisma..."
-    npx prisma db push --force-reset || echo "⚠️ Échec de la configuration de la base de données"
+    npx prisma db push || echo "⚠️ Échec de la configuration de la base de données"
 fi
 
 echo "🚀 Lancement du serveur backend..."

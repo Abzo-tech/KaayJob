@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="4200" height="2600" viewBox="0 0 4200 2600">
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#ececec" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <style>
+    text { font-family: Arial, Helvetica, sans-serif; fill: #111; }
+    .classBox { fill: #fff; stroke: #666; stroke-width: 2; }
+    .sep { stroke: #666; stroke-width: 1.8; }
+    .title { font-size: 24px; font-weight: 700; text-anchor: middle; }
+    .attr { font-size: 21px; }
+    .assoc { stroke: #111; stroke-width: 1.8; fill: none; }
+    .dep { stroke: #555; stroke-width: 1.6; stroke-dasharray: 8 7; fill: none; }
+    .mult { font-size: 20px; fill: #111; }
+    .filledDiamond { fill: #111; stroke: #111; stroke-width: 1.5; }
+  </style>
+  <rect width="100%" height="100%" fill="#fafafa"/>
+  <rect width="100%" height="100%" fill="url(#grid)"/>
+  <line x1="1380" y1="401" x2="2400" y2="641" class="assoc"/>
+
+<text x="1390" y="391" class="mult">1</text>
+<text x="2348" y="631" class="mult">0..1</text>
+<line x1="1183" y1="682" x2="967" y2="900" class="assoc"/>
+
+<text x="1193" y="672" class="mult">1</text>
+<text x="977" y="890" class="mult">0..*</text>
+<line x1="1165" y1="682" x2="1855" y2="980" class="assoc"/>
+
+<text x="1175" y="672" class="mult">1</text>
+<text x="1865" y="970" class="mult">0..*</text>
+<line x1="1380" y1="401" x2="2650" y2="1126" class="assoc"/>
+
+<text x="1390" y="391" class="mult">1</text>
+<text x="2598" y="1116" class="mult">0..*</text>
+<line x1="1165" y1="682" x2="760" y2="1960" class="assoc"/>
+
+<text x="1175" y="672" class="mult">1</text>
+<text x="770" y="1950" class="mult">0..*</text>
+<line x1="1183" y1="682" x2="1627" y2="1960" class="assoc"/>
+
+<text x="1193" y="672" class="mult">1</text>
+<text x="1637" y="1950" class="mult">0..*</text>
+<line x1="1165" y1="682" x2="3295" y2="1960" class="assoc"/>
+
+<text x="1175" y="672" class="mult">1</text>
+<text x="3305" y="1950" class="mult">0..*</text>
+<line x1="2920" y1="641" x2="3300" y2="296" class="assoc"/>
+
+<text x="2930" y="631" class="mult">1</text>
+<text x="3248" y="286" class="mult">0..*</text>
+<line x1="2400" y1="641" x2="2060" y2="1141" class="assoc"/>
+
+<text x="2348" y="631" class="mult">1</text>
+<text x="2070" y="1131" class="mult">0..*</text>
+<line x1="2700" y1="281" x2="3300" y2="296" class="assoc"/>
+
+<text x="2710" y="271" class="mult">1</text>
+<text x="3248" y="286" class="mult">0..*</text>
+<line x1="3300" y1="296" x2="1210" y2="1136" class="assoc"/>
+
+<text x="3248" y="286" class="mult">1</text>
+<text x="1220" y="1126" class="mult">0..*</text>
+<line x1="3300" y1="296" x2="2060" y2="1141" class="assoc"/>
+
+<text x="3248" y="286" class="mult">0..1</text>
+<text x="2070" y="1131" class="mult">0..*</text>
+<line x1="1210" y1="1136" x2="1650" y2="1141" class="assoc"/>
+<polygon points="1210,1136 1198,1124 1186,1136 1198,1148" class="filledDiamond"/>
+<text x="1220" y="1126" class="mult">1</text>
+<text x="1598" y="1131" class="mult">0..1</text>
+<line x1="1210" y1="1136" x2="2650" y2="1126" class="assoc"/>
+
+<text x="1220" y="1126" class="mult">1</text>
+<text x="2598" y="1116" class="mult">0..*</text>
+<line x1="2200" y1="2121" x2="1840" y2="2106" class="assoc"/>
+
+<text x="2148" y="2111" class="mult">1</text>
+<text x="1850" y="2096" class="mult">0..*</text>
+  <line x1="950" y1="401" x2="380" y2="226" class="dep"/>
+<path d="M 391.69560837177266 223.31434462111744 L 380 226 L 388.173649969809 234.7858662732278" class="dep"/>
+<line x1="3300" y1="296" x2="380" y2="566" class="dep"/>
+<path d="M 389.7957231510833 559.0686359244856 L 380 566 L 390.9005989478159 571.0176630595203" class="dep"/>
+<line x1="760" y1="1136" x2="420" y2="991" class="dep"/>
+<path d="M 431.9130081198363 989.5576971411268 L 420 991 L 427.20557497565324 1000.595816237832" class="dep"/>
+<line x1="760" y1="1136" x2="420" y2="1406" class="dep"/>
+<path d="M 424.4070337933427 1394.8385461007836 L 420 1406 L 431.8696195165617 1404.235876270763" class="dep"/>
+<line x1="2650" y1="1126" x2="420" y2="1406" class="dep"/>
+<path d="M 429.56384726148906 1398.7520468021028 L 420 1406 L 431.05883522556417 1410.6585580874153" class="dep"/>
+  
+  <g>
+    <rect x="120" y="140" width="260" height="172" class="classBox"/>
+    <line x1="120" y1="192" x2="380" y2="192" class="sep"/>
+    <line x1="120" y1="276" x2="380" y2="276" class="sep"/>
+    <text x="250" y="171" class="title"><tspan x="250" dy="0">&lt;&lt;enumeration&gt;&gt;</tspan><tspan x="250" dy="24">Role</tspan></text>
+    <text x="136" y="228" class="attr">CLIENT</text>
+<text x="136" y="258" class="attr">PRESTATAIRE</text>
+<text x="136" y="288" class="attr">ADMIN</text>
+  </g>
+
+  <g>
+    <rect x="120" y="480" width="260" height="172" class="classBox"/>
+    <line x1="120" y1="532" x2="380" y2="532" class="sep"/>
+    <line x1="120" y1="616" x2="380" y2="616" class="sep"/>
+    <text x="250" y="511" class="title"><tspan x="250" dy="0">&lt;&lt;enumeration&gt;&gt;</tspan><tspan x="250" dy="24">PriceType</tspan></text>
+    <text x="136" y="568" class="attr">FIXED</text>
+<text x="136" y="598" class="attr">HOURLY</text>
+<text x="136" y="628" class="attr">QUOTE</text>
+  </g>
+
+  <g>
+    <rect x="120" y="860" width="300" height="262" class="classBox"/>
+    <line x1="120" y1="912" x2="420" y2="912" class="sep"/>
+    <line x1="120" y1="1086" x2="420" y2="1086" class="sep"/>
+    <text x="270" y="891" class="title"><tspan x="270" dy="0">&lt;&lt;enumeration&gt;&gt;</tspan><tspan x="270" dy="24">BookingStatus</tspan></text>
+    <text x="136" y="948" class="attr">PENDING</text>
+<text x="136" y="978" class="attr">CONFIRMED</text>
+<text x="136" y="1008" class="attr">IN_PROGRESS</text>
+<text x="136" y="1038" class="attr">COMPLETED</text>
+<text x="136" y="1068" class="attr">CANCELLED</text>
+<text x="136" y="1098" class="attr">REJECTED</text>
+  </g>
+
+  <g>
+    <rect x="120" y="1320" width="300" height="172" class="classBox"/>
+    <line x1="120" y1="1372" x2="420" y2="1372" class="sep"/>
+    <line x1="120" y1="1456" x2="420" y2="1456" class="sep"/>
+    <text x="270" y="1351" class="title"><tspan x="270" dy="0">&lt;&lt;enumeration&gt;&gt;</tspan><tspan x="270" dy="24">PaymentStatus</tspan></text>
+    <text x="136" y="1408" class="attr">PENDING</text>
+<text x="136" y="1438" class="attr">PAID</text>
+<text x="136" y="1468" class="attr">REFUNDED</text>
+  </g>
+
+  <g>
+    <rect x="950" y="120" width="430" height="562" class="classBox"/>
+    <line x1="950" y1="172" x2="1380" y2="172" class="sep"/>
+    <line x1="950" y1="646" x2="1380" y2="646" class="sep"/>
+    <text x="1165" y="151" class="title"><tspan x="1165" dy="0">User</tspan></text>
+    <text x="966" y="208" class="attr">+id: String</text>
+<text x="966" y="238" class="attr">+email: String</text>
+<text x="966" y="268" class="attr">+password: String</text>
+<text x="966" y="298" class="attr">+firstName: String</text>
+<text x="966" y="328" class="attr">+lastName: String</text>
+<text x="966" y="358" class="attr">+phone: String</text>
+<text x="966" y="388" class="attr">+role: Role</text>
+<text x="966" y="418" class="attr">+avatar: String?</text>
+<text x="966" y="448" class="attr">+bio: String?</text>
+<text x="966" y="478" class="attr">+specialization: String?</text>
+<text x="966" y="508" class="attr">+address: String?</text>
+<text x="966" y="538" class="attr">+zone: String?</text>
+<text x="966" y="568" class="attr">+latitude: Float?</text>
+<text x="966" y="598" class="attr">+longitude: Float?</text>
+<text x="966" y="628" class="attr">+isVerified: Boolean</text>
+<text x="966" y="658" class="attr">+isActive: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="2400" y="420" width="520" height="442" class="classBox"/>
+    <line x1="2400" y1="472" x2="2920" y2="472" class="sep"/>
+    <line x1="2400" y1="826" x2="2920" y2="826" class="sep"/>
+    <text x="2660" y="451" class="title"><tspan x="2660" dy="0">ProviderProfile</tspan></text>
+    <text x="2416" y="508" class="attr">+id: String</text>
+<text x="2416" y="538" class="attr">+userId: String</text>
+<text x="2416" y="568" class="attr">+businessName: String?</text>
+<text x="2416" y="598" class="attr">+specialty: String?</text>
+<text x="2416" y="628" class="attr">+bio: String?</text>
+<text x="2416" y="658" class="attr">+hourlyRate: Decimal?</text>
+<text x="2416" y="688" class="attr">+location: String?</text>
+<text x="2416" y="718" class="attr">+serviceRadius: Int?</text>
+<text x="2416" y="748" class="attr">+isAvailable: Boolean</text>
+<text x="2416" y="778" class="attr">+rating: Decimal</text>
+<text x="2416" y="808" class="attr">+totalReviews: Int</text>
+<text x="2416" y="838" class="attr">+totalBookings: Int</text>
+  </g>
+
+  <g>
+    <rect x="2300" y="120" width="400" height="322" class="classBox"/>
+    <line x1="2300" y1="172" x2="2700" y2="172" class="sep"/>
+    <line x1="2300" y1="406" x2="2700" y2="406" class="sep"/>
+    <text x="2500" y="151" class="title"><tspan x="2500" dy="0">Category</tspan></text>
+    <text x="2316" y="208" class="attr">+id: String</text>
+<text x="2316" y="238" class="attr">+name: String</text>
+<text x="2316" y="268" class="attr">+slug: String</text>
+<text x="2316" y="298" class="attr">+description: String?</text>
+<text x="2316" y="328" class="attr">+icon: String?</text>
+<text x="2316" y="358" class="attr">+image: String?</text>
+<text x="2316" y="388" class="attr">+parentId: String?</text>
+<text x="2316" y="418" class="attr">+displayOrder: Int</text>
+  </g>
+
+  <g>
+    <rect x="3300" y="120" width="420" height="352" class="classBox"/>
+    <line x1="3300" y1="172" x2="3720" y2="172" class="sep"/>
+    <line x1="3300" y1="436" x2="3720" y2="436" class="sep"/>
+    <text x="3510" y="151" class="title"><tspan x="3510" dy="0">Service</tspan></text>
+    <text x="3316" y="208" class="attr">+id: String</text>
+<text x="3316" y="238" class="attr">+providerId: String</text>
+<text x="3316" y="268" class="attr">+categoryId: String?</text>
+<text x="3316" y="298" class="attr">+name: String</text>
+<text x="3316" y="328" class="attr">+description: String?</text>
+<text x="3316" y="358" class="attr">+price: Decimal</text>
+<text x="3316" y="388" class="attr">+priceType: PriceType</text>
+<text x="3316" y="418" class="attr">+duration: Int?</text>
+<text x="3316" y="448" class="attr">+isActive: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="760" y="900" width="450" height="472" class="classBox"/>
+    <line x1="760" y1="952" x2="1210" y2="952" class="sep"/>
+    <line x1="760" y1="1336" x2="1210" y2="1336" class="sep"/>
+    <text x="985" y="931" class="title"><tspan x="985" dy="0">Booking</tspan></text>
+    <text x="776" y="988" class="attr">+id: String</text>
+<text x="776" y="1018" class="attr">+clientId: String</text>
+<text x="776" y="1048" class="attr">+serviceId: String</text>
+<text x="776" y="1078" class="attr">+bookingDate: DateTime</text>
+<text x="776" y="1108" class="attr">+bookingTime: String</text>
+<text x="776" y="1138" class="attr">+duration: Int</text>
+<text x="776" y="1168" class="attr">+status: BookingStatus</text>
+<text x="776" y="1198" class="attr">+address: String</text>
+<text x="776" y="1228" class="attr">+city: String</text>
+<text x="776" y="1258" class="attr">+phone: String?</text>
+<text x="776" y="1288" class="attr">+notes: String?</text>
+<text x="776" y="1318" class="attr">+totalAmount: Decimal?</text>
+<text x="776" y="1348" class="attr">+paymentStatus: PaymentStatus</text>
+  </g>
+
+  <g>
+    <rect x="1650" y="980" width="410" height="322" class="classBox"/>
+    <line x1="1650" y1="1032" x2="2060" y2="1032" class="sep"/>
+    <line x1="1650" y1="1266" x2="2060" y2="1266" class="sep"/>
+    <text x="1855" y="1011" class="title"><tspan x="1855" dy="0">Review</tspan></text>
+    <text x="1666" y="1068" class="attr">+id: String</text>
+<text x="1666" y="1098" class="attr">+bookingId: String</text>
+<text x="1666" y="1128" class="attr">+clientId: String</text>
+<text x="1666" y="1158" class="attr">+providerId: String</text>
+<text x="1666" y="1188" class="attr">+serviceId: String?</text>
+<text x="1666" y="1218" class="attr">+rating: Int</text>
+<text x="1666" y="1248" class="attr">+comment: String?</text>
+<text x="1666" y="1278" class="attr">+isVerified: Boolean</text>
+  </g>
+
+  <g>
+    <rect x="2650" y="980" width="380" height="292" class="classBox"/>
+    <line x1="2650" y1="1032" x2="3030" y2="1032" class="sep"/>
+    <line x1="2650" y1="1236" x2="3030" y2="1236" class="sep"/>
+    <text x="2840" y="1011" class="title"><tspan x="2840" dy="0">Payment</tspan></text>
+    <text x="2666" y="1068" class="attr">+id: String</text>
+<text x="2666" y="1098" class="attr">+bookingId: String?</text>
+<text x="2666" y="1128" class="attr">+userId: String</text>
+<text x="2666" y="1158" class="attr">+amount: Decimal</text>
+<text x="2666" y="1188" class="attr">+paymentMethod: String?</text>
+<text x="2666" y="1218" class="attr">+status: PaymentStatus</text>
+<text x="2666" y="1248" class="attr">+transactionId: String?</text>
+  </g>
+
+  <g>
+    <rect x="540" y="1960" width="440" height="262" class="classBox"/>
+    <line x1="540" y1="2012" x2="980" y2="2012" class="sep"/>
+    <line x1="540" y1="2186" x2="980" y2="2186" class="sep"/>
+    <text x="760" y="1991" class="title"><tspan x="760" dy="0">VerificationRequest</tspan></text>
+    <text x="556" y="2048" class="attr">+id: String</text>
+<text x="556" y="2078" class="attr">+userId: String</text>
+<text x="556" y="2108" class="attr">+documents: Json?</text>
+<text x="556" y="2138" class="attr">+status: String</text>
+<text x="556" y="2168" class="attr">+reviewedBy: String?</text>
+<text x="556" y="2198" class="attr">+reviewedAt: DateTime?</text>
+  </g>
+
+  <g>
+    <rect x="1450" y="1960" width="390" height="292" class="classBox"/>
+    <line x1="1450" y1="2012" x2="1840" y2="2012" class="sep"/>
+    <line x1="1450" y1="2216" x2="1840" y2="2216" class="sep"/>
+    <text x="1645" y="1991" class="title"><tspan x="1645" dy="0">Subscription</tspan></text>
+    <text x="1466" y="2048" class="attr">+id: String</text>
+<text x="1466" y="2078" class="attr">+userId: String</text>
+<text x="1466" y="2108" class="attr">+plan: String</text>
+<text x="1466" y="2138" class="attr">+status: String</text>
+<text x="1466" y="2168" class="attr">+startDate: DateTime</text>
+<text x="1466" y="2198" class="attr">+endDate: DateTime</text>
+<text x="1466" y="2228" class="attr">+subscriptionPlanId: String?</text>
+  </g>
+
+  <g>
+    <rect x="2200" y="1960" width="430" height="322" class="classBox"/>
+    <line x1="2200" y1="2012" x2="2630" y2="2012" class="sep"/>
+    <line x1="2200" y1="2246" x2="2630" y2="2246" class="sep"/>
+    <text x="2415" y="1991" class="title"><tspan x="2415" dy="0">SubscriptionPlan</tspan></text>
+    <text x="2216" y="2048" class="attr">+id: String</text>
+<text x="2216" y="2078" class="attr">+name: String</text>
+<text x="2216" y="2108" class="attr">+slug: String</text>
+<text x="2216" y="2138" class="attr">+price: Decimal</text>
+<text x="2216" y="2168" class="attr">+duration: Int</text>
+<text x="2216" y="2198" class="attr">+features: Json</text>
+<text x="2216" y="2228" class="attr">+isActive: Boolean</text>
+<text x="2216" y="2258" class="attr">+displayOrder: Int</text>
+  </g>
+
+  <g>
+    <rect x="3090" y="1960" width="410" height="292" class="classBox"/>
+    <line x1="3090" y1="2012" x2="3500" y2="2012" class="sep"/>
+    <line x1="3090" y1="2216" x2="3500" y2="2216" class="sep"/>
+    <text x="3295" y="1991" class="title"><tspan x="3295" dy="0">Notification</tspan></text>
+    <text x="3106" y="2048" class="attr">+id: String</text>
+<text x="3106" y="2078" class="attr">+userId: String</text>
+<text x="3106" y="2108" class="attr">+title: String</text>
+<text x="3106" y="2138" class="attr">+message: String</text>
+<text x="3106" y="2168" class="attr">+type: String</text>
+<text x="3106" y="2198" class="attr">+read: Boolean</text>
+<text x="3106" y="2228" class="attr">+link: String?</text>
+  </g>
+</svg>

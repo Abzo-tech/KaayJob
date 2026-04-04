@@ -508,13 +508,21 @@ const startServer = async () => {
   try {
     await testConnection();
 
-    // NE PAS seeder automatiquement - utiliser seulement la vraie base de données
+    // Seeder automatiquement pour les données de démonstration
     try {
       console.log("🔄 Vérification de connexion à la base de données...");
       const usersCount = await prisma.user.count();
       const categoriesCount = await prisma.category.count();
       console.log(`✅ Base de données connectée: ${usersCount} utilisateurs, ${categoriesCount} catégories`);
-      console.log("🚫 Seed automatique désactivé - utilisation des données réelles uniquement");
+
+      // Si la base est vide, seeder automatiquement
+      if (usersCount === 0) {
+        console.log("🌱 Base vide détectée - exécution du seed automatique...");
+        await seedDatabase();
+        console.log("✅ Seed automatique terminé");
+      } else {
+        console.log("✅ Données existantes préservées");
+      }
     } catch (dbError) {
       console.log("⚠️ Erreur de connexion base de données:", dbError);
     }
