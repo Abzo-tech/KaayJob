@@ -22,7 +22,29 @@ export interface UpdateBookingData {
  * Liste des réservations avec pagination et filtres
  */
 export declare function listBookings(filters: BookingFilters): Promise<{
-    data: any[];
+    data: {
+        id: any;
+        clientId: any;
+        serviceId: any;
+        providerId: any;
+        bookingDate: any;
+        bookingTime: any;
+        duration: any;
+        status: any;
+        address: any;
+        city: any;
+        phone: any;
+        notes: any;
+        totalAmount: any;
+        paymentStatus: any;
+        createdAt: any;
+        updatedAt: any;
+        clientFirstName: any;
+        clientLastName: any;
+        serviceName: any;
+        providerFirstName: any;
+        providerLastName: any;
+    }[];
     pagination: {
         page: number;
         limit: number;
@@ -32,26 +54,54 @@ export declare function listBookings(filters: BookingFilters): Promise<{
 /**
  * Obtenir une réservation par ID
  */
-export declare function getBookingById(bookingId: string): Promise<any>;
+export declare function getBookingById(bookingId: string): Promise<{
+    id: any;
+    clientId: any;
+    serviceId: any;
+    providerId: any;
+    bookingDate: any;
+    bookingTime: any;
+    duration: any;
+    status: any;
+    address: any;
+    city: any;
+    phone: any;
+    notes: any;
+    totalAmount: any;
+    paymentStatus: any;
+    createdAt: any;
+    updatedAt: any;
+    clientFirstName: any;
+    clientLastName: any;
+    serviceName: any;
+    providerFirstName: any;
+    providerLastName: any;
+}>;
 /**
  * Mettre à jour une réservation
  */
 export declare function updateBooking(bookingId: string, data: UpdateBookingData, adminId?: string): Promise<{
-    id: string;
-    clientId: string;
-    serviceId: string;
-    bookingDate: Date;
-    bookingTime: string;
-    duration: number;
-    status: import(".prisma/client").$Enums.BookingStatus;
-    address: string;
-    city: string;
-    phone: string | null;
-    notes: string | null;
-    totalAmount: import("@prisma/client/runtime/library").Decimal | null;
-    paymentStatus: import(".prisma/client").$Enums.PaymentStatus;
-    createdAt: Date;
-    updatedAt: Date;
+    id: any;
+    clientId: any;
+    serviceId: any;
+    providerId: any;
+    bookingDate: any;
+    bookingTime: any;
+    duration: any;
+    status: any;
+    address: any;
+    city: any;
+    phone: any;
+    notes: any;
+    totalAmount: any;
+    paymentStatus: any;
+    createdAt: any;
+    updatedAt: any;
+    clientFirstName: any;
+    clientLastName: any;
+    serviceName: any;
+    providerFirstName: any;
+    providerLastName: any;
 }>;
 /**
  * Supprimer une réservation

@@ -16,6 +16,49 @@ interface ProviderCardProps {
   index?: number;
 }
 
+const PROVIDER_COVER_IMAGES: Record<string, string> = {
+  plomberie: "/images/plomberie.png",
+  plombier: "/images/plomberie.png",
+  cuisine: "/images/cuisine.png",
+  cuisinier: "/images/cuisine.png",
+  menuiserie: "/images/menuiserie.png",
+  menuisier: "/images/menuiserie.png",
+  mecanique: "/images/mecanique.png",
+  mecanicien: "/images/mecanique.png",
+  education: "/images/education.png",
+  professeur: "/images/education.png",
+  reparateur: "/images/Reparation.png",
+  reparation: "/images/Reparation.png",
+  macon: "/images/Reparation.png",
+  maconnerie: "/images/Reparation.png",
+  demenagement: "/images/Demenagement.png",
+  metallique: "/images/metalique.png",
+  soudeur: "/images/metalique.png",
+};
+
+function normalizeValue(value?: string) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function getProviderCoverImage(avatar?: string, specialty?: string) {
+  if (avatar) {
+    return avatar;
+  }
+
+  const normalizedSpecialty = normalizeValue(specialty);
+
+  for (const [keyword, image] of Object.entries(PROVIDER_COVER_IMAGES)) {
+    if (normalizedSpecialty.includes(keyword)) {
+      return image;
+    }
+  }
+
+  return "/images/cuisine.png";
+}
+
 export function ProviderCard({
   id,
   firstName,
@@ -32,8 +75,8 @@ export function ProviderCard({
   const fullName = `${firstName} ${lastName}`;
   const categoryName = specialty || "Service";
   const reviews = totalReviews || 0;
-  const price = hourlyRate ? `${Number(hourlyRate).toLocaleString('fr-SN')} CFA/h` : "Sur devis";
-  const image = avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80&crop=faces&fit=crop";
+  const price = hourlyRate ? `${Number(hourlyRate).toLocaleString("fr-SN")} CFA/h` : "Sur devis";
+  const image = getProviderCoverImage(avatar, specialty);
 
   return (
     <div
@@ -50,6 +93,12 @@ export function ProviderCard({
           alt={fullName}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#000080]/80 via-[#000080]/20 to-transparent" />
+        <div className="absolute left-4 bottom-4">
+          <span className="inline-flex items-center rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#000080] shadow-lg">
+            KaayJob Senegal
+          </span>
+        </div>
         <div className="absolute top-4 right-4 bg-[#FFF4EA] px-3 py-1 rounded-full shadow-lg">
           <span className="font-bold text-[#000080]">
             {price}

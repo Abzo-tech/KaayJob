@@ -4,7 +4,7 @@
   "description": "Backend API for KaayJob marketplace",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "dev": "ts-node-dev --respawn --transpile-only --poll src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "init-db": "node dist/config/init-db.js",
@@ -12,8 +12,8 @@
     "db:migrate": "node dist/config/migrate.js",
     "db:seed": "node dist/config/seed.js",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "jest --testPathPattern=unit --coverage",
-    "test:integration": "jest --testPathPattern=integration",
+    "test:unit": "jest --testPathPatterns=unit --coverage",
+    "test:integration": "jest --testPathPatterns=integration",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --coverageDirectory=coverage",
     "test:ci": "jest --ci --coverage --watchAll=false"

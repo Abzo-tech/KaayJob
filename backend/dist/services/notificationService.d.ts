@@ -3,6 +3,7 @@
  * Fonctions utilitaires pour créer des notifications
  */
 import { NotificationRecipient, NotificationContext } from "../utils/notificationFormatter";
+export declare function ensureNotificationSchema(): Promise<void>;
 /**
  * Créer une notification pour un utilisateur
  */

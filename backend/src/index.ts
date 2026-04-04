@@ -27,7 +27,7 @@ import { seedDatabase } from "./scripts/seed";
 import bcrypt from "bcryptjs";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(
@@ -537,6 +537,9 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (process.env.NODE_ENV !== "test") {
+  startServer();
+}
 
+export { app };
 export default app;

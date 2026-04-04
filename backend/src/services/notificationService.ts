@@ -11,6 +11,24 @@ import {
   NotificationContext
 } from "../utils/notificationFormatter";
 
+let notificationSchemaReady: Promise<void> | null = null;
+
+export async function ensureNotificationSchema(): Promise<void> {
+  if (!notificationSchemaReady) {
+    notificationSchemaReady = (async () => {
+      await query(`
+        ALTER TABLE notifications
+        ADD COLUMN IF NOT EXISTS private_recipients JSONB
+      `);
+    })().catch((error) => {
+      notificationSchemaReady = null;
+      throw error;
+    });
+  }
+
+  await notificationSchemaReady;
+}
+
 /**
  * Créer une notification pour un utilisateur
  */
@@ -23,6 +41,8 @@ export async function createNotification(
   privateRecipients?: string[],
 ): Promise<void> {
   try {
+    await ensureNotificationSchema();
+
     console.log(
       "Creating notification for user:",
       userId,

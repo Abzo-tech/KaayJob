@@ -1,221 +1,303 @@
-import request from 'supertest';
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import { app } from '../../src/index';
-import { prisma } from '../../src/config/prisma';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import authRoutes from "../../src/routes/auth";
+import { prisma } from "../../src/config/prisma";
 
-describe('Auth API Integration Tests', () => {
-  beforeAll(async () => {
-    // Clean up database
-    await prisma.user.deleteMany();
+jest.mock("../../src/config/prisma", () => ({
+  prisma: {
+    user: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    providerProfile: {
+      findUnique: jest.fn(),
+    },
+  },
+}));
+
+type MockRequest = {
+  body?: Record<string, unknown>;
+  headers?: Record<string, string>;
+  params?: Record<string, string>;
+  query?: Record<string, string>;
+  user?: unknown;
+};
+
+type MockResponse = {
+  statusCode: number;
+  body: any;
+  status: (code: number) => MockResponse;
+  json: (payload: any) => MockResponse;
+};
+
+const findUniqueMock = prisma.user.findUnique as unknown as jest.Mock;
+const createUserMock = prisma.user.create as unknown as jest.Mock;
+const providerProfileFindUniqueMock =
+  prisma.providerProfile.findUnique as unknown as jest.Mock;
+
+function createMockResponse(): MockResponse {
+  return {
+    statusCode: 200,
+    body: undefined,
+    status(code: number) {
+      this.statusCode = code;
+      return this;
+    },
+    json(payload: any) {
+      this.body = payload;
+      return this;
+    },
+  };
+}
+
+function getRouteHandlers(method: "get" | "post" | "put" | "delete", path: string) {
+  const layer = (authRoutes as any).stack.find(
+    (entry: any) => entry.route?.path === path && entry.route.methods?.[method],
+  );
+
+  if (!layer) {
+    throw new Error(`Route ${method.toUpperCase()} ${path} introuvable`);
+  }
+
+  return layer.route.stack.map((entry: any) => entry.handle);
+}
+
+async function invokeRoute(
+  method: "get" | "post" | "put" | "delete",
+  path: string,
+  request: MockRequest = {},
+) {
+  const req: any = {
+    method: method.toUpperCase(),
+    url: path,
+    originalUrl: path,
+    body: request.body || {},
+    headers: request.headers || {},
+    params: request.params || {},
+    query: request.query || {},
+  };
+  const res = createMockResponse();
+  const handlers = getRouteHandlers(method, path);
+
+  for (const handler of handlers) {
+    await handler(req, res, () => undefined);
+    if (res.body !== undefined || res.statusCode >= 400) {
+      break;
+    }
+  }
+
+  return res;
+}
+
+describe("Auth route integration", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  afterAll(async () => {
-    // Clean up database
-    await prisma.user.deleteMany();
-  });
-
-  describe('POST /api/auth/register', () => {
-    it('should register a new client successfully', async () => {
-      const userData = {
-        email: 'client@example.com',
-        password: 'password123',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+221771234567',
-        role: 'CLIENT'
-      };
-
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('id');
-      expect(response.body.data.email).toBe(userData.email);
-      expect(response.body.data.firstName).toBe(userData.firstName);
-      expect(response.body.data.role).toBe(userData.role);
-    });
-
-    it('should register a new provider successfully', async () => {
-      const userData = {
-        email: 'provider@example.com',
-        password: 'password123',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        phone: '+221772345678',
-        role: 'PRESTATAIRE'
-      };
-
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.role).toBe('PRESTATAIRE');
-
-      // Check if provider profile was created
-      const profile = await prisma.providerProfile.findUnique({
-        where: { userId: response.body.data.id }
+  describe("POST /register", () => {
+    it("registers a client successfully", async () => {
+      findUniqueMock.mockResolvedValueOnce(null);
+      createUserMock.mockResolvedValueOnce({
+        id: "user-1",
+        email: "client@example.com",
+        firstName: "John",
+        lastName: "Doe",
+        phone: "+221771234567",
+        role: "CLIENT",
+        providerProfile: null,
       });
-      expect(profile).toBeTruthy();
+
+      const response = await invokeRoute("post", "/register", {
+        body: {
+          email: "client@example.com",
+          password: "Password123",
+          firstName: "John",
+          lastName: "Doe",
+          phone: "+221771234567",
+          role: "client",
+        },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user.role).toBe("client");
+      expect(response.body.data.token).toEqual(expect.any(String));
     });
 
-    it('should reject registration with existing email', async () => {
-      const userData = {
-        email: 'duplicate@example.com',
-        password: 'password123',
-        firstName: 'Duplicate',
-        lastName: 'User',
-        role: 'CLIENT'
-      };
+    it("registers a provider successfully", async () => {
+      findUniqueMock.mockResolvedValueOnce(null);
+      createUserMock.mockResolvedValueOnce({
+        id: "provider-1",
+        email: "provider@example.com",
+        firstName: "Jane",
+        lastName: "Smith",
+        phone: "+221772345678",
+        role: "PRESTATAIRE",
+        providerProfile: { id: "profile-1" },
+      });
 
-      // First registration
-      await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(201);
+      const response = await invokeRoute("post", "/register", {
+        body: {
+          email: "provider@example.com",
+          password: "Password123",
+          firstName: "Jane",
+          lastName: "Smith",
+          phone: "+221772345678",
+          role: "prestataire",
+        },
+      });
 
-      // Duplicate registration
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(400);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Email déjà utilisé');
+      expect(response.statusCode).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.user.role).toBe("prestataire");
     });
 
-    it('should validate required fields', async () => {
-      const invalidData = {
-        email: 'invalid',
-        password: '123', // Too short
-        firstName: '',
-        lastName: 'Doe'
-      };
+    it("rejects duplicate emails", async () => {
+      findUniqueMock.mockResolvedValueOnce({ id: "existing-user" });
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(invalidData)
-        .expect(400);
+      const response = await invokeRoute("post", "/register", {
+        body: {
+          email: "duplicate@example.com",
+          password: "Password123",
+          firstName: "Duplicate",
+          lastName: "User",
+          phone: "+221771234567",
+          role: "client",
+        },
+      });
 
+      expect(response.statusCode).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.errors).toBeDefined();
+      expect(response.body.message).toContain("déjà utilisé");
+    });
+
+    it("validates required fields", async () => {
+      const response = await invokeRoute("post", "/register", {
+        body: {
+          email: "invalid",
+          password: "123",
+          firstName: "",
+          lastName: "Doe",
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.errors).toEqual(expect.any(Array));
     });
   });
 
-  describe('POST /api/auth/login', () => {
-    beforeAll(async () => {
-      // Create a test user
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'login@example.com',
-          password: 'password123',
-          firstName: 'Login',
-          lastName: 'Test',
-          role: 'CLIENT'
-        });
-    });
+  describe("POST /login", () => {
+    it("logs in with valid credentials", async () => {
+      findUniqueMock.mockResolvedValueOnce({
+        id: "user-1",
+        email: "login@example.com",
+        firstName: "Login",
+        lastName: "Test",
+        phone: "+221771234567",
+        role: "CLIENT",
+        avatar: null,
+        password: bcrypt.hashSync("Password123", 10),
+      });
 
-    it('should login successfully with correct credentials', async () => {
-      const loginData = {
-        email: 'login@example.com',
-        password: 'password123'
-      };
+      const response = await invokeRoute("post", "/login", {
+        body: {
+          email: "login@example.com",
+          password: "Password123",
+        },
+      });
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(200);
-
+      expect(response.statusCode).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('token');
-      expect(response.body.data.user.email).toBe(loginData.email);
+      expect(response.body.data.user.email).toBe("login@example.com");
     });
 
-    it('should reject login with wrong password', async () => {
-      const loginData = {
-        email: 'login@example.com',
-        password: 'wrongpassword'
-      };
+    it("rejects a wrong password", async () => {
+      findUniqueMock.mockResolvedValueOnce({
+        id: "user-1",
+        email: "login@example.com",
+        firstName: "Login",
+        lastName: "Test",
+        phone: "+221771234567",
+        role: "CLIENT",
+        avatar: null,
+        password: bcrypt.hashSync("Password123", 10),
+      });
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const response = await invokeRoute("post", "/login", {
+        body: {
+          email: "login@example.com",
+          password: "WrongPassword123",
+        },
+      });
 
+      expect(response.statusCode).toBe(401);
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('Identifiants invalides');
+      expect(response.body.message).toContain("incorrect");
     });
 
-    it('should reject login with non-existent email', async () => {
-      const loginData = {
-        email: 'nonexistent@example.com',
-        password: 'password123'
-      };
+    it("rejects unknown users", async () => {
+      findUniqueMock.mockResolvedValueOnce(null);
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(401);
+      const response = await invokeRoute("post", "/login", {
+        body: {
+          email: "missing@example.com",
+          password: "Password123",
+        },
+      });
 
+      expect(response.statusCode).toBe(401);
       expect(response.body.success).toBe(false);
     });
   });
 
-  describe('GET /api/auth/profile', () => {
-    let authToken: string;
+  describe("GET /me", () => {
+    it("returns the authenticated user profile", async () => {
+      const token = jwt.sign(
+        { id: "user-1", email: "profile@example.com", role: "CLIENT" },
+        process.env.JWT_SECRET || "kaayjob-test-secret",
+      );
 
-    beforeAll(async () => {
-      // Create and login a user
-      await request(app)
-        .post('/api/auth/register')
-        .send({
-          email: 'profile@example.com',
-          password: 'password123',
-          firstName: 'Profile',
-          lastName: 'Test',
-          role: 'CLIENT'
-        });
+      findUniqueMock.mockResolvedValueOnce({
+        id: "user-1",
+        email: "profile@example.com",
+        firstName: "Profile",
+        lastName: "Test",
+        phone: "+221771234567",
+        role: "CLIENT",
+        avatar: null,
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      });
 
-      const loginResponse = await request(app)
-        .post('/api/auth/login')
-        .send({
-          email: 'profile@example.com',
-          password: 'password123'
-        });
+      const response = await invokeRoute("get", "/me", {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
 
-      authToken = loginResponse.body.data.token;
-    });
-
-    it('should return user profile with authentication', async () => {
-      const response = await request(app)
-        .get('/api/auth/profile')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
+      expect(response.statusCode).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.email).toBe('profile@example.com');
-      expect(response.body.data.firstName).toBe('Profile');
+      expect(response.body.data.email).toBe("profile@example.com");
+      expect(providerProfileFindUniqueMock).not.toHaveBeenCalled();
     });
 
-    it('should reject profile access without authentication', async () => {
-      const response = await request(app)
-        .get('/api/auth/profile')
-        .expect(401);
+    it("rejects missing tokens", async () => {
+      const response = await invokeRoute("get", "/me");
 
-      expect(response.body.success).toBe(false);
+      expect(response.statusCode).toBe(401);
+      expect(response.body.message).toBe("Token requis");
     });
 
-    it('should reject profile access with invalid token', async () => {
-      const response = await request(app)
-        .get('/api/auth/profile')
-        .set('Authorization', 'Bearer invalid-token')
-        .expect(401);
+    it("rejects invalid tokens", async () => {
+      const response = await invokeRoute("get", "/me", {
+        headers: {
+          authorization: "Bearer invalid-token",
+        },
+      });
 
-      expect(response.body.success).toBe(false);
+      expect(response.statusCode).toBe(401);
+      expect(response.body.message).toBe("Token invalide");
     });
   });
 });

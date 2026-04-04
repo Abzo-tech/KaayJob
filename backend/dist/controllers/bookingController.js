@@ -8,16 +8,29 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BookingController = void 0;
 const prisma_1 = require("../config/prisma");
 const database_1 = require("../config/database");
-// Fonction utilitaire pour créer une notification (utilise query direct pour compatibilité)
-async function createNotification(userId, title, message, type = "info", link, privateRecipients) {
-    try {
-        const privateRecipientsJson = privateRecipients ? JSON.stringify(privateRecipients) : null;
-        await (0, database_1.query)("INSERT INTO notifications (id, user_id, title, message, type, link, private_recipients, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())", [userId, title, message, type, link || null, privateRecipientsJson]);
-    }
-    catch (error) {
-        console.error("Erreur création notification:", error);
-    }
-}
+const notificationService_1 = require("../services/notificationService");
+const normalizeBookingPayload = (booking) => ({
+    id: booking.id,
+    clientId: booking.clientId ?? booking.client_id ?? null,
+    serviceId: booking.serviceId ?? booking.service_id ?? null,
+    providerId: booking.providerId ?? booking.provider_id ?? null,
+    bookingDate: booking.bookingDate ?? booking.booking_date ?? null,
+    bookingTime: booking.bookingTime ?? booking.booking_time ?? null,
+    duration: booking.duration ?? null,
+    status: booking.status,
+    address: booking.address,
+    city: booking.city,
+    phone: booking.phone ?? null,
+    notes: booking.notes ?? null,
+    totalAmount: booking.totalAmount ?? booking.total_amount ?? null,
+    paymentStatus: booking.paymentStatus ?? booking.payment_status ?? null,
+    createdAt: booking.createdAt ?? booking.created_at ?? null,
+    updatedAt: booking.updatedAt ?? booking.updated_at ?? null,
+    client: booking.client,
+    service: booking.service,
+    review: booking.review,
+    payments: booking.payments,
+});
 class BookingController {
     /**
      * Mes réservations (alias de getAll pour client)
@@ -234,18 +247,18 @@ class BookingController {
                 });
                 if (providerProfile) {
                     // Notification privée entre client et prestataire
-                    await createNotification(providerProfile.userId, "Nouvelle réservation", `${user.firstName} ${user.lastName} a réservé "${service.name}"`, "info", "/prestataire/bookings", [user.id, providerProfile.userId]);
+                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Nouvelle réservation", `${user.firstName} ${user.lastName} a réservé "${service.name}"`, "info", "/prestataire/bookings", [user.id, providerProfile.userId]);
                     // Notifier l'admin de la nouvelle réservation (message adapté)
                     const admins = await (0, database_1.query)("SELECT id FROM users WHERE role = 'ADMIN'", []);
                     for (const admin of admins.rows) {
-                        await createNotification(admin.id, "Nouvelle réservation créée", `${user.firstName} ${user.lastName} a réservé le service "${service.name}" auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}`, "info", "/admin/bookings");
+                        await (0, notificationService_1.createNotification)(admin.id, "Nouvelle réservation créée", `${user.firstName} ${user.lastName} a réservé le service "${service.name}" auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}`, "info", "/admin/bookings");
                     }
                 }
             }
             res.status(201).json({
                 success: true,
                 message: "Réservation créée",
-                data: booking,
+                data: normalizeBookingPayload(booking),
             });
         }
         catch (error) {
@@ -325,7 +338,7 @@ class BookingController {
                 }
             }
             // Notifier le client du changement de statut
-            await createNotification(booking.clientId, "Statut de réservation mis à jour", `Votre réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
+            await (0, notificationService_1.createNotification)(booking.clientId, "Statut de réservation mis à jour", `Votre réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
                 ? "error"
                 : "success", "/client/bookings", privateRecipients);
             // Notifier le prestataire du changement de statut
@@ -334,7 +347,7 @@ class BookingController {
                     where: { id: booking.service.providerId },
                 });
                 if (providerProfile) {
-                    await createNotification(providerProfile.userId, "Réservation mise à jour", `La réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
+                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Réservation mise à jour", `La réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
                         ? "error"
                         : "success", "/prestataire/bookings", privateRecipients);
                 }
@@ -348,7 +361,7 @@ class BookingController {
                 // Trouver tous les admins pour les notifier
                 const admins = await (0, database_1.query)("SELECT id FROM users WHERE role = 'ADMIN'", []);
                 for (const admin of admins.rows) {
-                    await createNotification(admin.id, "Nouvelle activité de réservation", `${clientInfo.firstName} ${clientInfo.lastName} a mis à jour sa réservation pour "${booking.service.name}" - Statut: ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
+                    await (0, notificationService_1.createNotification)(admin.id, "Nouvelle activité de réservation", `${clientInfo.firstName} ${clientInfo.lastName} a mis à jour sa réservation pour "${booking.service.name}" - Statut: ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
                         ? "warning"
                         : "info", "/admin/bookings");
                 }
@@ -356,7 +369,7 @@ class BookingController {
             res.json({
                 success: true,
                 message: "Statut mis à jour",
-                data: updated,
+                data: normalizeBookingPayload(updated),
             });
         }
         catch (error) {
@@ -413,14 +426,14 @@ class BookingController {
                 }
             }
             // Notifier le client de l'annulation
-            await createNotification(booking.clientId, "Réservation annulée", "Votre réservation a été annulée", "warning", "/client/bookings", privateRecipients);
+            await (0, notificationService_1.createNotification)(booking.clientId, "Réservation annulée", "Votre réservation a été annulée", "warning", "/client/bookings", privateRecipients);
             // Notifier le prestataire de l'annulation
             if (service?.providerId) {
                 const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
                     where: { id: service.providerId },
                 });
                 if (providerProfile) {
-                    await createNotification(providerProfile.userId, "Réservation annulée", `Une réservation a été annulée`, "warning", "/prestataire/bookings", privateRecipients);
+                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Réservation annulée", `Une réservation a été annulée`, "warning", "/prestataire/bookings", privateRecipients);
                 }
             }
             res.json({ success: true, message: "Réservation annulée" });

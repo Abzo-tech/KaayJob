@@ -11,6 +11,7 @@ exports.deleteService = deleteService;
 const prisma_1 = require("../config/prisma");
 const database_1 = require("../config/database");
 const notificationService_1 = require("./notificationService");
+const normalizePriceType = (priceType) => priceType ? priceType.toLowerCase() : priceType;
 /**
  * Liste des services avec pagination et filtres
  */
@@ -70,7 +71,7 @@ async function listServices(filters) {
         name: s.name,
         description: s.description,
         price: s.price,
-        priceType: s.priceType,
+        priceType: normalizePriceType(s.priceType),
         duration: s.duration,
         isActive: s.isActive,
         provider_id: s.providerId,
@@ -121,7 +122,7 @@ async function getServiceById(serviceId) {
         name: service.name,
         description: service.description,
         price: service.price,
-        priceType: service.priceType,
+        priceType: normalizePriceType(service.priceType),
         duration: service.duration,
         isActive: service.isActive,
         provider_id: service.providerId,
@@ -159,7 +160,7 @@ async function updateService(serviceId, data, adminId) {
     if (data.isActive !== undefined)
         updateData.isActive = data.isActive;
     if (data.priceType !== undefined)
-        updateData.priceType = data.priceType;
+        updateData.priceType = data.priceType.toUpperCase();
     if (Object.keys(updateData).length === 0) {
         throw new Error("Aucune donnée à mettre à jour");
     }
@@ -176,7 +177,10 @@ async function updateService(serviceId, data, adminId) {
     if (adminId) {
         await (0, notificationService_1.createNotification)(adminId, "Service mis à jour", "Le service a été mis à jour avec succès", "info", "/admin/services");
     }
-    return result;
+    return {
+        ...result,
+        priceType: normalizePriceType(result.priceType),
+    };
 }
 /**
  * Supprimer un service

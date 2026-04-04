@@ -12,19 +12,16 @@ interface HeroSectionProps {
 export function HeroSection({ searchQuery, onSearchChange, onSearch, onNavigate }: HeroSectionProps) {
   return (
     <section className="relative h-screen text-white overflow-hidden">
-      {/* Senegalese Background Image - Service Provider & Client Communication */}
+      {/* Home background image */}
       <div className="absolute inset-0">
-        {/* Senegalese professionals and client communication background image */}
         <div
-          className="w-full h-full object-cover bg-cover bg-center"
+          className="h-full w-full bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('https://i.pinimg.com/1200x/4d/5d/e8/4d5de82c946cd58e5f9dc7f723326633.jpg')",
-            backgroundAttachment: "fixed",
+              "url('https://blogger.googleusercontent.com/img/a/AVvXsEiQQekaAuYbcJ1ViZyux5Ff7VJcyBFdrskLnuLeBR4LWZDUmI-Z6It6cVziDg524vX4FdrRnAXuNXK3IGjkF91O5lrtd_H4tBwWTFfkIM9p_zX3fqjtbpRwf1PbtEC0JylkioIWPk1Y7KempJngy8eB1IVJ9cBCHx10OfT6eDmZM6RFWSgieIh2JI_F7NXp=s16000')",
           }}
         />
-        {/* Black overlay */}
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/45 to-[#000080]/55" />
       </div>
 
       {/* Content */}

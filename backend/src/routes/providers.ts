@@ -317,6 +317,8 @@ router.get("/map", async (req: Request, res: Response) => {
       availableOnly = true
     } = req.query;
 
+    const shouldFilterAvailableOnly = availableOnly !== "false";
+
     let queryStr = `
       SELECT
         u.id,
@@ -335,7 +337,8 @@ router.get("/map", async (req: Request, res: Response) => {
         COALESCE(pp.is_available, true) as "isAvailable",
         COALESCE(rating_stats.avg_rating, 0) as rating,
         COALESCE(rating_stats.review_count, 0) as "totalReviews",
-        0 as "totalBookings"
+        0 as "totalBookings",
+        NULL::float as distance
       FROM users u
       INNER JOIN provider_profiles pp ON u.id = pp.user_id
       LEFT JOIN (
@@ -349,7 +352,6 @@ router.get("/map", async (req: Request, res: Response) => {
       WHERE u.role = 'PRESTATAIRE'
         AND u.latitude IS NOT NULL
         AND u.longitude IS NOT NULL
-        AND pp.is_available = true
     `;
 
     const params: any[] = [];
@@ -362,22 +364,28 @@ router.get("/map", async (req: Request, res: Response) => {
       paramIndex++;
     }
 
-    // Filtre par disponibilité déjà appliqué dans WHERE
-    // availableOnly est géré au niveau de la condition pp.is_available = true
+    if (shouldFilterAvailableOnly) {
+      queryStr += ` AND pp.is_available = true`;
+    }
 
     // Filtre par rayon si coordonnées fournies
     if (lat && lng) {
       const latitude = parseFloat(lat as string);
       const longitude = parseFloat(lng as string);
       const radiusKm = parseInt(radius as string) || 50;
+      const distanceExpression = `
+        6371 * acos(
+          cos(radians($${paramIndex})) * cos(radians(u.latitude)) *
+          cos(radians(u.longitude) - radians($${paramIndex + 1})) +
+          sin(radians($${paramIndex})) * sin(radians(u.latitude))
+        )
+      `;
+
+      queryStr = queryStr.replace("NULL::float as distance", `${distanceExpression} as distance`);
 
       queryStr += `
         AND (
-          6371 * acos(
-            cos(radians($${paramIndex})) * cos(radians(u.latitude)) *
-            cos(radians(u.longitude) - radians($${paramIndex + 1})) +
-            sin(radians($${paramIndex})) * sin(radians(u.latitude))
-          )
+          ${distanceExpression}
         ) <= $${paramIndex + 2}
       `;
       params.push(latitude, longitude, radiusKm);
@@ -409,6 +417,7 @@ router.get("/map", async (req: Request, res: Response) => {
       totalReviews: parseInt(row.totalReviews) || 0,
       totalBookings: parseInt(row.totalBookings) || 0,
       isVerified: row.isVerified,
+      distance: row.distance !== null ? parseFloat(row.distance) : undefined,
       user: {
         id: row.id,
         firstName: row.first_name,
@@ -686,7 +695,7 @@ router.post(
 
     // Notifier les administrateurs de la demande de vérification (privé admin-prestataire)
     const admins = await query(
-      "SELECT id, role FROM users WHERE role = 'admin'",
+      "SELECT id, role FROM users WHERE role = 'ADMIN'",
       [],
     );
 
@@ -1043,7 +1052,7 @@ router.post(
 
       // Vérifier si l'utilisateur est un prestataire
       const userCheck = await query(
-        "SELECT role FROM users WHERE id = $1",
+        "SELECT role, first_name, last_name FROM users WHERE id = $1",
         [userId],
       );
 
@@ -1073,7 +1082,7 @@ router.post(
 
       // Notifier les administrateurs de l'annulation d'abonnement (privé admin-prestataire)
       const admins = await query(
-        "SELECT id, role FROM users WHERE role = 'admin'",
+        "SELECT id, role FROM users WHERE role = 'ADMIN'",
         [],
       );
 

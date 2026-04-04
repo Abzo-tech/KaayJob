@@ -9,6 +9,15 @@ import { prisma } from "../config/prisma";
 import { PriceType } from "@prisma/client";
 import { IServiceCreate, IServiceUpdate, IServiceFilter } from "../interfaces";
 
+const normalizePriceTypeInput = (priceType?: string): PriceType => {
+  return (priceType?.toUpperCase() as PriceType) || "FIXED";
+};
+
+const normalizeServiceOutput = <T extends { priceType?: string | null }>(service: T): T => ({
+  ...service,
+  priceType: service.priceType ? service.priceType.toLowerCase() : service.priceType,
+});
+
 export class ServiceController {
   /**
    * Liste des services avec filtres et pagination
@@ -97,7 +106,7 @@ export class ServiceController {
 
       res.json({
         success: true,
-        data: services,
+        data: services.map((service) => normalizeServiceOutput(service)),
         pagination: {
           page: Number(page),
           limit: Number(limit),
@@ -167,7 +176,7 @@ export class ServiceController {
       res.json({
         success: true,
         data: {
-          ...service,
+          ...normalizeServiceOutput(service),
           reviews,
         },
       });
@@ -229,7 +238,7 @@ export class ServiceController {
           name,
           description,
           price,
-          priceType: (priceType?.toUpperCase() as PriceType) || "FIXED",
+          priceType: normalizePriceTypeInput(priceType),
           duration,
           isActive: true,
         },
@@ -238,7 +247,7 @@ export class ServiceController {
       res.status(201).json({
         success: true,
         message: "Service créé",
-        data: service,
+        data: normalizeServiceOutput(service),
       });
     } catch (error) {
       console.error("Erreur création service:", error);
@@ -285,7 +294,7 @@ export class ServiceController {
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.categoryId) updateData.categoryId = updates.categoryId;
       if (updates.price) updateData.price = updates.price;
-      if (updates.priceType) updateData.priceType = updates.priceType.toUpperCase();
+      if (updates.priceType) updateData.priceType = normalizePriceTypeInput(updates.priceType);
       if (updates.duration !== undefined) updateData.duration = updates.duration;
       if (updates.isActive !== undefined) updateData.isActive = updates.isActive;
 
@@ -297,7 +306,7 @@ export class ServiceController {
       res.json({
         success: true,
         message: "Service mis à jour",
-        data: service,
+        data: normalizeServiceOutput(service),
       });
     } catch (error) {
       console.error("Erreur mise à jour service:", error);
@@ -363,7 +372,10 @@ export class ServiceController {
         },
       });
 
-      res.json({ success: true, data: services });
+      res.json({
+        success: true,
+        data: services.map((service) => normalizeServiceOutput(service)),
+      });
     } catch (error) {
       console.error("Erreur récupération services prestataire:", error);
       res.status(500).json({ success: false, message: "Erreur serveur" });

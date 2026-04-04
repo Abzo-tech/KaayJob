@@ -12,3 +12,4 @@ export * from "./bookingService";
 export * from "./categoryService";
 export * from "./serviceService";
 export * from "./paymentService";
+export * from "./geolocationService";

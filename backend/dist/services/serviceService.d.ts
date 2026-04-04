@@ -24,7 +24,7 @@ export declare function listServices(filters: ServiceFilters): Promise<{
         name: any;
         description: any;
         price: any;
-        priceType: any;
+        priceType: string | null | undefined;
         duration: any;
         isActive: any;
         provider_id: any;
@@ -50,7 +50,7 @@ export declare function getServiceById(serviceId: string): Promise<{
     name: string;
     description: string | null;
     price: import("@prisma/client/runtime/library").Decimal;
-    priceType: import(".prisma/client").$Enums.PriceType;
+    priceType: string | null | undefined;
     duration: number | null;
     isActive: boolean;
     provider_id: string;
@@ -66,13 +66,13 @@ export declare function getServiceById(serviceId: string): Promise<{
  * Mettre à jour un service
  */
 export declare function updateService(serviceId: string, data: UpdateServiceData, adminId?: string): Promise<{
+    priceType: string | null | undefined;
     id: string;
     providerId: string;
     categoryId: string | null;
     name: string;
     description: string | null;
     price: import("@prisma/client/runtime/library").Decimal;
-    priceType: import(".prisma/client").$Enums.PriceType;
     duration: number | null;
     isActive: boolean;
     createdAt: Date;

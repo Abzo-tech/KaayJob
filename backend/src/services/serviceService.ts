@@ -7,6 +7,9 @@ import { prisma } from "../config/prisma";
 import { query } from "../config/database";
 import { createNotification } from "./notificationService";
 
+const normalizePriceType = (priceType?: string | null) =>
+  priceType ? priceType.toLowerCase() : priceType;
+
 export interface ServiceFilters {
   page?: number;
   limit?: number;
@@ -84,7 +87,7 @@ export async function listServices(filters: ServiceFilters) {
     name: s.name,
     description: s.description,
     price: s.price,
-    priceType: s.priceType,
+    priceType: normalizePriceType(s.priceType),
     duration: s.duration,
     isActive: s.isActive,
     provider_id: s.providerId,
@@ -139,7 +142,7 @@ export async function getServiceById(serviceId: string) {
     name: service.name,
     description: service.description,
     price: service.price,
-    priceType: service.priceType,
+    priceType: normalizePriceType(service.priceType),
     duration: service.duration,
     isActive: service.isActive,
     provider_id: service.providerId,
@@ -178,7 +181,7 @@ export async function updateService(
   if (data.price !== undefined) updateData.price = parseFloat(String(data.price));
   if (data.duration !== undefined) updateData.duration = parseInt(String(data.duration));
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
-  if (data.priceType !== undefined) updateData.priceType = data.priceType;
+  if (data.priceType !== undefined) updateData.priceType = data.priceType.toUpperCase();
 
   if (Object.keys(updateData).length === 0) {
     throw new Error("Aucune donnée à mettre à jour");
@@ -212,7 +215,10 @@ export async function updateService(
     );
   }
 
-  return result;
+  return {
+    ...result,
+    priceType: normalizePriceType(result.priceType),
+  };
 }
 
 /**

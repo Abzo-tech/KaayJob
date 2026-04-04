@@ -23,13 +23,79 @@ interface Category {
   };
 }
 
+const fallbackCategories: Category[] = [
+  {
+    id: "plomberie",
+    name: "Plomberie",
+    slug: "plomberie",
+    description: "Installation, fuite, entretien et depannage a domicile.",
+    image: "/images/plomberie.png",
+  },
+  {
+    id: "menuiserie",
+    name: "Menuiserie",
+    slug: "menuiserie",
+    description: "Fabrication, reparation et ajustements sur mesure.",
+    image: "/images/menuiserie.png",
+  },
+  {
+    id: "cuisine",
+    name: "Cuisine",
+    slug: "cuisine",
+    description: "Chefs et cuisiniers pour vos besoins du quotidien et evenements.",
+    image: "/images/cuisine.png",
+  },
+  {
+    id: "mecanique",
+    name: "Mecanique",
+    slug: "mecanique",
+    description: "Diagnostic, entretien et reparation de vehicules.",
+    image: "/images/mecanique.png",
+  },
+  {
+    id: "education",
+    name: "Education",
+    slug: "education",
+    description: "Cours particuliers et accompagnement scolaire de proximite.",
+    image: "/images/education.png",
+  },
+  {
+    id: "reparation",
+    name: "Reparation",
+    slug: "reparation",
+    description: "Interventions rapides pour vos pannes et petits travaux.",
+    image: "/images/Reparation.png",
+  },
+];
+
+function normalizeCategoriesResponse(response: any): Category[] {
+  const categoriesData = response?.data?.data || response?.data || [];
+
+  if (!Array.isArray(categoriesData) || categoriesData.length === 0) {
+    return fallbackCategories;
+  }
+
+  return categoriesData.map((category: any, index: number) => ({
+    id: category.id || category.slug || `category-${index}`,
+    name: category.name || "Service",
+    slug: category.slug || category.id || `category-${index}`,
+    description:
+      category.description ||
+      fallbackCategories[index % fallbackCategories.length].description,
+    icon: category.icon,
+    image:
+      category.image ||
+      fallbackCategories[index % fallbackCategories.length].image,
+    _count: category._count,
+  }));
+}
+
 export function ServiceCategoriesPage({
   onNavigate,
   params = {},
 }: ServiceCategoriesPageProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(params.search || "");
   const [location, setLocation] = useState("Dakar, Sénégal");
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
@@ -43,13 +109,16 @@ export function ServiceCategoriesPage({
       try {
         setLoading(true);
         const response = await api.get("/categories");
-        if (response.success && response.data) {
-          setCategories(response.data);
-          setFilteredCategories(response.data);
-        }
+        const normalizedCategories = response?.success
+          ? normalizeCategoriesResponse(response)
+          : fallbackCategories;
+
+        setCategories(normalizedCategories);
+        setFilteredCategories(normalizedCategories);
       } catch (err) {
         console.error("Erreur chargement catégories:", err);
-        setError("Impossible de charger les catégories");
+        setCategories(fallbackCategories);
+        setFilteredCategories(fallbackCategories);
       } finally {
         setLoading(false);
       }
@@ -164,17 +233,6 @@ export function ServiceCategoriesPage({
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin text-[#000080] mx-auto mb-4" />
           <p className="text-gray-600">Chargement des catégories...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white pt-20 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()}>Réessayer</Button>
         </div>
       </div>
     );

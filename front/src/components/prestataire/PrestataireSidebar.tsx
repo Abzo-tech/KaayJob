@@ -43,6 +43,7 @@ export function PrestataireSidebar({
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? "Fermer le menu prestataire" : "Ouvrir le menu prestataire"}
         className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#000080] text-white rounded-lg shadow-lg"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}

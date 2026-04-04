@@ -33,6 +33,49 @@ export interface UserFilters {
   search?: string;
 }
 
+const normalizeUserRow = (row: any) => ({
+  id: row.id,
+  email: row.email,
+  firstName: row.first_name ?? row.firstName ?? null,
+  lastName: row.last_name ?? row.lastName ?? null,
+  phone: row.phone ?? null,
+  role: row.role,
+  isActive: row.is_active ?? row.isActive ?? undefined,
+  isVerified: row.is_verified ?? row.isVerified ?? false,
+  bookingCount:
+    row.booking_count !== undefined || row.bookingCount !== undefined
+      ? Number(row.booking_count ?? row.bookingCount)
+      : undefined,
+  createdAt: row.created_at ?? row.createdAt ?? null,
+  updatedAt: row.updated_at ?? row.updatedAt ?? undefined,
+});
+
+const normalizeProviderProfileRow = (row: any) => ({
+  id: row.id,
+  userId: row.user_id ?? row.userId,
+  businessName: row.business_name ?? row.businessName ?? null,
+  specialty: row.specialty ?? null,
+  bio: row.bio ?? null,
+  hourlyRate: row.hourly_rate ?? row.hourlyRate ?? null,
+  yearsExperience: row.years_experience ?? row.yearsExperience ?? null,
+  location: row.location ?? null,
+  address: row.address ?? null,
+  city: row.city ?? null,
+  region: row.region ?? null,
+  postalCode: row.postal_code ?? row.postalCode ?? null,
+  serviceRadius: row.service_radius ?? row.serviceRadius ?? null,
+  isAvailable: row.is_available ?? row.isAvailable ?? true,
+  rating: row.rating ?? 0,
+  totalReviews: row.total_reviews ?? row.totalReviews ?? 0,
+  totalBookings: row.total_bookings ?? row.totalBookings ?? 0,
+  isVerified: row.is_verified ?? row.isVerified ?? false,
+  profileImage: row.profile_image ?? row.profileImage ?? null,
+  specialties: row.specialties ?? null,
+  availability: row.availability ?? null,
+  createdAt: row.created_at ?? row.createdAt ?? null,
+  updatedAt: row.updated_at ?? row.updatedAt ?? null,
+});
+
 /**
  * Liste des utilisateurs avec pagination et filtres
  */
@@ -74,7 +117,7 @@ export async function listUsers(filters: UserFilters) {
   );
 
   return {
-    data: result.rows,
+    data: result.rows.map(normalizeUserRow),
     pagination: {
       page,
       limit,
@@ -150,7 +193,7 @@ export async function createUser(data: CreateUserData, adminId?: string) {
     );
   }
 
-  return user;
+  return normalizeUserRow(user);
 }
 
 /**
@@ -229,7 +272,7 @@ export async function updateUser(userId: string, data: UpdateUserData, adminId?:
     );
   }
 
-  return result.rows[0];
+  return normalizeUserRow(result.rows[0]);
 }
 
 /**
@@ -289,7 +332,7 @@ export async function verifyProvider(providerId: string, adminId: string) {
     { target: { firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name, role: "PRESTATAIRE" } }
   );
 
-  return result.rows[0];
+  return normalizeProviderProfileRow(result.rows[0]);
 }
 
 /**
@@ -361,5 +404,5 @@ export async function getUserById(userId: string) {
     throw new Error("Utilisateur non trouvé");
   }
 
-  return result.rows[0];
+  return normalizeUserRow(result.rows[0]);
 }
