@@ -2,7 +2,7 @@
  * Script simple pour migrer les données de la base locale vers Prisma Cloud
  */
 
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require('./backend/node_modules/@prisma/client');
 const { query } = require('./backend/src/config/database');
 
 async function migrateData() {
