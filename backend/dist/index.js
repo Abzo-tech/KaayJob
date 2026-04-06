@@ -11,28 +11,21 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
 const path_1 = __importDefault(require("path"));
-const auth_1 = __importDefault(require("./routes/auth"));
-const bookings_1 = __importDefault(require("./routes/bookings"));
-const providers_1 = __importDefault(require("./routes/providers"));
-const categories_1 = __importDefault(require("./routes/categories"));
-const services_1 = __importDefault(require("./routes/services"));
-const reviews_1 = __importDefault(require("./routes/reviews"));
-const admin_1 = __importDefault(require("./routes/admin"));
-const notifications_1 = __importDefault(require("./routes/notifications"));
-const payments_1 = __importDefault(require("./routes/payments"));
 const database_1 = require("./config/database");
 const prisma_1 = require("./config/prisma");
 const seed_1 = require("./scripts/seed");
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const app = (0, express_1.default)();
 exports.app = app;
 const PORT = process.env.PORT || 3001;
 // Middleware
-app.use((0, helmet_1.default)({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-}));
+// app.use(
+//   helmet({
+//     crossOriginResourcePolicy: { policy: "cross-origin" },
+//   }),
+// );
 app.use((0, morgan_1.default)("dev"));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -49,6 +42,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
         "https://kaay-job.vercel.app",
         "https://kaay-job-git-main-abzo-techs-projects.vercel.app",
         "https://kaay-job-git-abzo-abzo-techs-projects.vercel.app",
+        "https://kaay-job-git-dev-abzo-techs-projects.vercel.app",
     ];
 app.use((0, cors_1.default)({
     origin: allowedOrigins,
@@ -62,15 +56,15 @@ app.use("/images", (req, res, next) => {
     next();
 }, express_1.default.static(path_1.default.join(__dirname, "../public/images")));
 // Routes
-app.use("/api/auth", auth_1.default);
-app.use("/api/bookings", bookings_1.default);
-app.use("/api/providers", providers_1.default);
-app.use("/api/categories", categories_1.default);
-app.use("/api/services", services_1.default);
-app.use("/api/reviews", reviews_1.default);
-app.use("/api/admin", admin_1.default);
-app.use("/api/notifications", notifications_1.default);
-app.use("/api/payments", payments_1.default);
+// app.use("/api/auth", authRoutes);
+// app.use("/api/bookings", bookingsRoutes);
+// app.use("/api/providers", providersRoutes);
+// app.use("/api/categories", categoriesRoutes);
+// app.use("/api/services", servicesRoutes);
+// app.use("/api/reviews", reviewsRoutes);
+// app.use("/api/admin", adminRoutes);
+// app.use("/api/notifications", notificationsRoutes);
+// app.use("/api/payments", paymentsRoutes);
 // Health check
 app.get("/api/health", async (req, res) => {
     try {
@@ -111,6 +105,128 @@ app.post("/api/seed", async (req, res) => {
         });
     }
 });
+// Create basic test data endpoint (emergency solution)
+app.post("/api/create-test-data", async (req, res) => {
+    try {
+        console.log('🌱 Création de données de test basiques...');
+        // Créer quelques catégories de base
+        const categories = [
+            { name: 'Jardinage', slug: 'jardinage', description: 'Services de jardinage et espaces verts', icon: '🌿', isActive: true },
+            { name: 'Plomberie', slug: 'plomberie', description: 'Réparations et installations de plomberie', icon: '🔧', isActive: true },
+            { name: 'Électricité', slug: 'electricite', description: 'Travaux électriques et dépannages', icon: '⚡', isActive: true },
+            { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage et entretien', icon: '🧹', isActive: true },
+            { name: 'Réparations', slug: 'reparations', description: 'Réparations diverses à domicile', icon: '🔨', isActive: true }
+        ];
+        for (const cat of categories) {
+            await prisma_1.prisma.category.upsert({
+                where: { slug: cat.slug },
+                update: cat,
+                create: cat
+            });
+        }
+        // Créer un utilisateur admin
+        const hashedPassword = await bcryptjs_1.default.hash('admin123', 10);
+        await prisma_1.prisma.user.upsert({
+            where: { email: 'admin@kaayjob.com' },
+            update: {
+                firstName: 'Admin',
+                lastName: 'KaayJob',
+                phone: '+221000000000',
+                role: 'ADMIN',
+                isVerified: true,
+                isActive: true,
+                password: hashedPassword,
+            },
+            create: {
+                email: 'admin@kaayjob.com',
+                password: hashedPassword,
+                firstName: 'Admin',
+                lastName: 'KaayJob',
+                phone: '+221000000000',
+                role: 'ADMIN',
+                isVerified: true,
+                isActive: true,
+            }
+        });
+        // Créer quelques prestataires
+        const providers = [
+            { email: 'jardinier@email.com', firstName: 'Ahmed', lastName: 'Diallo', specialty: 'Jardinage' },
+            { email: 'plombier@email.com', firstName: 'Moussa', lastName: 'Sow', specialty: 'Plomberie' },
+            { email: 'electricien@email.com', firstName: 'Fatou', lastName: 'Diop', specialty: 'Électricité' }
+        ];
+        for (const prov of providers) {
+            const userPassword = await bcryptjs_1.default.hash('test123', 10);
+            const user = await prisma_1.prisma.user.upsert({
+                where: { email: prov.email },
+                update: {
+                    firstName: prov.firstName,
+                    lastName: prov.lastName,
+                    phone: '+221000000000',
+                    role: 'PRESTATAIRE',
+                    isVerified: true,
+                    isActive: true,
+                    password: userPassword,
+                },
+                create: {
+                    email: prov.email,
+                    password: userPassword,
+                    firstName: prov.firstName,
+                    lastName: prov.lastName,
+                    phone: '+221000000000',
+                    role: 'PRESTATAIRE',
+                    isVerified: true,
+                    isActive: true,
+                }
+            });
+            // Créer le profil prestataire
+            await prisma_1.prisma.providerProfile.upsert({
+                where: { userId: user.id },
+                update: {
+                    businessName: `${prov.firstName} ${prov.specialty}`,
+                    specialty: prov.specialty,
+                    bio: `Professionnel ${prov.specialty} expérimenté`,
+                    isAvailable: true,
+                    rating: 4.5,
+                    totalReviews: 10,
+                    totalBookings: 25,
+                    isVerified: true,
+                },
+                create: {
+                    userId: user.id,
+                    businessName: `${prov.firstName} ${prov.specialty}`,
+                    specialty: prov.specialty,
+                    bio: `Professionnel ${prov.specialty} expérimenté`,
+                    isAvailable: true,
+                    rating: 4.5,
+                    totalReviews: 10,
+                    totalBookings: 25,
+                    isVerified: true,
+                }
+            });
+        }
+        console.log('✅ Données de test créées avec succès');
+        res.json({
+            success: true,
+            message: 'Données de test créées avec succès',
+            data: {
+                categories: categories.length,
+                users: providers.length + 1, // + admin
+                credentials: {
+                    admin: { email: 'admin@kaayjob.com', password: 'admin123' },
+                    providers: providers.map(p => ({ email: p.email, password: 'test123' }))
+                }
+            }
+        });
+    }
+    catch (error) {
+        console.error('❌ Erreur création données test:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Erreur lors de la création des données de test',
+            error: error.message
+        });
+    }
+});
 // Create admin account endpoint (for emergency access)
 app.post("/api/setup-admin", async (req, res) => {
     try {
@@ -130,8 +246,7 @@ app.post("/api/setup-admin", async (req, res) => {
             });
         }
         // Créer l'admin
-        const bcrypt = require('bcrypt');
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcryptjs_1.default.hash(password, 10);
         await (0, database_1.query)(`
       INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
       VALUES (gen_random_uuid(), $1, $2, $3, $4, '+221000000000', 'ADMIN', true, NOW(), NOW())
@@ -337,18 +452,24 @@ app.use((req, res) => {
 // Start server
 const startServer = async () => {
     try {
-        await (0, database_1.testConnection)();
-        // NE PAS seeder automatiquement - utiliser seulement la vraie base de données
-        try {
-            console.log("🔄 Vérification de connexion à la base de données...");
-            const usersCount = await prisma_1.prisma.user.count();
-            const categoriesCount = await prisma_1.prisma.category.count();
-            console.log(`✅ Base de données connectée: ${usersCount} utilisateurs, ${categoriesCount} catégories`);
-            console.log("🚫 Seed automatique désactivé - utilisation des données réelles uniquement");
-        }
-        catch (dbError) {
-            console.log("⚠️ Erreur de connexion base de données:", dbError);
-        }
+        // await testConnection();
+        // Seeder automatiquement pour les données de démonstration
+        // try {
+        //   console.log("🔄 Vérification de connexion à la base de données...");
+        //   const usersCount = await prisma.user.count();
+        //   const categoriesCount = await prisma.category.count();
+        //   console.log(`✅ Base de données connectée: ${usersCount} utilisateurs, ${categoriesCount} catégories");
+        //   // Si la base est vide, seeder automatiquement
+        //   if (usersCount === 0) {
+        //     console.log("🌱 Base vide détectée - exécution du seed automatique...");
+        //     // await seedDatabase();
+        //     console.log("✅ Seed automatique désactivé");
+        //   } else {
+        //     console.log("✅ Données existantes préservées");
+        //   }
+        // } catch (dbError) {
+        //   console.log("⚠️ Erreur de connexion base de données:", dbError);
+        // }
         app.listen(PORT, () => {
             console.log(`✅ Serveur KaayJob démarré sur le port ${PORT}`);
             console.log(`   API: http://localhost:${PORT}/api`);

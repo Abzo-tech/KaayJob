@@ -68,15 +68,15 @@ export declare function getServiceById(serviceId: string): Promise<{
 export declare function updateService(serviceId: string, data: UpdateServiceData, adminId?: string): Promise<{
     priceType: string | null | undefined;
     id: string;
-    providerId: string;
-    categoryId: string | null;
-    name: string;
-    description: string | null;
-    price: import("@prisma/client/runtime/library").Decimal;
-    duration: number | null;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    name: string;
+    description: string | null;
+    categoryId: string | null;
+    price: import("@prisma/client/runtime/library").Decimal;
+    duration: number | null;
+    providerId: string;
 }>;
 /**
  * Supprimer un service

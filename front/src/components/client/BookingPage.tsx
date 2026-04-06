@@ -72,6 +72,9 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
   const providerId = params.providerId;
   const serviceId = params.serviceId;
 
+  // Check if user is logged in
+  const isLoggedIn = !!localStorage.getItem("token");
+
   const [date, setDate] = useState<Date>();
   const [formData, setFormData] = useState({
     time: "",
@@ -279,7 +282,13 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
       }
     } catch (err: any) {
       console.error("Erreur soumission réservation:", err);
-      setSubmitError(err.message || "Erreur lors de la réservation");
+      let errorMessage = "Erreur lors de la réservation";
+      if (err.message?.includes("Token")) {
+        errorMessage = "Vous devez être connecté pour effectuer cette réservation.";
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setSubmitError(errorMessage);
       setIsSubmitting(false);
     }
   };
@@ -335,6 +344,25 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
           </p>
           <Button onClick={() => onNavigate("categories")}>
             Retour aux catégories
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // If not logged in, show login prompt
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-white pt-20">
+        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
+          <h1 className="text-3xl font-bold text-[#000080] mb-4">
+            Connexion Requise
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Vous devez être connecté pour réserver un service. Veuillez vous connecter pour continuer.
+          </p>
+          <Button onClick={() => onNavigate("login")}>
+            Se Connecter
           </Button>
         </div>
       </div>

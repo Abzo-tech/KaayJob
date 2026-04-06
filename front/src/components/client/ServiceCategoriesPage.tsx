@@ -108,7 +108,8 @@ export function ServiceCategoriesPage({
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/categories");
+        const response = await api.get("/categories", false); // no cache
+        console.log('Categories API response:', response);
         const normalizedCategories = response?.success
           ? normalizeCategoriesResponse(response)
           : fallbackCategories;

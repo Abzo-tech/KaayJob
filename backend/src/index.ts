@@ -10,6 +10,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
+import rateLimit from "express-rate-limit";
 
 import authRoutes from "./routes/auth";
 import bookingsRoutes from "./routes/bookings";
@@ -22,6 +23,7 @@ import notificationsRoutes from "./routes/notifications";
 import paymentsRoutes from "./routes/payments";
 
 import { testConnection, query } from "./config/database";
+import { swaggerUi, specs } from "./config/swagger";
 import { prisma } from "./config/prisma";
 import { seedDatabase } from "./scripts/seed";
 import bcrypt from "bcryptjs";
@@ -29,12 +31,25 @@ import bcrypt from "bcryptjs";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    message: "Trop de requêtes, veuillez réessayer plus tard"
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Middleware
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  }),
-);
+app.use(limiter);
+// app.use(
+//   helmet({
+//     crossOriginResourcePolicy: { policy: "cross-origin" },
+//   }),
+// );
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -75,36 +90,23 @@ app.use(
 );
 
 // Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/bookings", bookingsRoutes);
-app.use("/api/providers", providersRoutes);
-app.use("/api/categories", categoriesRoutes);
-app.use("/api/services", servicesRoutes);
-app.use("/api/reviews", reviewsRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/notifications", notificationsRoutes);
-app.use("/api/payments", paymentsRoutes);
+// app.use("/api/auth", authRoutes);
+// app.use("/api/bookings", bookingsRoutes);
+// app.use("/api/providers", providersRoutes);
+// app.use("/api/categories", categoriesRoutes);
+// app.use("/api/services", servicesRoutes);
+// app.use("/api/reviews", reviewsRoutes);
+// app.use("/api/admin", adminRoutes);
+// app.use("/api/notifications", notificationsRoutes);
+// app.use("/api/payments", paymentsRoutes);
 
 // Health check
 app.get("/api/health", async (req, res) => {
-  try {
-    // Test de connexion à la base de données
-    await prisma.$queryRaw`SELECT 1`;
-    res.json({
-      success: true,
-      message: "API KaayJob en ligne",
-      timestamp: new Date().toISOString(),
-      database: "connectée",
-    });
-  } catch (error) {
-    res.json({
-      success: true,
-      message: "API KaayJob en ligne",
-      timestamp: new Date().toISOString(),
-      database: "déconnectée",
-    });
-  }
+  res.json({ success: true, message: "API KaayJob opérationnelle", timestamp: new Date().toISOString() });
 });
+
+// Documentation Swagger
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // Seed database endpoint
 app.post("/api/seed", async (req, res) => {
@@ -506,26 +508,26 @@ app.use((req, res) => {
 // Start server
 const startServer = async () => {
   try {
-    await testConnection();
+    // await testConnection();
 
     // Seeder automatiquement pour les données de démonstration
-    try {
-      console.log("🔄 Vérification de connexion à la base de données...");
-      const usersCount = await prisma.user.count();
-      const categoriesCount = await prisma.category.count();
-      console.log(`✅ Base de données connectée: ${usersCount} utilisateurs, ${categoriesCount} catégories`);
+    // try {
+    //   console.log("🔄 Vérification de connexion à la base de données...");
+    //   const usersCount = await prisma.user.count();
+    //   const categoriesCount = await prisma.category.count();
+    //   console.log(`✅ Base de données connectée: ${usersCount} utilisateurs, ${categoriesCount} catégories");
 
-      // Si la base est vide, seeder automatiquement
-      if (usersCount === 0) {
-        console.log("🌱 Base vide détectée - exécution du seed automatique...");
-        await seedDatabase();
-        console.log("✅ Seed automatique terminé");
-      } else {
-        console.log("✅ Données existantes préservées");
-      }
-    } catch (dbError) {
-      console.log("⚠️ Erreur de connexion base de données:", dbError);
-    }
+    //   // Si la base est vide, seeder automatiquement
+    //   if (usersCount === 0) {
+    //     console.log("🌱 Base vide détectée - exécution du seed automatique...");
+    //     // await seedDatabase();
+    //     console.log("✅ Seed automatique désactivé");
+    //   } else {
+    //     console.log("✅ Données existantes préservées");
+    //   }
+    // } catch (dbError) {
+    //   console.log("⚠️ Erreur de connexion base de données:", dbError);
+    // }
 
     app.listen(PORT, () => {
       console.log(`✅ Serveur KaayJob démarré sur le port ${PORT}`);

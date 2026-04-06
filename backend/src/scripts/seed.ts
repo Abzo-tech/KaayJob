@@ -9,16 +9,14 @@ export async function seedDatabase() {
   try {
     console.log('🌱 Initialisation des données de démonstration...');
 
-    // Créer des catégories de base
+    // Créer des catégories de base (alignées avec le frontend)
     const categories = [
-      { name: 'Plomberie', slug: 'plomberie', description: 'Services de plomberie et réparation', icon: '🔧' },
-      { name: 'Électricité', slug: 'electricite', description: 'Installation et réparation électrique', icon: '⚡' },
-      { name: 'Menuiserie', slug: 'menuiserie', description: 'Travaux de bois et menuiserie', icon: '🔨' },
-      { name: 'Peinture', slug: 'peinture', description: 'Peinture intérieure et extérieure', icon: '🎨' },
-      { name: 'Jardinage', slug: 'jardinage', description: 'Entretien d\'espaces verts', icon: '🌿' },
-      { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage', icon: '🧽' },
-      { name: 'Réparation', slug: 'reparation', description: 'Réparations diverses', icon: '🔧' },
-      { name: 'Transport', slug: 'transport', description: 'Services de transport', icon: '🚚' }
+      { name: 'Plomberie', slug: 'plomberie', description: 'Installation, fuite, entretien et depannage a domicile.', image: '/images/plomberie.png', icon: '🔧' },
+      { name: 'Menuiserie', slug: 'menuiserie', description: 'Fabrication, reparation et ajustements sur mesure.', image: '/images/menuiserie.png', icon: '🔨' },
+      { name: 'Cuisine', slug: 'cuisine', description: 'Chefs et cuisiniers pour vos besoins du quotidien et evenements.', image: '/images/cuisine.png', icon: '👨‍🍳' },
+      { name: 'Mecanique', slug: 'mecanique', description: 'Diagnostic, entretien et reparation de vehicules.', image: '/images/mecanique.png', icon: '🔧' },
+      { name: 'Education', slug: 'education', description: 'Cours particuliers et accompagnement scolaire de proximite.', image: '/images/education.png', icon: '📚' },
+      { name: 'Reparation', slug: 'reparation', description: 'Interventions rapides pour vos pannes et petits travaux.', image: '/images/reparation.png', icon: '🔧' }
     ];
 
     let categoriesCreated = 0;
@@ -26,9 +24,9 @@ export async function seedDatabase() {
       const existing = await query('SELECT id FROM categories WHERE slug = $1', [category.slug]);
       if (existing.rows.length === 0) {
         await query(`
-          INSERT INTO categories (id, name, slug, description, icon, is_active, created_at)
-          VALUES (gen_random_uuid(), $1, $2, $3, $4, true, NOW())
-        `, [category.name, category.slug, category.description, category.icon]);
+          INSERT INTO categories (id, name, slug, description, icon, image, is_active, created_at)
+          VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true, NOW())
+        `, [category.name, category.slug, category.description, category.icon, category.image]);
         categoriesCreated++;
       }
     }
@@ -50,12 +48,12 @@ export async function seedDatabase() {
       {
         name: 'Fatou Sow',
         email: 'fatou@example.com',
-        specialty: 'Électricité',
+        specialty: 'Mecanique',
         phone: '+22177234567',
         address: 'Yoff, Dakar',
         lat: 14.7489,
         lng: -17.4667,
-        bio: 'Spécialiste en installations électriques et dépannages'
+        bio: 'Spécialiste en mécanique et dépannages automobiles'
       },
       {
         name: 'Moussa Ba',
@@ -70,22 +68,22 @@ export async function seedDatabase() {
       {
         name: 'Amina Kane',
         email: 'amina@example.com',
-        specialty: 'Peinture',
+        specialty: 'Cuisine',
         phone: '+22177456789',
         address: 'Mermoz, Dakar',
         lat: 14.7067,
         lng: -17.4758,
-        bio: 'Peintre professionnelle pour intérieur et extérieur'
+        bio: 'Cheffe cuisinière pour événements et cuisine du quotidien'
       },
       {
         name: 'Ibrahima Diop',
         email: 'ibrahima@example.com',
-        specialty: 'Jardinage',
+        specialty: 'Education',
         phone: '+22177567890',
         address: 'Ouakam, Dakar',
         lat: 14.7294,
         lng: -17.4667,
-        bio: 'Expert en aménagement et entretien d\'espaces verts'
+        bio: 'Professeur particulier pour cours à domicile'
       },
       {
         name: 'Mariama Faye',
@@ -144,6 +142,30 @@ export async function seedDatabase() {
     }
 
     console.log(`✅ ${providersCreated} prestataires créés`);
+
+    // Créer des services pour chaque prestataire (minimum 1 service actif requis)
+    let servicesCreated = 0;
+    for (const provider of providers) {
+      const user = await query('SELECT id FROM users WHERE email = $1', [provider.email]);
+      if (user.rows.length > 0) {
+        const category = await query('SELECT id FROM categories WHERE name = $1', [provider.specialty]);
+        if (category.rows.length > 0) {
+          await query(`
+            INSERT INTO services (id, provider_id, category_id, name, description, price, price_type, duration, is_active, created_at, updated_at)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'HOURLY', 1, true, NOW(), NOW())
+          `, [
+            user.rows[0].id,
+            category.rows[0].id,
+            `Service ${provider.specialty}`,
+            `Service professionnel de ${provider.specialty.toLowerCase()}`,
+25
+          ]);
+          servicesCreated++;
+        }
+      }
+    }
+
+    console.log(`✅ ${servicesCreated} services créés`);
 
     // Créer un admin si aucun n'existe
     const adminCheck = await query("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1");

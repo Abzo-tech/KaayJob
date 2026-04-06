@@ -51,30 +51,30 @@ export declare function getCategoryById(categoryId: string): Promise<{
  */
 export declare function createCategory(data: CreateCategoryData, adminId?: string): Promise<{
     id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    icon: string | null;
-    image: string | null;
     isActive: boolean;
-    displayOrder: number;
-    parentId: string | null;
     createdAt: Date;
+    name: string;
+    description: string | null;
+    slug: string;
+    icon: string | null;
+    parentId: string | null;
+    displayOrder: number;
+    image: string | null;
 }>;
 /**
  * Mettre à jour une catégorie
  */
 export declare function updateCategory(categoryId: string, data: UpdateCategoryData, adminId?: string): Promise<{
     id: string;
-    name: string;
-    slug: string;
-    description: string | null;
-    icon: string | null;
-    image: string | null;
     isActive: boolean;
-    displayOrder: number;
-    parentId: string | null;
     createdAt: Date;
+    name: string;
+    description: string | null;
+    slug: string;
+    icon: string | null;
+    parentId: string | null;
+    displayOrder: number;
+    image: string | null;
 }>;
 /**
  * Supprimer une catégorie

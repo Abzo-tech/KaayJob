@@ -370,7 +370,7 @@ export function ServiceProvidersMapPage({
                 <SelectTrigger className="w-full md:w-48 h-12 bg-white text-gray-900 border-0">
                   <SelectValue placeholder="Toutes les catégories" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[1000]">
                   <SelectItem value="all">Toutes les catégories</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.name}>
@@ -400,7 +400,7 @@ export function ServiceProvidersMapPage({
 
             {/* Advanced Filters */}
             {showFilters && (
-              <Card className="bg-white text-gray-900 p-4">
+              <Card className="bg-white text-gray-900 p-4 relative z-[1000]">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <Label className="text-sm font-medium">Distance max (km)</Label>
