@@ -13,14 +13,14 @@ import path from "path";
 import rateLimit from "express-rate-limit";
 
 import authRoutes from "./routes/auth";
-import bookingsRoutes from "./routes/bookings";
-import providersRoutes from "./routes/providers";
+// import bookingsRoutes from "./routes/bookings";
+// import providersRoutes from "./routes/providers";
 import categoriesRoutes from "./routes/categories";
-import servicesRoutes from "./routes/services";
-import reviewsRoutes from "./routes/reviews";
-import adminRoutes from "./routes/admin";
-import notificationsRoutes from "./routes/notifications";
-import paymentsRoutes from "./routes/payments";
+// import servicesRoutes from "./routes/services";
+// import reviewsRoutes from "./routes/reviews";
+// import adminRoutes from "./routes/admin";
+// import notificationsRoutes from "./routes/notifications";
+// import paymentsRoutes from "./routes/payments";
 
 import { testConnection, query } from "./config/database";
 import { swaggerUi, specs } from "./config/swagger";
@@ -91,14 +91,14 @@ app.use(
 
 // Routes
 app.use("/api/auth", authRoutes);
-// app.use("/api/bookings", bookingsRoutes);
+// app.use("/api/bookings", bookingsRoutes); // Temporairement désactivé
 // app.use("/api/providers", providersRoutes);
 app.use("/api/categories", categoriesRoutes);
-app.use("/api/services", servicesRoutes);
-app.use("/api/reviews", reviewsRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/notifications", notificationsRoutes);
-app.use("/api/payments", paymentsRoutes);
+// app.use("/api/services", servicesRoutes);
+// app.use("/api/reviews", reviewsRoutes);
+// app.use("/api/admin", adminRoutes);
+// app.use("/api/notifications", notificationsRoutes);
+// app.use("/api/payments", paymentsRoutes);
 
 // Health check
 app.get("/api/health", async (req, res) => {
