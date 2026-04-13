@@ -10,6 +10,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma";
 import { Role } from "@prisma/client";
 import { IUserCreate, IUserUpdate } from "../interfaces";
+import { query } from "../config/database";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "kaayjob-secret-key-change-in-production";
@@ -17,18 +18,21 @@ const JWT_SECRET =
 export class AuthController {
   /**
    * Inscription d'un nouvel utilisateur
+   * Utilise les requêtes SQL directes pour contourner les problèmes Prisma temporaires
    */
   static async register(req: Request, res: Response): Promise<void> {
     try {
       const { email, password, firstName, lastName, phone, role } =
         req.body as IUserCreate;
 
-      // Vérifier si l'email existe déjà
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
+      console.log("📝 Inscription pour:", email);
 
-      if (existingUser) {
+      // Import de la fonction query
+      const { query } = await import("../config/database");
+
+      // Vérifier si l'email existe déjà
+      const existingUser = await query("SELECT id FROM users WHERE email = $1", [email]);
+      if (existingUser.rows.length > 0) {
         res.status(400).json({
           success: false,
           message: "Cet email est déjà utilisé",
@@ -39,52 +43,50 @@ export class AuthController {
       // Hasher le mot de passe
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Mapper le rôle
-      let userRole: Role = Role.CLIENT;
+      // Mapper le rôle pour la base de données
+      let dbRole = 'CLIENT';
       if (role === "prestataire") {
-        userRole = Role.PRESTATAIRE;
+        dbRole = 'PRESTATAIRE';
       } else if (role === "admin") {
-        userRole = Role.ADMIN;
+        dbRole = 'ADMIN';
       }
 
-      // Créer l'utilisateur avec son profil prestataire si nécessaire
-      const user = await prisma.user.create({
-        data: {
-          email,
-          password: hashedPassword,
-          firstName,
-          lastName,
-          phone,
-          role: userRole,
-          ...(role === "prestataire"
-            ? {
-                providerProfile: {
-                  create: {},
-                },
-              }
-            : {}),
-        },
-        include: {
-          providerProfile: true,
-        },
-      });
+      // Créer l'utilisateur
+      const userResult = await query(`
+        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
+        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, NOW(), NOW())
+        RETURNING id, email, first_name, last_name, phone, role
+      `, [email, hashedPassword, firstName, lastName, phone, dbRole]);
+
+      const user = userResult.rows[0];
+
+      // Créer le profil prestataire si nécessaire
+      if (role === "prestataire") {
+        await query(`
+          INSERT INTO provider_profiles (id, user_id, created_at, updated_at)
+          VALUES (gen_random_uuid(), $1, NOW(), NOW())
+        `, [user.id]);
+        console.log('👷 Profil prestataire créé');
+      }
 
       // Générer le token JWT
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "7d" },
+        { expiresIn: "7d" }
       );
+
+      console.log("✅ Inscription réussie:", email);
 
       res.status(201).json({
         success: true,
-        message: "Compte créé avec succès",
+        message: "Utilisateur créé avec succès",
         data: {
           user: {
             id: user.id,
             email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            firstName: user.first_name,
+            lastName: user.last_name,
             phone: user.phone,
             role: user.role.toLowerCase(),
           },
@@ -92,7 +94,7 @@ export class AuthController {
         },
       });
     } catch (error) {
-      console.error("Erreur inscription:", error);
+      console.error("❌ Erreur inscription:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de l'inscription",
@@ -102,16 +104,24 @@ export class AuthController {
 
   /**
    * Connexion d'un utilisateur existant
+   * Utilise les requêtes SQL directes pour contourner les problèmes Prisma temporaires
    */
   static async login(req: Request, res: Response): Promise<void> {
     try {
       const { email, password } = req.body;
 
-      // Rechercher l'utilisateur
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
+      console.log("🔐 Connexion pour:", email);
 
+      // Import de la fonction query
+      const { query } = await import("../config/database");
+
+      // Rechercher l'utilisateur
+      const userResult = await query(
+        "SELECT id, email, password, first_name, last_name, phone, role, avatar FROM users WHERE email = $1",
+        [email]
+      );
+
+      const user = userResult.rows[0];
       if (!user) {
         res.status(401).json({
           success: false,
@@ -134,8 +144,10 @@ export class AuthController {
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "7d" },
+        { expiresIn: "7d" }
       );
+
+      console.log("✅ Connexion réussie:", email);
 
       res.json({
         success: true,
@@ -144,8 +156,8 @@ export class AuthController {
           user: {
             id: user.id,
             email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
+            firstName: user.first_name,
+            lastName: user.last_name,
             phone: user.phone,
             role: user.role.toLowerCase(),
             avatar: user.avatar,
@@ -154,7 +166,7 @@ export class AuthController {
         },
       });
     } catch (error) {
-      console.error("Erreur connexion:", error);
+      console.error("❌ Erreur connexion:", error);
       res.status(500).json({
         success: false,
         message: "Erreur lors de la connexion",

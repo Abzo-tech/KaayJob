@@ -94,16 +94,45 @@ export async function testConnection(): Promise<boolean> {
 
 export const query = async (text: string, params?: any[]) => {
   const start = Date.now();
-  const result = await pool.query(text, params);
-  const duration = Date.now() - start;
-  if (process.env.NODE_ENV === "development") {
-    console.log("Requête exécutée", {
-      text: text.substring(0, 50),
-      duration,
-      rows: result.rowCount,
+  let client: any = null;
+
+  try {
+    // Utiliser des connexions individuelles pour éviter les problèmes de pool
+    client = new (require('pg')).Client({
+      host: '127.0.0.1',
+      port: 5432,
+      database: 'kaayjob',
+      user: 'postgres',
+      password: 'postgres',
+      connectionTimeoutMillis: 5000,
+      query_timeout: 5000,
     });
+
+    await client.connect();
+    const result = await client.query(text, params);
+
+    const duration = Date.now() - start;
+    if (process.env.NODE_ENV === "development") {
+      console.log("✅ Requête exécutée", {
+        text: text.substring(0, 50),
+        duration,
+        rows: result.rowCount,
+      });
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error("❌ Erreur de requête:", error.message);
+    throw error;
+  } finally {
+    if (client) {
+      try {
+        await client.end();
+      } catch (e) {
+        // Ignorer
+      }
+    }
   }
-  return result;
 };
 
 export default { pool, testConnection, query };

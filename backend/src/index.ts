@@ -90,15 +90,15 @@ app.use(
 );
 
 // Routes
-// app.use("/api/auth", authRoutes);
+app.use("/api/auth", authRoutes);
 // app.use("/api/bookings", bookingsRoutes);
 // app.use("/api/providers", providersRoutes);
-// app.use("/api/categories", categoriesRoutes);
-// app.use("/api/services", servicesRoutes);
-// app.use("/api/reviews", reviewsRoutes);
-// app.use("/api/admin", adminRoutes);
-// app.use("/api/notifications", notificationsRoutes);
-// app.use("/api/payments", paymentsRoutes);
+app.use("/api/categories", categoriesRoutes);
+app.use("/api/services", servicesRoutes);
+app.use("/api/reviews", reviewsRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationsRoutes);
+app.use("/api/payments", paymentsRoutes);
 
 // Health check
 app.get("/api/health", async (req, res) => {

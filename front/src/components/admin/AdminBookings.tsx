@@ -137,7 +137,13 @@ export function AdminBookings() {
   };
 
   const formatPrice = (price: string | number) => {
+    if (price === null || price === undefined) return "0";
+
     const numPrice = typeof price === "string" ? parseFloat(price) : price;
+
+    // Vérifier si le résultat est un nombre valide
+    if (isNaN(numPrice)) return "0";
+
     return numPrice.toLocaleString();
   };
 
