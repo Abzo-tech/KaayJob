@@ -67,6 +67,7 @@ export function PrestataireDashboard({ onNavigate }: PrestataireDashboardProps) 
   const [myServices, setMyServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [providerName, setProviderName] = useState("");
+  const [providerProfile, setProviderProfile] = useState<any>(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -86,6 +87,14 @@ export function PrestataireDashboard({ onNavigate }: PrestataireDashboardProps) 
       if (userData) {
         user = JSON.parse(userData);
         setProviderName(user.firstName || "Prestataire");
+      }
+
+      // Charger le profil prestataire
+      try {
+        const profileRes = await api.get("/profile");
+        setProviderProfile(profileRes?.data);
+      } catch (error) {
+        console.log("Erreur chargement profil:", error);
       }
 
       // Charger les services du prestataire
@@ -307,10 +316,16 @@ export function PrestataireDashboard({ onNavigate }: PrestataireDashboardProps) 
   );
 
   // Vérifications pour forcer la complétion du profil et création de services
+  // Vérifier les conditions de visibilité côté client (doivent correspondre aux conditions backend)
   const hasCompleteProfile = user && user.firstName && user.lastName && user.phone;
   const hasServices = myServices.length > 0;
+  const isProfileVerified = providerProfile?.isVerified === true;
+  const hasCompleteProviderProfile = providerProfile?.specialty && providerProfile?.bio && providerProfile?.hourlyRate && providerProfile?.location;
 
-  if (!hasCompleteProfile || !hasServices) {
+  // Le prestataire est visible si : profil utilisateur complet + profil prestataire vérifié et complet + au moins un service
+  const isVisibleToClients = hasCompleteProfile && isProfileVerified && hasCompleteProviderProfile && hasServices;
+
+  if (!isVisibleToClients) {
     return (
       <div className="min-h-screen bg-gray-50 pt-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -318,14 +333,14 @@ export function PrestataireDashboard({ onNavigate }: PrestataireDashboardProps) 
             <div className="text-center">
               <AlertTriangle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
               <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                Complétez votre profil prestataire
+                Votre profil n'est pas visible aux clients
               </h1>
               <p className="text-gray-600 mb-8">
                 Pour apparaître dans les recherches clients et recevoir des réservations,
-                vous devez compléter votre profil et créer au moins un service.
+                vous devez remplir toutes les conditions suivantes :
               </p>
 
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <Card className={`${hasCompleteProfile ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
                   <CardContent className="pt-6">
                     <div className="flex items-center">
@@ -333,9 +348,41 @@ export function PrestataireDashboard({ onNavigate }: PrestataireDashboardProps) 
                         <User className={`w-5 h-5 ${hasCompleteProfile ? 'text-green-600' : 'text-orange-600'}`} />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">Informations personnelles</h3>
+                        <h3 className="font-semibold text-gray-900">Profil utilisateur</h3>
                         <p className={`text-sm ${hasCompleteProfile ? 'text-green-600' : 'text-orange-600'}`}>
-                          {hasCompleteProfile ? '✓ Profil complet' : '⚠ Profil incomplet'}
+                          {hasCompleteProfile ? '✓ Complet' : '⚠ Incomplet'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className={`${isProfileVerified ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${isProfileVerified ? 'bg-green-100' : 'bg-orange-100'}`}>
+                        <Star className={`w-5 h-5 ${isProfileVerified ? 'text-green-600' : 'text-orange-600'}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Vérification</h3>
+                        <p className={`text-sm ${isProfileVerified ? 'text-green-600' : 'text-orange-600'}`}>
+                          {isProfileVerified ? '✓ Prestataire vérifié' : '⚠ En attente de vérification'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className={`${hasCompleteProviderProfile ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${hasCompleteProviderProfile ? 'bg-green-100' : 'bg-orange-100'}`}>
+                        <Briefcase className={`w-5 h-5 ${hasCompleteProviderProfile ? 'text-green-600' : 'text-orange-600'}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Profil prestataire</h3>
+                        <p className={`text-sm ${hasCompleteProviderProfile ? 'text-green-600' : 'text-orange-600'}`}>
+                          {hasCompleteProviderProfile ? '✓ Profil complet' : '⚠ Profil à compléter'}
                         </p>
                       </div>
                     </div>
@@ -349,24 +396,45 @@ export function PrestataireDashboard({ onNavigate }: PrestataireDashboardProps) 
                         <Wrench className={`w-5 h-5 ${hasServices ? 'text-green-600' : 'text-orange-600'}`} />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">Services créés</h3>
+                        <h3 className="font-semibold text-gray-900">Services actifs</h3>
                         <p className={`text-sm ${hasServices ? 'text-green-600' : 'text-orange-600'}`}>
-                          {hasServices ? `✓ ${myServices.length} service(s) créé(s)` : '⚠ Aucun service créé'}
+                          {hasServices ? `✓ ${myServices.length} service(s)` : '⚠ Aucun service'}
                         </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
+
               </div>
 
-              <div className="flex gap-4 justify-center">
+              <div className="flex flex-wrap gap-3 justify-center">
                 {!hasCompleteProfile && (
                   <Button
-                    onClick={() => onNavigate("prestataire-profile")}
+                    onClick={() => onNavigate("profile")}
                     className="bg-[#000080] hover:bg-[#000080]/90"
                   >
                     <User className="w-4 h-4 mr-2" />
-                    Compléter mon profil
+                    Compléter mon profil utilisateur
+                  </Button>
+                )}
+                {!isProfileVerified && (
+                  <Button
+                    onClick={() => onNavigate("prestataire-profile")}
+                    variant="outline"
+                    className="border-orange-500 text-orange-600 hover:bg-orange-50"
+                  >
+                    <Star className="w-4 h-4 mr-2" />
+                    Demander vérification
+                  </Button>
+                )}
+                {!hasCompleteProviderProfile && (
+                  <Button
+                    onClick={() => onNavigate("prestataire-profile")}
+                    variant="outline"
+                    className="border-blue-500 text-blue-600 hover:bg-blue-50"
+                  >
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    Compléter mon profil prestataire
                   </Button>
                 )}
                 {!hasServices && (

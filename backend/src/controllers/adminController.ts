@@ -86,7 +86,7 @@ export class AdminController {
                c.name as category_name, p.first_name, p.last_name
         FROM services s
         JOIN categories c ON s.category_id = c.id
-        JOIN provider_profiles pp ON s.provider_id = pp.id
+        JOIN provider_profiles pp ON s.provider_id = pp.user_id
         JOIN users p ON pp.user_id = p.id
         ORDER BY s.created_at DESC
         LIMIT $1 OFFSET $2
@@ -108,7 +108,7 @@ export class AdminController {
       console.log('📅 Récupération des réservations admin');
 
       const bookings = await query(`
-        SELECT b.id, b.date, b.time, b.status, b.total_price, b.created_at,
+        SELECT b.id, b.booking_date as date, b.booking_time as time, b.status, b.total_amount as total_price, b.created_at,
                u.first_name, u.last_name, u.email,
                s.name as service_name
         FROM bookings b

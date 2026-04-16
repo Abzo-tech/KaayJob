@@ -73,10 +73,16 @@ export function ServiceDetailPage({
   params = {},
 }: ServiceDetailPageProps) {
   const [provider, setProvider] = useState<Provider | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const providerId = params.providerId;
+  const categoryId = params.categoryId;
+
+  console.log("📄 ServiceDetailPage - params reçus:", params);
+  console.log("🆔 providerId:", providerId, "categoryId:", categoryId);
 
   // Fetch provider from API
   useEffect(() => {
@@ -169,9 +175,12 @@ export function ServiceDetailPage({
           variant="ghost"
           className="mb-4 text-gray-600 hover:text-gray-900"
           onClick={() => {
-            if (params.categoryId) {
-              onNavigate("service-providers", { categoryId: params.categoryId });
+            console.log("🔙 Bouton retour cliqué, categoryId:", categoryId);
+            if (categoryId) {
+              console.log("📍 Navigation vers service-providers avec categoryId:", categoryId);
+              onNavigate("service-providers", { categoryId });
             } else {
+              console.log("📍 Navigation vers service-providers sans categoryId");
               onNavigate("service-providers");
             }
           }}

@@ -44,21 +44,30 @@ export function ServiceProvidersListPage({
   const categoryId = params.categoryId;
   const categoryName = params.categoryName || "Services";
 
+  console.log("📋 ServiceProvidersListPage - categoryId:", categoryId, "params:", params);
+
   // Fetch providers from API
   useEffect(() => {
     const fetchProviders = async () => {
       try {
         setLoading(true);
-        
+        console.log("🔍 Chargement prestataires pour categoryId:", categoryId);
+
         // Build query string with category filter
         let query = "/providers?limit=50";
         if (categoryId) {
           query += `&category=${encodeURIComponent(categoryId)}`;
+          console.log("📋 Requête avec filtre catégorie:", query);
+        } else {
+          console.log("📋 Requête sans filtre catégorie:", query);
         }
-        
+
         const response = await api.get(query);
         if (response.success && response.data) {
+          console.log("✅ Prestataires chargés:", response.data.length);
           setProviders(response.data);
+        } else {
+          console.log("❌ Réponse API:", response);
         }
       } catch (err) {
         console.error("Erreur chargement prestataires:", err);
@@ -164,7 +173,10 @@ export function ServiceProvidersListPage({
                 <Card
                   key={provider.id}
                   className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer group"
-                  onClick={() => onNavigate("service-detail", { providerId: provider.id, categoryId })}
+                  onClick={() => {
+                    console.log("🖱️ Clic sur prestataire:", provider.id, "categoryId:", categoryId);
+                    onNavigate("service-detail", { providerId: provider.id, categoryId });
+                  }}
                 >
                   <CardContent className="p-6">
                     <div className="flex gap-4">

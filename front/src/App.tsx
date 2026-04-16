@@ -127,6 +127,8 @@ export default function App() {
   };
 
   const handleNavigate = (page: string, params?: Record<string, string>) => {
+    console.log("🧭 Navigation vers:", page, "avec params:", params);
+
     // Sauvegarder la page actuelle dans localStorage
     localStorage.setItem("currentPage", page);
 
@@ -135,6 +137,7 @@ export default function App() {
       const queryString = new URLSearchParams(params).toString();
       window.history.pushState({}, "", `/${page}?${queryString}`);
       setCurrentPage(`${page}?${queryString}`);
+      console.log("📝 URL mise à jour:", `/${page}?${queryString}`);
     } else if (page.includes("?")) {
       // Si la page contient déjà des paramètres de requête
       const [pageName, queryString] = page.split("?");

@@ -48,10 +48,10 @@ class BookingController {
             let sqlQuery = `
         SELECT
           b.id,
-          b.date,
-          b.time,
+          b.booking_date as date,
+          b.booking_time as time,
           b.status,
-          b.total_price,
+          b.total_amount as total_price,
           b.address,
           b.city,
           b.phone,

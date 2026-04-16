@@ -276,7 +276,7 @@ export class CategoryController {
         SELECT s.id, s.name, s.description, s.price, s.duration, s.is_active,
                p.first_name, p.last_name, p.phone
         FROM services s
-        JOIN provider_profiles pp ON s.provider_id = pp.id
+        JOIN provider_profiles pp ON s.provider_id = pp.user_id
         JOIN users p ON pp.user_id = p.id
         WHERE s.category_id = $1 AND s.is_active = true
         ORDER BY s.name ASC
