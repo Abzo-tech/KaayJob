@@ -209,6 +209,26 @@ class BookingController {
         try {
             const user = req.user;
             const { serviceId, date, time, address, city, phone, notes } = req.body;
+            console.log("📅 Création réservation - données reçues:", { serviceId, date, time, address, city, phone });
+            // Validate date format
+            if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                res.status(400).json({
+                    success: false,
+                    message: "Format de date invalide. Utilisez YYYY-MM-DD",
+                });
+                return;
+            }
+            // Validate that date is not in the past
+            const bookingDate = new Date(date + 'T00:00:00.000Z');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (bookingDate < today) {
+                res.status(400).json({
+                    success: false,
+                    message: "La date de réservation ne peut pas être dans le passé",
+                });
+                return;
+            }
             // Check if service exists and is active
             const service = await prisma_1.prisma.service.findUnique({
                 where: { id: serviceId },
