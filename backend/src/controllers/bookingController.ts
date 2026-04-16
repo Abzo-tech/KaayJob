@@ -52,10 +52,10 @@ export class BookingController {
       let sqlQuery = `
         SELECT
           b.id,
-          b.booking_date as date,
-          b.booking_time as time,
+          b.booking_date as "bookingDate",
+          b.booking_time as "bookingTime",
           b.status,
-          b.total_amount as total_price,
+          b.total_amount as "totalAmount",
           b.address,
           b.city,
           b.phone,
@@ -64,11 +64,22 @@ export class BookingController {
           u.first_name as client_first_name,
           u.last_name as client_last_name,
           u.email as client_email,
-          s.name as service_name,
-          s.price as service_price
+          json_build_object(
+            'id', s.id,
+            'name', s.name,
+            'price', s.price,
+            'provider', json_build_object(
+              'user', json_build_object(
+                'firstName', p.first_name,
+                'lastName', p.last_name
+              )
+            )
+          ) as service
         FROM bookings b
         JOIN users u ON b.client_id = u.id
         JOIN services s ON b.service_id = s.id
+        LEFT JOIN provider_profiles pp ON s.provider_id = pp.user_id
+        LEFT JOIN users p ON pp.user_id = p.id
       `;
 
       const params: any[] = [];
