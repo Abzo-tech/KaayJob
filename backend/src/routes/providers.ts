@@ -23,6 +23,27 @@ router.get("/:id", async (req: Request, res: Response) => {
   await ProviderController.getById(req, res);
 });
 
-// TODO: Ajouter les autres routes quand le contrôleur sera complet
+// Routes pour la gestion du profil prestataire (authentifiées)
+router.use(authenticate);
+
+// GET /api/providers/profile - Profil du prestataire connecté
+router.get("/profile", async (req: Request, res: Response) => {
+  await ProviderController.getProfile(req, res);
+});
+
+// PUT /api/providers/profile - Mettre à jour le profil prestataire
+router.put("/profile", async (req: Request, res: Response) => {
+  await ProviderController.updateProfile(req, res);
+});
+
+// PUT /api/providers/profile/location - Mettre à jour la localisation
+router.put("/profile/location", async (req: Request, res: Response) => {
+  await ProviderController.updateLocation(req, res);
+});
+
+// PUT /api/providers/profile/verification - Demander vérification
+router.put("/profile/verification", async (req: Request, res: Response) => {
+  await ProviderController.requestVerification(req, res);
+});
 
 export default router;
