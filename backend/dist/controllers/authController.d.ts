@@ -7,10 +7,12 @@ import { Request, Response } from "express";
 export declare class AuthController {
     /**
      * Inscription d'un nouvel utilisateur
+     * Utilise les requêtes SQL directes pour contourner les problèmes Prisma temporaires
      */
     static register(req: Request, res: Response): Promise<void>;
     /**
      * Connexion d'un utilisateur existant
+     * Utilise les requêtes SQL directes pour contourner les problèmes Prisma temporaires
      */
     static login(req: Request, res: Response): Promise<void>;
     /**

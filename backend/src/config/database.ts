@@ -53,28 +53,26 @@ const dbConfig = process.env.DATABASE_URL
   ? parseDatabaseUrl(process.env.DATABASE_URL)
   : null;
 
-console.log('📦 Configuration de la base de données:');
-console.log('  - DATABASE_URL présent:', !!process.env.DATABASE_URL);
-if (dbConfig) {
-  console.log('  - Host:', dbConfig.host);
-  console.log('  - Port:', dbConfig.port);
-  console.log('  - Database:', dbConfig.database);
-  console.log('  - User:', dbConfig.user);
-} else {
-  console.log('  - Utilisation des variables individuelles');
-}
+// console.log('📦 Configuration de la base de données:');
+// console.log('  - DATABASE_URL présent:', !!process.env.DATABASE_URL);
+// if (dbConfig) {
+//   console.log('  - Host:', dbConfig.host);
+//   console.log('  - Port:', dbConfig.port);
+//   console.log('  - Database:', dbConfig.database);
+//   console.log('  - User:', dbConfig.user);
+// } else {
+//   console.log('  - Utilisation des variables individuelles');
+// }
 
 export const pool = new Pool({
-  host: dbConfig?.host || process.env.DB_HOST || "localhost",
-  port: dbConfig?.port || parseInt(process.env.DB_PORT || "5432"),
-  database: dbConfig?.database || process.env.DB_NAME || "kaayjob",
-  user: dbConfig?.user || process.env.DB_USER || "postgres",
-  password: dbConfig?.password || process.env.DB_PASSWORD || "postgres",
+  host: "127.0.0.1",
+  port: 5432,
+  database: "kaayjob",
+  user: "postgres",
+  password: "postgres",
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-  // SSL configuration for Prisma Accelerate
-  ssl: process.env.DATABASE_URL?.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined,
+  connectionTimeoutMillis: 5000,
 });
 
 pool.on("error", (err) => {

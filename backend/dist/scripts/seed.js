@@ -3,9 +3,43 @@
  * Script de seed pour initialiser les données de démonstration
  * À exécuter au démarrage de l'application pour avoir du contenu de test
  */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.seedDatabase = seedDatabase;
 const database_1 = require("../config/database");
+const seed_subscriptions_1 = require("./seed-subscriptions");
 async function seedDatabase() {
     try {
         console.log('🌱 Initialisation des données de démonstration...');
@@ -121,15 +155,26 @@ async function seedDatabase() {
                 // Récupérer l'ID de l'utilisateur créé
                 const userResult = await (0, database_1.query)('SELECT id FROM users WHERE email = $1', [provider.email]);
                 const userId = userResult.rows[0].id;
-                // Créer le profil prestataire
+                // Créer le profil prestataire avec coordonnées géographiques
                 await (0, database_1.query)(`
           INSERT INTO provider_profiles (
-            id, user_id, hourly_rate, years_experience, is_available,
-            created_at, updated_at
+            id, user_id, specialty, bio, location, latitude, longitude,
+            hourly_rate, years_experience, is_available, rating, total_reviews,
+            is_verified, created_at, updated_at
           ) VALUES (
-            gen_random_uuid(), $1, $2, $3, true, NOW(), NOW()
+            gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, true, 4.5, 10,
+            true, NOW(), NOW()
           )
-        `, [userId, Math.floor(Math.random() * 50) + 20, Math.floor(Math.random() * 15) + 2]);
+        `, [
+                    userId,
+                    provider.specialty,
+                    provider.bio,
+                    provider.address,
+                    provider.lat,
+                    provider.lng,
+                    Math.floor(Math.random() * 50) + 20,
+                    Math.floor(Math.random() * 15) + 2
+                ]);
                 providersCreated++;
             }
         }
@@ -156,23 +201,11 @@ async function seedDatabase() {
             }
         }
         console.log(`✅ ${servicesCreated} services créés`);
-        // Créer un admin si aucun n'existe
-        const adminCheck = await (0, database_1.query)("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1");
-        if (adminCheck.rows.length === 0) {
-            // Créer un admin avec mot de passe connu pour les tests
-            await (0, database_1.query)(`
-        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
-        VALUES (gen_random_uuid(), $1, '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $2, $3, $4, 'ADMIN', true, NOW(), NOW())
-      `, ['admin@kaayjob.com', 'Admin', 'KaayJob', '+221000000000']);
-            console.log('✅ Administrateur créé - Email: admin@kaayjob.com, Mot de passe: password123');
-            // Créer aussi un utilisateur test normal
-            await (0, database_1.query)(`
-        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
-        VALUES (gen_random_uuid(), $1, '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $2, $3, $4, 'CLIENT', true, NOW(), NOW())
-      `, ['test@example.com', 'Test', 'User', '+22177123456']);
-            console.log('✅ Utilisateur test créé - Email: test@example.com, Mot de passe: password123');
-        }
-        console.log('🎉 Base de données initialisée avec succès !');
+        // Initialiser les plans d'abonnement
+        await (0, seed_subscriptions_1.seedSubscriptionPlans)();
+        // Mettre à jour les coordonnées géographiques des prestataires
+        const { updateProviderCoordinates } = await Promise.resolve().then(() => __importStar(require('./update-coordinates')));
+        await updateProviderCoordinates();
         return { categoriesCreated, providersCreated };
     }
     catch (error) {

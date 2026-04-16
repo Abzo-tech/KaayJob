@@ -8,9 +8,9 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma";
+import { query } from "../config/database";
 import { Role } from "@prisma/client";
 import { IUserCreate, IUserUpdate } from "../interfaces";
-import { query } from "../config/database";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "kaayjob-secret-key-change-in-production";
@@ -26,9 +26,6 @@ export class AuthController {
         req.body as IUserCreate;
 
       console.log("📝 Inscription pour:", email);
-
-      // Import de la fonction query
-      const { query } = await import("../config/database");
 
       // Vérifier si l'email existe déjà
       const existingUser = await query("SELECT id FROM users WHERE email = $1", [email]);
@@ -111,9 +108,6 @@ export class AuthController {
       const { email, password } = req.body;
 
       console.log("🔐 Connexion pour:", email);
-
-      // Import de la fonction query
-      const { query } = await import("../config/database");
 
       // Rechercher l'utilisateur
       const userResult = await query(

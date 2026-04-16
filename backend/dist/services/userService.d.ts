@@ -28,19 +28,7 @@ export interface UserFilters {
  * Liste des utilisateurs avec pagination et filtres
  */
 export declare function listUsers(filters: UserFilters): Promise<{
-    data: {
-        id: any;
-        email: any;
-        firstName: any;
-        lastName: any;
-        phone: any;
-        role: any;
-        isActive: any;
-        isVerified: any;
-        bookingCount: number | undefined;
-        createdAt: any;
-        updatedAt: any;
-    }[];
+    data: any;
     pagination: {
         page: number;
         limit: number;

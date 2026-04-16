@@ -22,29 +22,7 @@ export interface UpdateBookingData {
  * Liste des réservations avec pagination et filtres
  */
 export declare function listBookings(filters: BookingFilters): Promise<{
-    data: {
-        id: any;
-        clientId: any;
-        serviceId: any;
-        providerId: any;
-        bookingDate: any;
-        bookingTime: any;
-        duration: any;
-        status: any;
-        address: any;
-        city: any;
-        phone: any;
-        notes: any;
-        totalAmount: any;
-        paymentStatus: any;
-        createdAt: any;
-        updatedAt: any;
-        clientFirstName: any;
-        clientLastName: any;
-        serviceName: any;
-        providerFirstName: any;
-        providerLastName: any;
-    }[];
+    data: any;
     pagination: {
         page: number;
         limit: number;

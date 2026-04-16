@@ -6,7 +6,7 @@
 import { Request, Response } from "express";
 export declare class CategoryController {
     /**
-     * Liste des catégories
+     * Lister toutes les catégories
      */
     static getAll(req: Request, res: Response): Promise<void>;
     /**

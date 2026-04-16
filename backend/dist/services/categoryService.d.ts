@@ -58,8 +58,8 @@ export declare function createCategory(data: CreateCategoryData, adminId?: strin
     slug: string;
     icon: string | null;
     parentId: string | null;
-    displayOrder: number;
     image: string | null;
+    displayOrder: number;
 }>;
 /**
  * Mettre à jour une catégorie
@@ -73,8 +73,8 @@ export declare function updateCategory(categoryId: string, data: UpdateCategoryD
     slug: string;
     icon: string | null;
     parentId: string | null;
-    displayOrder: number;
     image: string | null;
+    displayOrder: number;
 }>;
 /**
  * Supprimer une catégorie

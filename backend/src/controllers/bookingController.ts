@@ -49,16 +49,96 @@ export class BookingController {
       const user = (req as any).user;
       const { status, page = 1, limit = 20 } = req.query as any;
 
-      // Pour l'instant, retourner un tableau vide pour éviter les erreurs
-      // TODO: Implémenter la vraie logique de réservations plus tard
+      let sqlQuery = `
+        SELECT
+          b.id,
+          b.date,
+          b.time,
+          b.status,
+          b.total_price,
+          b.address,
+          b.city,
+          b.phone,
+          b.notes,
+          b.created_at,
+          u.first_name as client_first_name,
+          u.last_name as client_last_name,
+          u.email as client_email,
+          s.name as service_name,
+          s.price as service_price
+        FROM bookings b
+        JOIN users u ON b.client_id = u.id
+        JOIN services s ON b.service_id = s.id
+      `;
+
+      const params: any[] = [];
+
+      // Filter by role
+      if (user.role === "CLIENT" || user.role === "client") {
+        sqlQuery += " WHERE b.client_id = $1";
+        params.push(user.id);
+      } else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+        sqlQuery += " WHERE s.provider_id IN (SELECT id FROM provider_profiles WHERE user_id = $1)";
+        params.push(user.id);
+      }
+      // Admin sees all (no WHERE clause needed)
+
+      // Filter by status
+      if (status) {
+        if (params.length > 0) {
+          sqlQuery += " AND ";
+        } else {
+          sqlQuery += " WHERE ";
+        }
+        sqlQuery += " b.status = $" + (params.length + 1);
+        params.push(status.toUpperCase());
+      }
+
+      sqlQuery += " ORDER BY b.created_at DESC";
+
+      // Add pagination
+      if (limit && limit !== 'all') {
+        sqlQuery += ` LIMIT $${params.length + 1}`;
+        params.push(Number(limit));
+      }
+
+      // Get total count for pagination
+      let countQuery = "SELECT COUNT(*) as total FROM bookings b JOIN services s ON b.service_id = s.id";
+      const countParams: any[] = [];
+
+      if (user.role === "CLIENT" || user.role === "client") {
+        countQuery += " WHERE b.client_id = $1";
+        countParams.push(user.id);
+      } else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+        countQuery += " WHERE s.provider_id IN (SELECT id FROM provider_profiles WHERE user_id = $1)";
+        countParams.push(user.id);
+      }
+
+      if (status) {
+        if (countParams.length > 0) {
+          countQuery += " AND ";
+        } else {
+          countQuery += " WHERE ";
+        }
+        countQuery += " b.status = $" + (countParams.length + 1);
+        countParams.push(status.toUpperCase());
+      }
+
+      const [bookingsResult, countResult] = await Promise.all([
+        query(sqlQuery, params),
+        query(countQuery, countParams)
+      ]);
+
+      const total = parseInt(countResult.rows[0].total, 10);
+
       res.json({
         success: true,
-        data: [],
+        data: bookingsResult.rows,
         pagination: {
           page: Number(page),
           limit: Number(limit),
-          total: 0,
-          totalPages: 0,
+          total,
+          totalPages: Math.ceil(total / Number(limit)),
         },
       });
     } catch (error) {

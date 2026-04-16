@@ -1,0 +1,13 @@
+
+> kaayjob-backend@1.0.0 dev
+> ts-node-dev --respawn --transpile-only --poll src/index.ts
+
+[INFO] 22:38:25 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+🚀 Démarrage du serveur...
+✅ Connexion à la base de données établie
+✅ Test de connexion DB réussi
+🔄 Serveur en attente de connexions...
+✅ Serveur KaayJob démarré sur le port 8000
+   API: http://localhost:8000/api
+🛑 Arrêt du serveur (SIGTERM)...
+✅ Serveur arrêté

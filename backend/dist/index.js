@@ -13,14 +13,38 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const path_1 = __importDefault(require("path"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+const auth_1 = __importDefault(require("./routes/auth"));
+const bookings_1 = __importDefault(require("./routes/bookings"));
+const providers_1 = __importDefault(require("./routes/providers"));
+const categories_1 = __importDefault(require("./routes/categories"));
+const services_1 = __importDefault(require("./routes/services"));
+// import reviewsRoutes from "./routes/reviews";
+const admin_1 = __importDefault(require("./routes/admin"));
+const notifications_1 = __importDefault(require("./routes/notifications"));
+const payments_1 = __importDefault(require("./routes/payments"));
+const subscriptions_1 = __importDefault(require("./routes/subscriptions"));
 const database_1 = require("./config/database");
+const swagger_1 = require("./config/swagger");
 const prisma_1 = require("./config/prisma");
 const seed_1 = require("./scripts/seed");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const app = (0, express_1.default)();
 exports.app = app;
 const PORT = process.env.PORT || 3001;
+// Rate limiting
+const limiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: {
+        success: false,
+        message: "Trop de requêtes, veuillez réessayer plus tard"
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 // Middleware
+app.use(limiter);
 // app.use(
 //   helmet({
 //     crossOriginResourcePolicy: { policy: "cross-origin" },
@@ -51,41 +75,27 @@ app.use((0, cors_1.default)({
 // Servir les fichiers statiques (images) avec CORS
 app.use("/images", (req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     next();
 }, express_1.default.static(path_1.default.join(__dirname, "../public/images")));
 // Routes
-// app.use("/api/auth", authRoutes);
-// app.use("/api/bookings", bookingsRoutes);
-// app.use("/api/providers", providersRoutes);
-// app.use("/api/categories", categoriesRoutes);
-// app.use("/api/services", servicesRoutes);
+app.use("/api/auth", auth_1.default);
+app.use("/api/bookings", bookings_1.default);
+app.use("/api/providers", providers_1.default);
+app.use("/api/categories", categories_1.default);
+app.use("/api/services", services_1.default);
 // app.use("/api/reviews", reviewsRoutes);
-// app.use("/api/admin", adminRoutes);
-// app.use("/api/notifications", notificationsRoutes);
-// app.use("/api/payments", paymentsRoutes);
+app.use("/api/admin", admin_1.default);
+app.use("/api/notifications", notifications_1.default);
+app.use("/api/payments", payments_1.default);
+app.use("/api/subscriptions", subscriptions_1.default);
 // Health check
 app.get("/api/health", async (req, res) => {
-    try {
-        // Test de connexion à la base de données
-        await prisma_1.prisma.$queryRaw `SELECT 1`;
-        res.json({
-            success: true,
-            message: "API KaayJob en ligne",
-            timestamp: new Date().toISOString(),
-            database: "connectée",
-        });
-    }
-    catch (error) {
-        res.json({
-            success: true,
-            message: "API KaayJob en ligne",
-            timestamp: new Date().toISOString(),
-            database: "déconnectée",
-        });
-    }
+    res.json({ success: true, message: "API KaayJob opérationnelle", timestamp: new Date().toISOString() });
 });
+// Documentation Swagger
+app.use("/api/docs", swagger_1.swaggerUi.serve, swagger_1.swaggerUi.setup(swagger_1.specs));
 // Seed database endpoint
 app.post("/api/seed", async (req, res) => {
     try {
@@ -452,28 +462,35 @@ app.use((req, res) => {
 // Start server
 const startServer = async () => {
     try {
-        // await testConnection();
-        // Seeder automatiquement pour les données de démonstration
-        // try {
-        //   console.log("🔄 Vérification de connexion à la base de données...");
-        //   const usersCount = await prisma.user.count();
-        //   const categoriesCount = await prisma.category.count();
-        //   console.log(`✅ Base de données connectée: ${usersCount} utilisateurs, ${categoriesCount} catégories");
-        //   // Si la base est vide, seeder automatiquement
-        //   if (usersCount === 0) {
-        //     console.log("🌱 Base vide détectée - exécution du seed automatique...");
-        //     // await seedDatabase();
-        //     console.log("✅ Seed automatique désactivé");
-        //   } else {
-        //     console.log("✅ Données existantes préservées");
-        //   }
-        // } catch (dbError) {
-        //   console.log("⚠️ Erreur de connexion base de données:", dbError);
-        // }
-        app.listen(PORT, () => {
+        console.log("🚀 Démarrage du serveur...");
+        await (0, database_1.testConnection)();
+        console.log("✅ Test de connexion DB réussi");
+        console.log(`🔄 Tentative de démarrage du serveur sur le port ${PORT}...`);
+        const server = app.listen(Number(PORT), '0.0.0.0', () => {
             console.log(`✅ Serveur KaayJob démarré sur le port ${PORT}`);
             console.log(`   API: http://localhost:${PORT}/api`);
+            console.log(`   Écoute sur toutes les interfaces: 0.0.0.0:${PORT}`);
         });
+        server.on('error', (err) => {
+            console.error('❌ Erreur du serveur:', err);
+        });
+        server.on('listening', () => {
+            console.log('✅ Serveur en écoute active');
+        });
+        // Keep the process alive
+        console.log('🔄 Serveur en attente de connexions...');
+        // Handle shutdown signals only for Ctrl+C (SIGINT)
+        process.on('SIGINT', () => {
+            console.log('🛑 Arrêt du serveur demandé (Ctrl+C)...');
+            server.close(() => {
+                console.log('✅ Serveur arrêté proprement');
+                process.exit(0);
+            });
+        });
+        // Keep server alive indefinitely
+        setInterval(() => {
+            // Keep-alive ping every 30 seconds
+        }, 30000);
     }
     catch (error) {
         console.error("❌ Échec du démarrage du serveur:", error);

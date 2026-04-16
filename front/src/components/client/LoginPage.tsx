@@ -11,13 +11,6 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
-  const [userType, setUserType] = useState<"customer" | "provider" | "admin">(
-    defaultTab === "provider"
-      ? "provider"
-      : defaultTab === "admin"
-        ? "admin"
-        : "customer",
-  );
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -27,6 +20,7 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
     phone: "",
     password: "",
     confirmPassword: "",
+    role: "customer" as "customer" | "provider",
   });
 
   // États pour les erreurs de validation
@@ -62,6 +56,11 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
       case "confirmPassword":
         if (value !== formData.password) {
           error = "Les mots de passe ne correspondent pas";
+        }
+        break;
+      case "role":
+        if (!value) {
+          error = "Veuillez sélectionner un rôle";
         }
         break;
     }
@@ -122,7 +121,7 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
         isValid = false;
       }
 
-      const nameError = userType === "provider"
+      const nameError = formData.role === "provider"
         ? validateFormField(formData.firstName, "address", "Nom de l'entreprise") // Pour prestataires, utiliser validation d'adresse (plus permissive)
         : validateFormField(formData.firstName, "name", "Nom");
       if (nameError) {
@@ -144,6 +143,11 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
         newErrors.confirmPassword = "Les mots de passe ne correspondent pas";
         isValid = false;
       }
+
+      if (!formData.role) {
+        newErrors.role = "Veuillez sélectionner un rôle";
+        isValid = false;
+      }
     }
 
     setErrors(newErrors);
@@ -153,6 +157,7 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
       name: true,
       phone: true,
       confirmPassword: true,
+      role: true,
     });
 
     return isValid;
@@ -180,23 +185,7 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
           }
         );
 
-        // Validate that the selected user type matches the user's actual role
-        const userRole = response.data.user.role?.toLowerCase();
-        
-        // Map user types for comparison
-        const userTypeMap: Record<string, string> = {
-          'client': 'customer',
-          'prestataire': 'provider',
-          'admin': 'admin'
-        };
-        
-        const expectedRole = userTypeMap[userRole] || userRole;
-        
-        if (expectedRole !== userType) {
-          toast.error(`Ce compte n'est pas un compte ${userType}. Veuillez sélectionner le bon type de compte ou contacter le support.`);
-          setIsLoading(false);
-          return;
-        }
+        // Le rôle est automatiquement déterminé par l'API
 
         // response.data contains { user, token }
         onLogin(response.data);
@@ -216,7 +205,7 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
             firstName,
             lastName,
             phone: formData.phone,
-            role: userType === "provider" ? "prestataire" : "client",
+            role: formData.role === "provider" ? "prestataire" : "client",
           }
         );
 
@@ -259,13 +248,11 @@ export function LoginPage({ onNavigate, onLogin, defaultTab }: LoginPageProps) {
           </div>
 
           <AuthForm
-            userType={userType}
             activeTab={activeTab}
             formData={formData}
             errors={errors}
             touched={touched}
             isLoading={isLoading}
-            onUserTypeChange={setUserType}
             onTabChange={setActiveTab}
             onInputChange={handleInputChange}
             onBlur={handleBlur}

@@ -45,65 +45,84 @@ class BookingController {
         try {
             const user = req.user;
             const { status, page = 1, limit = 20 } = req.query;
-            const skip = (Number(page) - 1) * Number(limit);
-            let where = {};
+            let sqlQuery = `
+        SELECT
+          b.id,
+          b.date,
+          b.time,
+          b.status,
+          b.total_price,
+          b.address,
+          b.city,
+          b.phone,
+          b.notes,
+          b.created_at,
+          u.first_name as client_first_name,
+          u.last_name as client_last_name,
+          u.email as client_email,
+          s.name as service_name,
+          s.price as service_price
+        FROM bookings b
+        JOIN users u ON b.client_id = u.id
+        JOIN services s ON b.service_id = s.id
+      `;
+            const params = [];
             // Filter by role
             if (user.role === "CLIENT" || user.role === "client") {
-                where.clientId = user.id;
+                sqlQuery += " WHERE b.client_id = $1";
+                params.push(user.id);
             }
             else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
-                // Service.providerId references ProviderProfile.userId
-                where.service = {
-                    providerId: user.id,
-                };
+                sqlQuery += " WHERE s.provider_id IN (SELECT id FROM provider_profiles WHERE user_id = $1)";
+                params.push(user.id);
             }
-            // Admin sees all
+            // Admin sees all (no WHERE clause needed)
             // Filter by status
             if (status) {
-                where.status = status.toUpperCase();
+                if (params.length > 0) {
+                    sqlQuery += " AND ";
+                }
+                else {
+                    sqlQuery += " WHERE ";
+                }
+                sqlQuery += " b.status = $" + (params.length + 1);
+                params.push(status.toUpperCase());
             }
-            const [bookings, total] = await Promise.all([
-                prisma_1.prisma.booking.findMany({
-                    where,
-                    include: {
-                        client: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                lastName: true,
-                                email: true,
-                                phone: true,
-                            },
-                        },
-                        service: {
-                            select: {
-                                id: true,
-                                name: true,
-                                price: true,
-                                provider: {
-                                    select: {
-                                        userId: true,
-                                        user: {
-                                            select: {
-                                                id: true,
-                                                firstName: true,
-                                                lastName: true,
-                                            },
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    orderBy: { createdAt: "desc" },
-                    skip,
-                    take: Number(limit),
-                }),
-                prisma_1.prisma.booking.count({ where }),
+            sqlQuery += " ORDER BY b.created_at DESC";
+            // Add pagination
+            if (limit && limit !== 'all') {
+                sqlQuery += ` LIMIT $${params.length + 1}`;
+                params.push(Number(limit));
+            }
+            // Get total count for pagination
+            let countQuery = "SELECT COUNT(*) as total FROM bookings b JOIN services s ON b.service_id = s.id";
+            const countParams = [];
+            if (user.role === "CLIENT" || user.role === "client") {
+                countQuery += " WHERE b.client_id = $1";
+                countParams.push(user.id);
+            }
+            else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+                countQuery += " WHERE s.provider_id IN (SELECT id FROM provider_profiles WHERE user_id = $1)";
+                countParams.push(user.id);
+            }
+            if (status) {
+                if (countParams.length > 0) {
+                    countQuery += " AND ";
+                }
+                else {
+                    countQuery += " WHERE ";
+                }
+                countQuery += " b.status = $" + (countParams.length + 1);
+                countParams.push(status.toUpperCase());
+            }
+            const [bookingsResult, countResult] = await Promise.all([
+                (0, database_1.query)(sqlQuery, params),
+                (0, database_1.query)(countQuery, countParams)
             ]);
+            const total = parseInt(countResult.rows[0].total, 10);
             res.json({
                 success: true,
-                data: bookings,
+                data: bookingsResult.rows,
                 pagination: {
                     page: Number(page),
                     limit: Number(limit),

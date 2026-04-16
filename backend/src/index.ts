@@ -13,14 +13,15 @@ import path from "path";
 import rateLimit from "express-rate-limit";
 
 import authRoutes from "./routes/auth";
-// import bookingsRoutes from "./routes/bookings";
-// import providersRoutes from "./routes/providers";
+import bookingsRoutes from "./routes/bookings";
+import providersRoutes from "./routes/providers";
 import categoriesRoutes from "./routes/categories";
-// import servicesRoutes from "./routes/services";
+import servicesRoutes from "./routes/services";
 // import reviewsRoutes from "./routes/reviews";
-// import adminRoutes from "./routes/admin";
-// import notificationsRoutes from "./routes/notifications";
-// import paymentsRoutes from "./routes/payments";
+import adminRoutes from "./routes/admin";
+import notificationsRoutes from "./routes/notifications";
+import paymentsRoutes from "./routes/payments";
+import subscriptionsRoutes from "./routes/subscriptions";
 
 import { testConnection, query } from "./config/database";
 import { swaggerUi, specs } from "./config/swagger";
@@ -82,7 +83,7 @@ app.use(
   "/images",
   (req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
     next();
   },
@@ -91,14 +92,15 @@ app.use(
 
 // Routes
 app.use("/api/auth", authRoutes);
-// app.use("/api/bookings", bookingsRoutes); // Temporairement désactivé
-// app.use("/api/providers", providersRoutes);
+app.use("/api/bookings", bookingsRoutes);
+app.use("/api/providers", providersRoutes);
 app.use("/api/categories", categoriesRoutes);
-// app.use("/api/services", servicesRoutes);
+app.use("/api/services", servicesRoutes);
 // app.use("/api/reviews", reviewsRoutes);
-// app.use("/api/admin", adminRoutes);
-// app.use("/api/notifications", notificationsRoutes);
-// app.use("/api/payments", paymentsRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationsRoutes);
+app.use("/api/payments", paymentsRoutes);
+app.use("/api/subscriptions", subscriptionsRoutes);
 
 // Health check
 app.get("/api/health", async (req, res) => {
@@ -508,31 +510,42 @@ app.use((req, res) => {
 // Start server
 const startServer = async () => {
   try {
-    // await testConnection();
+    console.log("🚀 Démarrage du serveur...");
+    await testConnection();
+    console.log("✅ Test de connexion DB réussi");
 
-    // Seeder automatiquement pour les données de démonstration
-    // try {
-    //   console.log("🔄 Vérification de connexion à la base de données...");
-    //   const usersCount = await prisma.user.count();
-    //   const categoriesCount = await prisma.category.count();
-    //   console.log(`✅ Base de données connectée: ${usersCount} utilisateurs, ${categoriesCount} catégories");
-
-    //   // Si la base est vide, seeder automatiquement
-    //   if (usersCount === 0) {
-    //     console.log("🌱 Base vide détectée - exécution du seed automatique...");
-    //     // await seedDatabase();
-    //     console.log("✅ Seed automatique désactivé");
-    //   } else {
-    //     console.log("✅ Données existantes préservées");
-    //   }
-    // } catch (dbError) {
-    //   console.log("⚠️ Erreur de connexion base de données:", dbError);
-    // }
-
-    app.listen(PORT, () => {
+    console.log(`🔄 Tentative de démarrage du serveur sur le port ${PORT}...`);
+    const server = app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`✅ Serveur KaayJob démarré sur le port ${PORT}`);
       console.log(`   API: http://localhost:${PORT}/api`);
+      console.log(`   Écoute sur toutes les interfaces: 0.0.0.0:${PORT}`);
     });
+
+    server.on('error', (err) => {
+      console.error('❌ Erreur du serveur:', err);
+    });
+
+    server.on('listening', () => {
+      console.log('✅ Serveur en écoute active');
+    });
+
+    // Keep the process alive
+    console.log('🔄 Serveur en attente de connexions...');
+
+    // Handle shutdown signals only for Ctrl+C (SIGINT)
+    process.on('SIGINT', () => {
+      console.log('🛑 Arrêt du serveur demandé (Ctrl+C)...');
+      server.close(() => {
+        console.log('✅ Serveur arrêté proprement');
+        process.exit(0);
+      });
+    });
+
+    // Keep server alive indefinitely
+    setInterval(() => {
+      // Keep-alive ping every 30 seconds
+    }, 30000);
+
   } catch (error) {
     console.error("❌ Échec du démarrage du serveur:", error);
     process.exit(1);

@@ -2,9 +2,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
 import { PasswordInput, EmailInput, TextInput } from "../forms";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface AuthFormProps {
-  userType: "customer" | "provider" | "admin";
   activeTab: "login" | "signup";
   formData: {
     firstName: string;
@@ -13,11 +13,11 @@ interface AuthFormProps {
     phone: string;
     password: string;
     confirmPassword: string;
+    role?: "customer" | "provider" | "admin";
   };
   errors: Record<string, string>;
   touched: Record<string, boolean>;
   isLoading: boolean;
-  onUserTypeChange: (type: "customer" | "provider" | "admin") => void;
   onTabChange: (tab: "login" | "signup") => void;
   onInputChange: (field: string, value: string) => void;
   onBlur: (field: string) => void;
@@ -26,13 +26,11 @@ interface AuthFormProps {
 }
 
 export function AuthForm({
-  userType,
   activeTab,
   formData,
   errors,
   touched,
   isLoading,
-  onUserTypeChange,
   onTabChange,
   onInputChange,
   onBlur,
@@ -71,21 +69,43 @@ export function AuthForm({
     </form>
   );
 
-  const renderSignupForm = (prefix: string, nameLabel: string, buttonText: string) => (
+  const renderSignupForm = () => (
     <form onSubmit={(e) => onSubmit(e, true)} className="space-y-3">
+      {/* Sélecteur de rôle */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-white/90">
+          Je m'inscris en tant que :
+        </label>
+        <Select
+          value={formData.role || ""}
+          onValueChange={(value) => onInputChange("role", value)}
+        >
+          <SelectTrigger className="w-full bg-white/10 border-white/20 text-white">
+            <SelectValue placeholder="Sélectionnez votre rôle" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="customer">Client - Je cherche des services</SelectItem>
+            <SelectItem value="provider">Prestataire - Je propose des services</SelectItem>
+          </SelectContent>
+        </Select>
+        {errors.role && touched.role && (
+          <p className="text-red-300 text-sm">{errors.role}</p>
+        )}
+      </div>
+
       <TextInput
-        id={`${prefix}-name`}
-        label={nameLabel}
+        id="signup-name"
+        label={formData.role === "provider" ? "Nom de l'entreprise" : "Nom complet"}
         value={formData.firstName}
         onChange={(value) => onInputChange("firstName", value)}
         onBlur={() => onBlur("name")}
-        placeholder={nameLabel === "Nom complet" ? "Entrez votre nom complet" : "Entrez le nom de votre entreprise"}
+        placeholder={formData.role === "provider" ? "Entrez le nom de votre entreprise" : "Entrez votre nom complet"}
         error={errors.name}
         touched={touched.name}
         required
       />
       <EmailInput
-        id={`${prefix}-email-signup`}
+        id="signup-email"
         label="Email"
         value={formData.email}
         onChange={(value) => onInputChange("email", value)}
@@ -96,7 +116,7 @@ export function AuthForm({
         required
       />
       <TextInput
-        id={`${prefix}-phone`}
+        id="signup-phone"
         label="Numéro de téléphone"
         value={formData.phone}
         onChange={(value) => onInputChange("phone", value)}
@@ -108,7 +128,7 @@ export function AuthForm({
         type="tel"
       />
       <PasswordInput
-        id={`${prefix}-password-signup`}
+        id="signup-password"
         label="Mot de passe"
         value={formData.password}
         onChange={(value) => onInputChange("password", value)}
@@ -119,7 +139,7 @@ export function AuthForm({
         required
       />
       <PasswordInput
-        id={`${prefix}-confirmPassword`}
+        id="signup-confirmPassword"
         label="Confirmer le mot de passe"
         value={formData.confirmPassword}
         onChange={(value) => onInputChange("confirmPassword", value)}
@@ -134,7 +154,7 @@ export function AuthForm({
         className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 text-base py-3 backdrop-blur"
         disabled={isLoading}
       >
-        {buttonText}
+        S'inscrire
       </Button>
     </form>
   );
@@ -160,116 +180,67 @@ export function AuthForm({
         }}
       >
         <CardTitle className="text-center text-white text-2xl font-bold">
-          {userType === "admin" ? "Administration" : "Connexion"}
+          Connexion
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-4" style={{ background: "transparent" }}>
         <Tabs
-          value={userType}
+          value={activeTab}
           className="w-full"
-          onValueChange={(value) => onUserTypeChange(value as "customer" | "provider" | "admin")}
+          onValueChange={(v) => onTabChange(v as "login" | "signup")}
         >
           <TabsList
-            className="grid w-full grid-cols-3 mb-4 h-10"
-            style={{
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              borderRadius: "8px",
-            }}
+            className="grid w-full grid-cols-2 mb-6"
+            style={{ background: "rgba(255, 255, 255, 0.1)" }}
           >
             <TabsTrigger
-              value="customer"
-              className="text-sm text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white data-[state=active]:shadow-lg font-semibold transition-all duration-200 h-8"
+              value="login"
+              className="text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white font-semibold transition-all duration-200"
             >
-              Client
+              Connexion
             </TabsTrigger>
             <TabsTrigger
-              value="provider"
-              className="text-sm text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white data-[state=active]:shadow-lg font-semibold transition-all duration-200 h-8"
+              value="signup"
+              className="text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white font-semibold transition-all duration-200"
             >
-              Prestataire
-            </TabsTrigger>
-            <TabsTrigger
-              value="admin"
-              className="text-sm text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white data-[state=active]:shadow-lg font-semibold transition-all duration-200 h-8"
-            >
-              Admin
+              S'inscrire
             </TabsTrigger>
           </TabsList>
 
-          {/* Customer Tab */}
-          <TabsContent value="customer">
-            <Tabs
-              value={activeTab}
-              className="w-full"
-              onValueChange={(v) => onTabChange(v as "login" | "signup")}
-            >
-              <TabsList
-                className="grid w-full grid-cols-2 mb-6"
-                style={{ background: "rgba(255, 255, 255, 0.1)" }}
+          <TabsContent value="login">
+            <form onSubmit={(e) => onSubmit(e, false)} className="space-y-3">
+              <EmailInput
+                id="login-email"
+                label="Email"
+                value={formData.email}
+                onChange={(value) => onInputChange("email", value)}
+                onBlur={() => onBlur("email")}
+                placeholder="exemple@email.com"
+                error={errors.email}
+                touched={touched.email}
+              />
+              <PasswordInput
+                id="login-password"
+                label="Mot de passe"
+                value={formData.password}
+                onChange={(value) => onInputChange("password", value)}
+                onBlur={() => onBlur("password")}
+                placeholder="Votre mot de passe"
+                error={errors.password}
+                touched={touched.password}
+              />
+              <Button
+                type="submit"
+                className="w-full bg-white/20 hover:bg-white/30 text-white border border-white/30 text-base py-3 backdrop-blur"
+                disabled={isLoading}
               >
-                <TabsTrigger
-                  value="login"
-                  className="text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white font-semibold transition-all duration-200"
-                >
-                  Connexion
-                </TabsTrigger>
-                <TabsTrigger
-                  value="signup"
-                  className="text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white font-semibold transition-all duration-200"
-                >
-                  S'inscrire
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="login">
-                {renderLoginForm("customer", "Connexion")}
-              </TabsContent>
-
-              <TabsContent value="signup">
-                {renderSignupForm("customer", "Nom complet", "S'inscrire")}
-              </TabsContent>
-            </Tabs>
+                Se connecter
+              </Button>
+            </form>
           </TabsContent>
 
-          {/* Provider Tab */}
-          <TabsContent value="provider">
-            <Tabs
-              value={activeTab}
-              className="w-full"
-              onValueChange={(v) => onTabChange(v as "login" | "signup")}
-            >
-              <TabsList
-                className="grid w-full grid-cols-2 mb-6"
-                style={{ background: "rgba(255, 255, 255, 0.1)" }}
-              >
-                <TabsTrigger
-                  value="login"
-                  className="text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white font-semibold transition-all duration-200"
-                >
-                  Connexion
-                </TabsTrigger>
-                <TabsTrigger
-                  value="signup"
-                  className="text-white/80 data-[state=active]:bg-[#000080] data-[state=active]:text-white font-semibold transition-all duration-200"
-                >
-                  S'inscrire
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="login">
-                {renderLoginForm("provider", "Connexion Prestataire")}
-              </TabsContent>
-
-              <TabsContent value="signup">
-                {renderSignupForm("provider", "Nom de l'entreprise", "S'inscrire en tant que Prestataire")}
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          {/* Admin Tab */}
-          <TabsContent value="admin">
-            {renderLoginForm("admin", "Connexion Admin")}
+          <TabsContent value="signup">
+            {renderSignupForm()}
           </TabsContent>
         </Tabs>
       </CardContent>

@@ -1,46 +1,49 @@
 /**
- * Routes de paiement
+ * Routes des paiements
+ * Utilise le PaymentController pour la logique métier
+ * Validations centralisées dans src/validations/index.ts
  */
 
 import { Router, Request, Response } from "express";
-import { authenticate } from "../middleware/auth";
-import { body, validationResult } from "express-validator";
-import { processSubscriptionPayment } from "../services/paymentService";
-import { query } from "../config/database";
+import { validationResult } from "express-validator";
+import PaymentController from "../controllers/paymentController";
+import { authenticate, requireAdmin } from "../middleware/auth";
 
 const router = Router();
 
-// POST /api/payments/subscription - Traiter un paiement d'abonnement
-router.post(
-  "/subscription",
-  authenticate,
-  [
-    body("amount").isNumeric().withMessage("Montant invalide"),
-    body("paymentMethod").notEmpty().withMessage("Méthode de paiement requise"),
-    body("planName").notEmpty().withMessage("Nom du plan requis"),
-  ],
-  async (req: Request, res: Response) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ success: false, errors: errors.array() });
-      }
+// Toutes les routes nécessitent authentification
+router.use(authenticate);
 
-      const user = (req as any).user;
-      const { amount, paymentMethod, planName } = req.body;
+// GET /api/payments/me - Mes paiements
+router.get("/me", async (req: Request, res: Response) => {
+  await PaymentController.getMyPayments(req, res);
+});
 
-      // Traiter le paiement d'abonnement
-      await processSubscriptionPayment(user.id, Number(amount), paymentMethod, planName);
+// GET /api/payments/:id - Détails d'un paiement d'abonnement
+router.get("/:id", async (req: Request, res: Response) => {
+  await PaymentController.getPaymentById(req, res);
+});
 
-      res.json({
-        success: true,
-        message: "Paiement d'abonnement traité avec succès",
-      });
-    } catch (error) {
-      console.error("Erreur traitement paiement abonnement:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
-  },
-);
+// Routes admin seulement
+router.use(requireAdmin);
+
+// GET /api/payments - Tous les paiements (Admin)
+router.get("/", async (req: Request, res: Response) => {
+  await PaymentController.getAllPayments(req, res);
+});
+
+// PUT /api/payments/:id/status - Mettre à jour le statut d'un paiement (Admin)
+router.put("/:id/status", async (req: Request, res: Response) => {
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({
+      success: false,
+      message: "status est requis"
+    });
+  }
+
+  await PaymentController.updatePaymentStatus(req, res);
+});
 
 export default router;

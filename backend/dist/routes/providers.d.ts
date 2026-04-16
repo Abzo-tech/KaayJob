@@ -1,7 +1,5 @@
 /**
- * Routes des prestataires
- * Utilise le ProviderController pour la logique métier
- * Validations centralisées dans src/validations/index.ts
+ * Routes pour les prestataires
  */
 declare const router: import("express-serve-static-core").Router;
 export default router;

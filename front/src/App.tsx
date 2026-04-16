@@ -207,7 +207,7 @@ export default function App() {
   const renderPrestataireContent = () => {
     switch (currentPage) {
       case "prestataire-dashboard":
-        return <PrestataireDashboard />;
+        return <PrestataireDashboard onNavigate={handleNavigate} />;
       case "prestataire-services":
         return <PrestataireServices />;
       case "prestataire-bookings":
@@ -219,7 +219,7 @@ export default function App() {
       case "prestataire-settings":
         return <PrestataireSettings />;
       default:
-        return <PrestataireDashboard />;
+        return <PrestataireDashboard onNavigate={handleNavigate} />;
     }
   };
 
@@ -275,8 +275,6 @@ export default function App() {
         return <CookiesPage onNavigate={handleNavigate} />;
       case "login":
         return <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />;
-      case "login-provider":
-        return <LoginPage onNavigate={handleNavigate} onLogin={handleLogin} />;
       case "categories":
         return (
           <ServiceCategoriesPage
@@ -314,7 +312,7 @@ export default function App() {
   };
 
   const pageName = currentPage.split("?")[0]; // Extraire le nom de la page sans les paramètres
-  const isLoginPage = pageName === "login" || pageName === "login-provider";
+      const isLoginPage = pageName === "login";
   const isAdminPage = currentPage.startsWith("admin-");
   const isPrestatairePage = currentPage.startsWith("prestataire-");
 

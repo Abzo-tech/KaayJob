@@ -6,6 +6,7 @@
 
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
+import { query } from "../config/database";
 
 export class CategoryController {
   /**
@@ -15,9 +16,6 @@ export class CategoryController {
     try {
       const { parentOnly, activeOnly } = req.query as any;
       console.log("📂 Requête catégories:", { parentOnly, activeOnly });
-
-      // Import de la fonction query
-      const { query } = await import("../config/database");
 
       let sqlQuery = "SELECT id, name, slug, description, icon, image, is_active, created_at FROM categories WHERE 1=1";
       const params: any[] = [];
@@ -48,9 +46,6 @@ export class CategoryController {
   static async getById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-
-      // Import de la fonction query
-      const { query } = await import("../config/database");
 
       const categoryResult = await query(`
         SELECT c.id, c.name, c.slug, c.description, c.icon, c.image, c.is_active, c.created_at,
@@ -276,9 +271,6 @@ export class CategoryController {
   static async getServices(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-
-      // Import de la fonction query
-      const { query } = await import("../config/database");
 
       const services = await query(`
         SELECT s.id, s.name, s.description, s.price, s.duration, s.is_active,

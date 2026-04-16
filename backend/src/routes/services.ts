@@ -28,14 +28,26 @@ router.get("/:id", async (req: Request, res: Response) => {
 // POST /api/services - Créer un service (prestataire)
 router.post(
   "/",
+  (req: Request, res: Response, next: any) => {
+    require('fs').appendFileSync('/tmp/debug.log', `MIDDLEWARE: POST /api/services called with method: ${req.method}\n`);
+    next();
+  },
   authenticate,
   createServiceValidation,
   async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
+    try {
+      require('fs').appendFileSync('/tmp/debug.log', `HANDLER: Route POST /api/services called\n`);
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        require('fs').appendFileSync('/tmp/debug.log', `Validation errors: ${JSON.stringify(errors.array())}\n`);
+        return res.status(400).json({ success: false, errors: errors.array() });
+      }
+      require('fs').appendFileSync('/tmp/debug.log', `Calling ServiceController.create\n`);
+      await ServiceController.create(req, res);
+    } catch (error: any) {
+      require('fs').appendFileSync('/tmp/debug.log', `Route error: ${error.message}\n`);
+      res.status(500).json({ success: false, message: "Erreur serveur", error: error.message });
     }
-    await ServiceController.create(req, res);
   },
 );
 

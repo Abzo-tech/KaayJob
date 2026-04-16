@@ -61,6 +61,8 @@ model ProviderProfile {
   city            String?
   region          String?
   postalCode      String?  @map("postal_code")
+  latitude        Float?   @db.DoublePrecision
+  longitude       Float?   @db.DoublePrecision
   serviceRadius   Int?     @map("service_radius")
   isAvailable     Boolean  @default(true) @map("is_available")
   rating          Decimal  @default(0) @db.Decimal(3, 2)

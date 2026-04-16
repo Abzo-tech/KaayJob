@@ -7,25 +7,27 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CategoryController = void 0;
 const prisma_1 = require("../config/prisma");
+const database_1 = require("../config/database");
 class CategoryController {
     /**
-     * Liste des catégories
+     * Lister toutes les catégories
      */
     static async getAll(req, res) {
         try {
             const { parentOnly, activeOnly } = req.query;
-            const where = {};
+            console.log("📂 Requête catégories:", { parentOnly, activeOnly });
+            let sqlQuery = "SELECT id, name, slug, description, icon, image, is_active, created_at FROM categories WHERE 1=1";
+            const params = [];
             if (activeOnly === "true") {
-                where.isActive = true;
+                sqlQuery += " AND is_active = $1";
+                params.push(true);
             }
             if (parentOnly === "true") {
-                where.parentId = null;
+                sqlQuery += " AND parent_id IS NULL";
             }
-            const categories = await prisma_1.prisma.category.findMany({
-                where,
-                orderBy: { name: "asc" },
-            });
-            res.json({ success: true, data: categories });
+            sqlQuery += " ORDER BY name ASC";
+            const categories = await (0, database_1.query)(sqlQuery, params);
+            res.json({ success: true, data: categories.rows });
         }
         catch (error) {
             console.error("Erreur liste catégories:", error);
@@ -38,31 +40,35 @@ class CategoryController {
     static async getById(req, res) {
         try {
             const { id } = req.params;
-            const category = await prisma_1.prisma.category.findUnique({
-                where: { id },
-                include: {
-                    parent: {
-                        select: {
-                            id: true,
-                            name: true,
-                        },
-                    },
-                    children: true,
-                    _count: {
-                        select: {
-                            services: {
-                                where: { isActive: true },
-                            },
-                        },
-                    },
-                },
-            });
-            if (!category) {
-                res
-                    .status(404)
-                    .json({ success: false, message: "Catégorie non trouvée" });
+            const categoryResult = await (0, database_1.query)(`
+        SELECT c.id, c.name, c.slug, c.description, c.icon, c.image, c.is_active, c.created_at,
+               p.id as parent_id, p.name as parent_name
+        FROM categories c
+        LEFT JOIN categories p ON c.parent_id = p.id
+        WHERE c.id = $1
+      `, [id]);
+            if (categoryResult.rows.length === 0) {
+                res.status(404).json({ success: false, message: "Catégorie non trouvée" });
                 return;
             }
+            const category = categoryResult.rows[0];
+            // Récupérer les enfants
+            const childrenResult = await (0, database_1.query)(`
+        SELECT id, name, slug, description, icon, image, is_active
+        FROM categories
+        WHERE parent_id = $1
+        ORDER BY name ASC
+      `, [id]);
+            category.children = childrenResult.rows;
+            // Compter les services actifs
+            const servicesCountResult = await (0, database_1.query)(`
+        SELECT COUNT(*) as count
+        FROM services
+        WHERE category_id = $1 AND is_active = true
+      `, [id]);
+            category._count = {
+                services: parseInt(servicesCountResult.rows[0].count)
+            };
             res.json({ success: true, data: category });
         }
         catch (error) {
@@ -231,59 +237,19 @@ class CategoryController {
     static async getServices(req, res) {
         try {
             const { id } = req.params;
-            const { page = 1, limit = 20, sortBy = "createdAt", sortOrder = "desc", } = req.query;
-            const skip = (Number(page) - 1) * Number(limit);
-            const validSortFields = ["name", "price", "createdAt"];
-            const orderBy = {};
-            orderBy[validSortFields.includes(sortBy) ? sortBy : "createdAt"] =
-                sortOrder === "asc" ? "asc" : "desc";
-            const [services, total] = await Promise.all([
-                prisma_1.prisma.service.findMany({
-                    where: {
-                        categoryId: id,
-                        isActive: true,
-                    },
-                    include: {
-                        provider: {
-                            include: {
-                                user: {
-                                    select: {
-                                        firstName: true,
-                                        lastName: true,
-                                    },
-                                },
-                            },
-                        },
-                        _count: {
-                            select: {
-                                reviews: true,
-                            },
-                        },
-                    },
-                    orderBy,
-                    skip,
-                    take: Number(limit),
-                }),
-                prisma_1.prisma.service.count({
-                    where: {
-                        categoryId: id,
-                        isActive: true,
-                    },
-                }),
-            ]);
-            res.json({
-                success: true,
-                data: services,
-                pagination: {
-                    page: Number(page),
-                    limit: Number(limit),
-                    total,
-                    totalPages: Math.ceil(total / Number(limit)),
-                },
-            });
+            const services = await (0, database_1.query)(`
+        SELECT s.id, s.name, s.description, s.price, s.duration, s.is_active,
+               p.first_name, p.last_name, p.phone
+        FROM services s
+        JOIN provider_profiles pp ON s.provider_id = pp.id
+        JOIN users p ON pp.user_id = p.id
+        WHERE s.category_id = $1 AND s.is_active = true
+        ORDER BY s.name ASC
+      `, [id]);
+            res.json({ success: true, data: services.rows });
         }
         catch (error) {
-            console.error("Erreur services de catégorie:", error);
+            console.error("Erreur services catégorie:", error);
             res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }

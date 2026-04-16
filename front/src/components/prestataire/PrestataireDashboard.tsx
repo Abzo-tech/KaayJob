@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Users, Briefcase, Calendar, Star, TrendingUp } from "lucide-react";
+import { Users, Briefcase, Calendar, Star, TrendingUp, AlertTriangle, User, Wrench } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { api, ApiResponse } from "../../lib/api";
 
 interface StatCardProps {
@@ -11,6 +12,10 @@ interface StatCardProps {
   trend: "up" | "down";
   icon: React.ElementType;
   color: string;
+}
+
+interface PrestataireDashboardProps {
+  onNavigate: (page: string) => void;
 }
 
 function StatCard({
@@ -49,7 +54,7 @@ function StatCard({
   );
 }
 
-export function PrestataireDashboard() {
+export function PrestataireDashboard({ onNavigate }: PrestataireDashboardProps) {
   const [stats, setStats] = useState({
     totalBookings: 0,
     activeServices: 0,
@@ -300,4 +305,85 @@ export function PrestataireDashboard() {
       </div>
     </div>
   );
+
+  // Vérifications pour forcer la complétion du profil et création de services
+  const hasCompleteProfile = user && user.firstName && user.lastName && user.phone;
+  const hasServices = myServices.length > 0;
+
+  if (!hasCompleteProfile || !hasServices) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="text-center">
+              <AlertTriangle className="w-16 h-16 text-orange-500 mx-auto mb-4" />
+              <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                Complétez votre profil prestataire
+              </h1>
+              <p className="text-gray-600 mb-8">
+                Pour apparaître dans les recherches clients et recevoir des réservations,
+                vous devez compléter votre profil et créer au moins un service.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <Card className={`${hasCompleteProfile ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${hasCompleteProfile ? 'bg-green-100' : 'bg-orange-100'}`}>
+                        <User className={`w-5 h-5 ${hasCompleteProfile ? 'text-green-600' : 'text-orange-600'}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Informations personnelles</h3>
+                        <p className={`text-sm ${hasCompleteProfile ? 'text-green-600' : 'text-orange-600'}`}>
+                          {hasCompleteProfile ? '✓ Profil complet' : '⚠ Profil incomplet'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className={`${hasServices ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${hasServices ? 'bg-green-100' : 'bg-orange-100'}`}>
+                        <Wrench className={`w-5 h-5 ${hasServices ? 'text-green-600' : 'text-orange-600'}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Services créés</h3>
+                        <p className={`text-sm ${hasServices ? 'text-green-600' : 'text-orange-600'}`}>
+                          {hasServices ? `✓ ${myServices.length} service(s) créé(s)` : '⚠ Aucun service créé'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="flex gap-4 justify-center">
+                {!hasCompleteProfile && (
+                  <Button
+                    onClick={() => onNavigate("prestataire-profile")}
+                    className="bg-[#000080] hover:bg-[#000080]/90"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Compléter mon profil
+                  </Button>
+                )}
+                {!hasServices && (
+                  <Button
+                    onClick={() => onNavigate("prestataire-services")}
+                    variant="outline"
+                    className="border-[#000080] text-[#000080] hover:bg-[#000080] hover:text-white"
+                  >
+                    <Wrench className="w-4 h-4 mr-2" />
+                    Créer mon premier service
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 }

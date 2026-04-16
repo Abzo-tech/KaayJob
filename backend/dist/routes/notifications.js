@@ -14,40 +14,46 @@ router.use(auth_1.authenticate);
 // GET /api/notifications - Liste des notifications de l'utilisateur
 router.get("/", async (req, res) => {
     try {
-        await (0, notificationService_1.ensureNotificationSchema)();
         const user = req.user;
         const userId = user?.id;
         const { limit = 20, offset = 0, unreadOnly } = req.query;
         const parsedLimit = Number(limit);
         const parsedOffset = Number(offset);
         const params = [userId];
-        let whereClause = `
-      (
-        user_id = $1
-        OR COALESCE(private_recipients, '[]'::jsonb) ? $1
+        // Créer la table notifications si elle n'existe pas
+        await (0, database_1.query)(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT,
+        type VARCHAR(50) DEFAULT 'info',
+        read BOOLEAN DEFAULT false,
+        link VARCHAR(500),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
       )
-    `;
-        // Tous les utilisateurs voient leurs notifications directes + celles
-        // où leur ID est présent dans le tableau JSONB private_recipients.
+    `);
+        let whereClause = "user_id = $1";
+        // Filter by read status
         if (unreadOnly === "true") {
             whereClause += " AND read = false";
         }
+        // Get unread count
         const unreadCountQuery = `
       SELECT COUNT(*) as count
       FROM notifications
-      WHERE (
-        user_id = $1
-        OR COALESCE(private_recipients, '[]'::jsonb) ? $1
-      )
-      AND read = false
+      WHERE user_id = $1 AND read = false
     `;
-        const unreadCountResult = await (0, database_1.query)(unreadCountQuery, params);
-        // Récupérer les notifications
-        const selectQuery = `SELECT id, title, message, type, read, link, created_at
-       FROM notifications
-       WHERE ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+        const unreadCountResult = await (0, database_1.query)(unreadCountQuery, [userId]);
+        // Get notifications
+        const selectQuery = `
+      SELECT id, title, message, type, read, link, created_at
+      FROM notifications
+      WHERE ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+    `;
         const result = await (0, database_1.query)(selectQuery, [...params, parsedLimit, parsedOffset]);
         res.json({
             success: true,
@@ -70,7 +76,8 @@ router.put("/:id/read", async (req, res) => {
         if (existing.rows.length === 0) {
             return res.status(404).json({ success: false, message: "Notification non trouvée" });
         }
-        await (0, database_1.query)("UPDATE notifications SET read = true WHERE id = $1", [id]);
+        // Marquer comme lue
+        await (0, database_1.query)("UPDATE notifications SET read = true, updated_at = NOW() WHERE id = $1", [id]);
         res.json({ success: true, message: "Notification marquée comme lue" });
     }
     catch (error) {
@@ -82,7 +89,7 @@ router.put("/:id/read", async (req, res) => {
 router.put("/read-all", async (req, res) => {
     try {
         const userId = req.user?.id;
-        await (0, database_1.query)("UPDATE notifications SET read = true WHERE user_id = $1 AND read = false", [userId]);
+        await (0, database_1.query)("UPDATE notifications SET read = true, updated_at = NOW() WHERE user_id = $1 AND read = false", [userId]);
         res.json({ success: true, message: "Toutes les notifications marquées comme lues" });
     }
     catch (error) {
@@ -100,6 +107,7 @@ router.delete("/:id", async (req, res) => {
         if (existing.rows.length === 0) {
             return res.status(404).json({ success: false, message: "Notification non trouvée" });
         }
+        // Supprimer la notification
         await (0, database_1.query)("DELETE FROM notifications WHERE id = $1", [id]);
         res.json({ success: true, message: "Notification supprimée" });
     }
@@ -113,7 +121,7 @@ router.delete("/", async (req, res) => {
     try {
         const userId = req.user?.id;
         await (0, database_1.query)("DELETE FROM notifications WHERE user_id = $1 AND read = true", [userId]);
-        res.json({ success: true, message: "Notifications supprimées" });
+        res.json({ success: true, message: "Notifications lues supprimées" });
     }
     catch (error) {
         console.error("Erreur suppression notifications:", error);
@@ -124,8 +132,23 @@ router.delete("/", async (req, res) => {
 router.post("/test", async (req, res) => {
     try {
         const userId = req.user?.id;
-        const { title, message, type } = req.body;
-        await (0, database_1.query)("INSERT INTO notifications (id, user_id, title, message, type, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())", [userId, title || "Test", message || "Ceci est une notification de test", type || "info"]);
+        const { title, message, type, link } = req.body;
+        // Créer la table si elle n'existe pas
+        await (0, database_1.query)(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT,
+        type VARCHAR(50) DEFAULT 'info',
+        read BOOLEAN DEFAULT false,
+        link VARCHAR(500),
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+        // Insérer la notification
+        await (0, database_1.query)("INSERT INTO notifications (user_id, title, message, type, link, created_at) VALUES ($1, $2, $3, $4, $5, NOW())", [userId, title || "Test", message || "Ceci est une notification de test", type || "info", link || null]);
         res.json({ success: true, message: "Notification de test créée" });
     }
     catch (error) {

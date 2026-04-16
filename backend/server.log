@@ -1,20 +1,20 @@
 
-> kaayjob-backend@1.0.0 dev
-> ts-node-dev --respawn --transpile-only --poll src/index.ts
+> kaayjob-backend@1.0.0 start
+> node dist/index.js
 
-[INFO] 12:48:40 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
-📦 Configuration de la base de données:
-  - DATABASE_URL présent: true
-  - Host: localhost
-  - Port: 5432
-  - Database: kaayjob
-  - User: postgres
-✅ Serveur KaayJob démarré sur le port 3001
-   API: http://localhost:3001/api
-📂 Requête catégories: { parentOnly: undefined, activeOnly: undefined }
-✅ Requête exécutée {
-  text: 'SELECT id, name, slug, description, icon, image, i',
-  duration: 38,
-  rows: 14
+🚀 Démarrage du serveur...
+✅ Connexion à la base de données établie
+✅ Test de connexion DB réussi
+🔄 Tentative de démarrage du serveur sur le port 4000...
+🔄 Serveur en attente de connexions...
+❌ Erreur du serveur: Error: listen EADDRINUSE: address already in use 0.0.0.0:4000
+    at Server.setupListenHandle [as _listen2] (node:net:1811:16)
+    at listenInCluster (node:net:1859:12)
+    at doListen (node:net:2008:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '0.0.0.0',
+  port: 4000
 }
-[0mGET /api/categories [32m200[0m 50.949 ms - 3629[0m

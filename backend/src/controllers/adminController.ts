@@ -4,6 +4,7 @@
  */
 
 import { Request, Response } from "express";
+import { query } from "../config/database";
 
 export class AdminController {
   /**
@@ -12,8 +13,6 @@ export class AdminController {
   static async getStats(req: Request, res: Response): Promise<void> {
     try {
       console.log('📊 Récupération des statistiques admin');
-
-      const { query } = await import("../config/database");
 
       // Statistiques de base
       const [usersResult, categoriesResult, servicesResult, bookingsResult] = await Promise.all([
@@ -60,8 +59,6 @@ export class AdminController {
       const { limit = 100, offset = 0 } = req.query;
       console.log('👥 Récupération des utilisateurs admin');
 
-      const { query } = await import("../config/database");
-
       const users = await query(`
         SELECT id, email, first_name, last_name, phone, role, is_verified, created_at
         FROM users
@@ -83,8 +80,6 @@ export class AdminController {
     try {
       const { limit = 100, offset = 0 } = req.query;
       console.log('🔧 Récupération des services admin');
-
-      const { query } = await import("../config/database");
 
       const services = await query(`
         SELECT s.id, s.name, s.price, s.duration, s.is_active,
@@ -111,8 +106,6 @@ export class AdminController {
     try {
       const { limit = 100, offset = 0 } = req.query;
       console.log('📅 Récupération des réservations admin');
-
-      const { query } = await import("../config/database");
 
       const bookings = await query(`
         SELECT b.id, b.date, b.time, b.status, b.total_price, b.created_at,

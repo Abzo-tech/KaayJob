@@ -4,6 +4,7 @@
  */
 
 import { query } from '../config/database';
+import { seedSubscriptionPlans } from './seed-subscriptions';
 
 export async function seedDatabase() {
   try {
@@ -127,15 +128,26 @@ export async function seedDatabase() {
         const userResult = await query('SELECT id FROM users WHERE email = $1', [provider.email]);
         const userId = userResult.rows[0].id;
 
-        // Créer le profil prestataire
+        // Créer le profil prestataire avec coordonnées géographiques
         await query(`
           INSERT INTO provider_profiles (
-            id, user_id, hourly_rate, years_experience, is_available,
-            created_at, updated_at
+            id, user_id, specialty, bio, location, latitude, longitude,
+            hourly_rate, years_experience, is_available, rating, total_reviews,
+            is_verified, created_at, updated_at
           ) VALUES (
-            gen_random_uuid(), $1, $2, $3, true, NOW(), NOW()
+            gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, true, 4.5, 10,
+            true, NOW(), NOW()
           )
-        `, [userId, Math.floor(Math.random() * 50) + 20, Math.floor(Math.random() * 15) + 2]);
+        `, [
+          userId,
+          provider.specialty,
+          provider.bio,
+          provider.address,
+          provider.lat,
+          provider.lng,
+          Math.floor(Math.random() * 50) + 20,
+          Math.floor(Math.random() * 15) + 2
+        ]);
 
         providersCreated++;
       }
@@ -167,25 +179,13 @@ export async function seedDatabase() {
 
     console.log(`✅ ${servicesCreated} services créés`);
 
-    // Créer un admin si aucun n'existe
-    const adminCheck = await query("SELECT id FROM users WHERE role = 'ADMIN' LIMIT 1");
-    if (adminCheck.rows.length === 0) {
-      // Créer un admin avec mot de passe connu pour les tests
-      await query(`
-        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
-        VALUES (gen_random_uuid(), $1, '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $2, $3, $4, 'ADMIN', true, NOW(), NOW())
-      `, ['admin@kaayjob.com', 'Admin', 'KaayJob', '+221000000000']);
-      console.log('✅ Administrateur créé - Email: admin@kaayjob.com, Mot de passe: password123');
+    // Initialiser les plans d'abonnement
+    await seedSubscriptionPlans();
 
-      // Créer aussi un utilisateur test normal
-      await query(`
-        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
-        VALUES (gen_random_uuid(), $1, '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', $2, $3, $4, 'CLIENT', true, NOW(), NOW())
-      `, ['test@example.com', 'Test', 'User', '+22177123456']);
-      console.log('✅ Utilisateur test créé - Email: test@example.com, Mot de passe: password123');
-    }
+    // Mettre à jour les coordonnées géographiques des prestataires
+    const { updateProviderCoordinates } = await import('./update-coordinates');
+    await updateProviderCoordinates();
 
-    console.log('🎉 Base de données initialisée avec succès !');
     return { categoriesCreated, providersCreated };
 
   } catch (error) {
