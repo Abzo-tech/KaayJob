@@ -71,6 +71,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       "https://kaay-job-git-main-abzo-techs-projects.vercel.app",
       "https://kaay-job-git-abzo-abzo-techs-projects.vercel.app",
       "https://kaay-job-git-dev-abzo-techs-projects.vercel.app",
+      "https://kaay-job-git-deployment-fix-abzo-techs-projects.vercel.app",
+      "https://kaay-job-git-fix-admin-login-abzo-techs-projects.vercel.app",
+      "https://kaay-job-git-feature-production-monitoring-abzo-techs-projects.vercel.app",
     ];
 
 app.use(
