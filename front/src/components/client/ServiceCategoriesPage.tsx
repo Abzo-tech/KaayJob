@@ -64,7 +64,7 @@ const fallbackCategories: Category[] = [
     name: "Reparation",
     slug: "reparation",
     description: "Interventions rapides pour vos pannes et petits travaux.",
-    image: "/images/Reparation.png",
+    image: "/images/reparation.png",
   },
 ];
 

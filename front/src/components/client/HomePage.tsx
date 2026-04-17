@@ -164,7 +164,7 @@ const defaultHomeCategories: Category[] = [
   {
     id: "reparation",
     name: "Reparation",
-    image: "/images/Reparation.png",
+    image: "/images/reparation.png",
     description: "Interventions rapides pour vos pannes et petits travaux.",
     slug: "reparation",
   },
@@ -184,7 +184,7 @@ const senegalProviderShowcase = [
   {
     title: "Qualite locale",
     description: "Une vitrine pour les meilleurs profils, avec une identite visuelle plus chaleureuse et locale.",
-    image: "/images/Reparation.png",
+    image: "/images/reparation.png",
   },
 ];
 
