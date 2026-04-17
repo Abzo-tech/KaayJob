@@ -7,11 +7,8 @@ import { PrismaClient } from "@prisma/client";
 const prismaClientSingleton = () => {
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-    datasources: {
-      db: {
-        url: "postgresql://postgres:postgres@127.0.0.1:5432/kaayjob"
-      }
-    }
+    // En production, utilise DATABASE_URL de l'environnement
+    // En développement, utilise la DB locale si pas spécifiée
   });
 };
 
