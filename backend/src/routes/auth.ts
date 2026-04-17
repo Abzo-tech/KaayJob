@@ -6,6 +6,7 @@
 
 import { Router, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
+import bcrypt from "bcrypt";
 import AuthController from "../controllers/authController";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { query } from "../config/database";
@@ -140,7 +141,6 @@ router.post("/logout", authenticate, async (req: Request, res: Response) => {
 // POST /api/auth/debug-admin
 router.post("/debug-admin", async (req: Request, res: Response) => {
   try {
-    const bcrypt = require('bcrypt');
 
     // Vérifier si l'admin existe
     const existingAdmin = await query('SELECT id, email, password, role FROM users WHERE email = $1', ['admin@kaayjob.com']);
