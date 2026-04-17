@@ -224,7 +224,8 @@ app.post("/api/create-test-data", async (req, res) => {
 
     // Créer un utilisateur admin
     const hashedPassword = await bcrypt.hash('Password123', 10);
-    await prisma.user.upsert({
+    console.log('Creating admin user with password hash starting with:', hashedPassword.substring(0, 10));
+    const adminUser = await prisma.user.upsert({
       where: { email: 'admin@kaayjob.com' },
       update: {
         firstName: 'Admin',
@@ -244,8 +245,9 @@ app.post("/api/create-test-data", async (req, res) => {
         role: 'ADMIN',
         isVerified: true,
         isActive: true,
-      }
+      },
     });
+    console.log('Admin user created/updated:', adminUser.email);
 
     // Créer quelques prestataires
     const providers = [
