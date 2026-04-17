@@ -26,6 +26,11 @@ router.get("/:id", async (req: Request, res: Response) => {
 // Routes pour la gestion du profil prestataire (authentifiées)
 router.use(authenticate);
 
+// GET /api/providers/me - Profil du prestataire connecté (alias pour /profile)
+router.get("/me", async (req: Request, res: Response) => {
+  await ProviderController.getProfile(req, res);
+});
+
 // GET /api/providers/profile - Profil du prestataire connecté
 router.get("/profile", async (req: Request, res: Response) => {
   await ProviderController.getProfile(req, res);
