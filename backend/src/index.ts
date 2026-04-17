@@ -22,6 +22,8 @@ import adminRoutes from "./routes/admin";
 import notificationsRoutes from "./routes/notifications";
 import paymentsRoutes from "./routes/payments";
 import subscriptionsRoutes from "./routes/subscriptions";
+import { authenticate } from "./middleware/auth";
+import ProviderController from "./controllers/providerController";
 
 import { testConnection, query } from "./config/database";
 import { swaggerUi, specs } from "./config/swagger";
@@ -89,6 +91,75 @@ app.use(
   },
   express.static(path.join(__dirname, "../public/images")),
 );
+
+// Route générale pour le profil utilisateur (selon le rôle)
+app.get("/api/profile", authenticate, async (req, res) => {
+  try {
+    const user = (req as any).user;
+
+    if (!user?.role) {
+      return res.status(401).json({ success: false, message: "Utilisateur non authentifié" });
+    }
+
+    // Rediriger vers la bonne route selon le rôle
+    if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+      // Utiliser directement la méthode du contrôleur
+      await ProviderController.getProfile(req, res);
+    } else if (user.role === "CLIENT" || user.role === "client") {
+      // Pour les clients, on pourrait avoir un contrôleur utilisateur
+      // Pour l'instant, retourner les infos de base
+      res.json({
+        success: true,
+        data: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
+          avatar: user.avatar,
+          role: user.role
+        }
+      });
+    } else {
+      res.status(403).json({ success: false, message: "Rôle non autorisé" });
+    }
+  } catch (error) {
+    console.error("❌ Erreur route profile générale:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
+
+// Route générale pour la mise à jour du profil
+app.put("/api/profile", authenticate, async (req, res) => {
+  try {
+    const user = (req as any).user;
+
+    if (!user?.role) {
+      return res.status(401).json({ success: false, message: "Utilisateur non authentifié" });
+    }
+
+    // Rediriger vers la bonne route selon le rôle
+    if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
+      await ProviderController.updateProfile(req, res);
+    } else if (user.role === "CLIENT" || user.role === "client") {
+      // Pour les clients, mise à jour des informations de base
+      const { firstName, lastName, phone } = req.body;
+
+      await query(`
+        UPDATE users SET
+          first_name = $1, last_name = $2, phone = $3, updated_at = NOW()
+        WHERE id = $4
+      `, [firstName, lastName, phone, user.id]);
+
+      res.json({ success: true, message: "Profil mis à jour avec succès" });
+    } else {
+      res.status(403).json({ success: false, message: "Rôle non autorisé" });
+    }
+  } catch (error) {
+    console.error("❌ Erreur mise à jour profile générale:", error);
+    res.status(500).json({ success: false, message: "Erreur serveur" });
+  }
+});
 
 // Routes
 app.use("/api/auth", authRoutes);

@@ -45,7 +45,7 @@ import { PrestataireServices } from "./components/prestataire/PrestataireService
 import { PrestataireBookings } from "./components/prestataire/PrestataireBookings";
 import { PrestataireProfile } from "./components/prestataire/PrestataireProfile";
 import { PrestataireSettings } from "./components/prestataire/PrestataireSettings";
-import { PrestataireSubscription } from "./components/prestataire/PrestataireSubscription";
+import { SubscriptionManagement } from "./components/prestataire/SubscriptionManagement";
 
 export default function App() {
   // Initialiser currentPage basé sur le rôle de l'utilisateur au chargement
@@ -216,7 +216,7 @@ export default function App() {
       case "prestataire-bookings":
         return <PrestataireBookings />;
       case "prestataire-subscription":
-        return <PrestataireSubscription />;
+        return <SubscriptionManagement onNavigate={handleNavigate} />;
       case "prestataire-profile":
         return <PrestataireProfile />;
       case "prestataire-settings":

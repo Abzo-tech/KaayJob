@@ -17,6 +17,18 @@ export declare class ProviderController {
      */
     static getById(req: Request, res: Response): Promise<void>;
     /**
+     * Récupérer le profil du prestataire connecté
+     */
+    static getProfile(req: Request, res: Response): Promise<void>;
+    /**
+     * Mettre à jour le profil du prestataire
+     */
+    static updateProfile(req: Request, res: Response): Promise<void>;
+    /**
+     * Demander la vérification du profil prestataire
+     */
+    static requestVerification(req: Request, res: Response): Promise<void>;
+    /**
      * Mettre à jour la localisation du prestataire
      */
     static updateLocation(req: Request, res: Response): Promise<void>;
