@@ -7,9 +7,9 @@
 import { Router, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
 import bcrypt from "bcrypt";
+import { prisma } from "../config/database";
 import AuthController from "../controllers/authController";
 import { authenticate, AuthRequest } from "../middleware/auth";
-import { query } from "../config/database";
 import {
   registerValidation,
   loginValidation,
@@ -141,16 +141,67 @@ router.post("/logout", authenticate, async (req: Request, res: Response) => {
 // POST /api/auth/debug-admin
 router.post("/debug-admin", async (req: Request, res: Response) => {
   try {
-
     // Vérifier si l'admin existe
-    const existingAdmin = await query('SELECT id, email, password, role FROM users WHERE email = $1', ['admin@kaayjob.com']);
+    const admin = await prisma.user.findUnique({
+      where: { email: 'admin@kaayjob.com' },
+      select: { id: true, email: true, password: true, role: true }
+    });
 
-    if (existingAdmin.rows.length === 0) {
+    if (!admin) {
+      // Créer l'admin
+      const hashedPassword = await bcrypt.hash('Password123', 10);
+      const newAdmin = await prisma.user.create({
+        data: {
+          email: 'admin@kaayjob.com',
+          password: hashedPassword,
+          firstName: 'Admin',
+          lastName: 'KaayJob',
+          phone: '+221000000000',
+          role: 'ADMIN',
+          isVerified: true,
+          isActive: true,
+        },
+        select: { id: true, email: true, role: true }
+      });
+
       return res.json({
         success: true,
-        message: 'Admin non trouvé, création en cours...',
-        action: 'create'
+        message: 'Admin créé',
+        admin: newAdmin,
+        action: 'created'
       });
+    }
+
+    const isValidPassword = await bcrypt.compare('Password123', admin.password);
+
+    if (!isValidPassword) {
+      // Réinitialiser le mot de passe
+      const hashedPassword = await bcrypt.hash('Password123', 10);
+      await prisma.user.update({
+        where: { email: 'admin@kaayjob.com' },
+        data: { password: hashedPassword }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Mot de passe admin réinitialisé',
+        admin: { id: admin.id, email: admin.email, role: admin.role },
+        action: 'reset'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Admin OK',
+      admin: { id: admin.id, email: admin.email, role: admin.role },
+      action: 'ok'
+    });
+
+  } catch (error) {
+    console.error('Erreur debug admin:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
     }
 
     const admin = existingAdmin.rows[0];
