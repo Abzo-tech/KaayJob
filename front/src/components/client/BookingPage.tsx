@@ -251,10 +251,21 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
 
     try {
       // Prepare booking data
+      if (!date || isNaN(date.getTime())) {
+        setSubmitError("Date invalide sélectionnée");
+        return;
+      }
+
+      const totalPrice = calculateTotal();
+      if (isNaN(totalPrice) || totalPrice <= 0) {
+        setSubmitError("Prix invalide calculé");
+        return;
+      }
+
       const bookingData = {
         providerId: providerId,
         serviceId: formData.serviceId,
-        date: date?.toISOString().split("T")[0],
+        date: date.toISOString().split("T")[0],
         time: formData.time,
         duration: parseInt(formData.duration),
         address: formData.address,
@@ -307,15 +318,17 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
   // Calculate total price
   const calculateTotal = () => {
     if (selectedService) {
+      const price = selectedService.price && !isNaN(Number(selectedService.price)) ? Number(selectedService.price) : 0;
       if (selectedService.priceType === "fixed") {
-        return selectedService.price;
+        return price;
       }
       if (selectedService.priceType === "hourly") {
-        return selectedService.price * parseInt(formData.duration || "1");
+        return price * parseInt(formData.duration || "1");
       }
     }
     // Default to hourly rate * duration
-    return (provider?.hourlyRate || 25) * parseInt(formData.duration || "1");
+    const defaultRate = provider?.hourlyRate && !isNaN(Number(provider.hourlyRate)) ? Number(provider.hourlyRate) : 25;
+    return defaultRate * parseInt(formData.duration || "1");
   };
 
   // Get provider name
@@ -430,8 +443,8 @@ export function BookingPage({ onNavigate, params = {} }: BookingPageProps) {
                             {service.priceType === "quote"
                               ? "Sur devis"
                               : service.priceType === "fixed"
-                                ? `${Number(service.price).toLocaleString("fr-SN")} CFA`
-                                : `À partir de ${Number(service.price).toLocaleString("fr-SN")} CFA/h`}
+                                ? `${service.price && !isNaN(Number(service.price)) ? Number(service.price).toLocaleString("fr-SN") : "Prix non défini"} CFA`
+                                : `À partir de ${service.price && !isNaN(Number(service.price)) ? Number(service.price).toLocaleString("fr-SN") : "Prix non défini"} CFA/h`}
                           </SelectItem>
                         ))}
                       </SelectContent>

@@ -52,10 +52,10 @@ export class BookingController {
       let sqlQuery = `
         SELECT
           b.id,
-          b.booking_date as date,
-          b.booking_time as time,
+          b.booking_date as "bookingDate",
+          b.booking_time as "bookingTime",
           b.status,
-          b.total_amount as total_price,
+          b.total_amount as "totalAmount",
           b.address,
           b.city,
           b.phone,
@@ -64,11 +64,22 @@ export class BookingController {
           u.first_name as client_first_name,
           u.last_name as client_last_name,
           u.email as client_email,
-          s.name as service_name,
-          s.price as service_price
+          json_build_object(
+            'id', s.id,
+            'name', s.name,
+            'price', s.price,
+            'provider', json_build_object(
+              'user', json_build_object(
+                'firstName', p.first_name,
+                'lastName', p.last_name
+              )
+            )
+          ) as service
         FROM bookings b
         JOIN users u ON b.client_id = u.id
         JOIN services s ON b.service_id = s.id
+        LEFT JOIN provider_profiles pp ON s.provider_id = pp.user_id
+        LEFT JOIN users p ON pp.user_id = p.id
       `;
 
       const params: any[] = [];
@@ -223,6 +234,30 @@ export class BookingController {
     try {
       const user = (req as any).user;
       const { serviceId, date, time, address, city, phone, notes } = req.body;
+
+      console.log("📅 Création réservation - données reçues:", { serviceId, date, time, address, city, phone });
+
+      // Validate date format
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        res.status(400).json({
+          success: false,
+          message: "Format de date invalide. Utilisez YYYY-MM-DD",
+        });
+        return;
+      }
+
+      // Validate that date is not in the past
+      const bookingDate = new Date(date + 'T00:00:00.000Z');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (bookingDate < today) {
+        res.status(400).json({
+          success: false,
+          message: "La date de réservation ne peut pas être dans le passé",
+        });
+        return;
+      }
 
       // Check if service exists and is active
       const service = await prisma.service.findUnique({

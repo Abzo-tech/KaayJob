@@ -59,11 +59,13 @@ export function AdminBookings() {
 
   const filteredBookings = bookings.filter((booking) => {
     const clientName = `${booking.client_first_name || ""} ${booking.client_last_name || ""}`.toLowerCase();
+    const providerName = `${booking.provider_first_name || ""} ${booking.provider_last_name || ""}`.toLowerCase();
     const matchesSearch =
       clientName.includes(searchTerm.toLowerCase()) ||
+      providerName.includes(searchTerm.toLowerCase()) ||
       (booking.service_name || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || 
+      statusFilter === "all" ||
       booking.status?.toUpperCase() === statusFilter.toUpperCase();
     return matchesSearch && matchesStatus;
   });
@@ -293,18 +295,18 @@ export function AdminBookings() {
                     </p>
                   </TableCell>
                   <TableCell>{bookingItem.service_name || "-"}</TableCell>
-                  <TableCell>
-                    {bookingItem.provider_first_name} {bookingItem.provider_last_name}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-gray-400" />
-                      <span>
-                        {formatDate(bookingItem.booking_date)} {bookingItem.booking_time}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatPrice(bookingItem.total_amount)} CFA</TableCell>
+                   <TableCell>
+                     {bookingItem.provider_first_name ? `${bookingItem.provider_first_name} ${bookingItem.provider_last_name}` : "Prestataire inconnu"}
+                   </TableCell>
+                   <TableCell>
+                     <div className="flex items-center gap-2">
+                       <Calendar size={14} className="text-gray-400" />
+                       <span>
+                         {formatDate(bookingItem.date)} {bookingItem.time}
+                       </span>
+                     </div>
+                   </TableCell>
+                   <TableCell>{formatPrice(bookingItem.total_price)} CFA</TableCell>
                   <TableCell>{getStatusBadge(bookingItem.status)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

@@ -5,16 +5,9 @@
 🚀 Démarrage du serveur...
 ✅ Connexion à la base de données établie
 ✅ Test de connexion DB réussi
-🔄 Tentative de démarrage du serveur sur le port 4000...
+🔄 Tentative de démarrage du serveur sur le port 5000...
 🔄 Serveur en attente de connexions...
-❌ Erreur du serveur: Error: listen EADDRINUSE: address already in use 0.0.0.0:4000
-    at Server.setupListenHandle [as _listen2] (node:net:1811:16)
-    at listenInCluster (node:net:1859:12)
-    at doListen (node:net:2008:7)
-    at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
-  code: 'EADDRINUSE',
-  errno: -98,
-  syscall: 'listen',
-  address: '0.0.0.0',
-  port: 4000
-}
+✅ Serveur KaayJob démarré sur le port 5000
+   API: http://localhost:5000/api
+   Écoute sur toutes les interfaces: 0.0.0.0:5000
+✅ Serveur en écoute active

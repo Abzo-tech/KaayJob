@@ -101,11 +101,14 @@ class AdminController {
             console.log('📅 Récupération des réservations admin');
             const bookings = await (0, database_1.query)(`
         SELECT b.id, b.booking_date as date, b.booking_time as time, b.status, b.total_amount as total_price, b.created_at,
-               u.first_name, u.last_name, u.email,
-               s.name as service_name
+               u.first_name as client_first_name, u.last_name as client_last_name, u.email as client_email,
+               s.name as service_name,
+               p.first_name as provider_first_name, p.last_name as provider_last_name
         FROM bookings b
         JOIN users u ON b.client_id = u.id
         JOIN services s ON b.service_id = s.id
+        LEFT JOIN provider_profiles pp ON s.provider_id = pp.user_id
+        LEFT JOIN users p ON pp.user_id = p.id
         ORDER BY b.created_at DESC
         LIMIT $1 OFFSET $2
       `, [limit, offset]);
