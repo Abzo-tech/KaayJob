@@ -187,7 +187,12 @@ app.put("/api/profile", authenticate, async (req, res) => {
   }
 });
 
-// Routes
+// Route de santé simple
+app.get("/", (req, res) => {
+  res.send("API KaayJob OK 🚀");
+});
+
+// Routes API
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingsRoutes);
 app.use("/api/providers", providersRoutes);

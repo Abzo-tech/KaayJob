@@ -49,9 +49,11 @@ else
         # Utiliser nc (netcat) pour vérifier si le port est ouvert
         if nc -z -w 2 $DB_HOST $DB_PORT 2>/dev/null; then
             echo "✅ Base de données prête!"
+            # Attendre encore 2 secondes pour s'assurer que la DB est vraiment prête
+            sleep 2
             break
         fi
-        
+
         RETRY_COUNT=$((RETRY_COUNT + 1))
         echo "⏳ Tentative $RETRY_COUNT/$MAX_RETRIES - Base de données non prête..."
         sleep 2
@@ -66,6 +68,10 @@ fi
 if [ -n "$DATABASE_URL" ]; then
     echo "🔄 Configuration de la base de données Prisma..."
     npx prisma db push || echo "⚠️ Échec de la configuration de la base de données"
+
+    # Tester la connexion Prisma
+    echo "🔗 Test de connexion Prisma..."
+    npx prisma db execute --file <(echo "SELECT 1 as test;") > /dev/null 2>&1 && echo "✅ Connexion Prisma réussie" || echo "⚠️ Test de connexion Prisma échoué"
 fi
 
 echo "🚀 Lancement du serveur backend..."
