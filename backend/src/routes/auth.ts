@@ -6,9 +6,11 @@
 
 import { Router, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
+import bcrypt from "bcryptjs";
+import { prisma } from "../config/prisma";
+import { query } from "../config/database";
 import AuthController from "../controllers/authController";
 import { authenticate, AuthRequest } from "../middleware/auth";
-import { query } from "../config/database";
 import {
   registerValidation,
   loginValidation,
@@ -135,5 +137,111 @@ router.post("/logout", authenticate, async (req: Request, res: Response) => {
   // côté client en supprimant le token du localStorage.
   res.json({ success: true, message: "Déconnexion réussie" });
 });
+
+// DEBUG: Endpoint temporaire pour vérifier/réinitialiser l'admin
+// POST /api/auth/debug-admin
+router.post("/debug-admin", async (req: Request, res: Response) => {
+  try {
+    // Vérifier si l'admin existe
+    const admin = await prisma.user.findUnique({
+      where: { email: 'admin@kaayjob.com' },
+      select: { id: true, email: true, password: true, role: true }
+    });
+
+    if (!admin) {
+      // Créer l'admin
+      const hashedPassword = await bcrypt.hash('Password123', 10);
+      const newAdmin = await prisma.user.create({
+        data: {
+          email: 'admin@kaayjob.com',
+          password: hashedPassword,
+          firstName: 'Admin',
+          lastName: 'KaayJob',
+          phone: '+221000000000',
+          role: 'ADMIN',
+          isVerified: true,
+          isActive: true,
+        },
+        select: { id: true, email: true, role: true }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Admin créé',
+        admin: newAdmin,
+        action: 'created'
+      });
+    }
+
+    const isValidPassword = await bcrypt.compare('Password123', admin.password);
+
+    if (!isValidPassword) {
+      // Réinitialiser le mot de passe
+      const hashedPassword = await bcrypt.hash('Password123', 10);
+      await prisma.user.update({
+        where: { email: 'admin@kaayjob.com' },
+        data: { password: hashedPassword }
+      });
+
+      return res.json({
+        success: true,
+        message: 'Mot de passe admin réinitialisé',
+        admin: { id: admin.id, email: admin.email, role: admin.role },
+        action: 'reset'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Admin OK',
+      admin: { id: admin.id, email: admin.email, role: admin.role },
+      action: 'ok'
+    });
+
+  } catch (error) {
+    console.error('Erreur debug admin:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+
+
+// ROUTE TEMPORAIRE: Créer l'admin (à supprimer après utilisation)
+// POST /api/auth/create-admin-temp
+router.post("/create-admin-temp", async (req: Request, res: Response) => {
+  try {
+    console.log('🔧 Création temporaire de l\'admin...');
+
+    const admin = await prisma.user.create({
+      data: {
+        email: 'admin@kaayjob.com',
+        password: await bcrypt.hash('Password123', 10),
+        firstName: 'Admin',
+        lastName: 'KaayJob',
+        phone: '+221000000000',
+        role: 'ADMIN',
+        isVerified: true,
+        isActive: true,
+      },
+    });
+
+    console.log('✅ Admin créé temporairement:', admin.email);
+
+    res.json({
+      success: true,
+      message: 'Admin créé avec succès',
+      admin: { email: admin.email, role: admin.role },
+      credentials: {
+        email: 'admin@kaayjob.com',
+        password: 'Password123'
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Erreur création admin:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 
 export default router;

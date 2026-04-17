@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: kaayjob-backend
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_x6ov5qSikWXV@ep-hidden-queen-amjlvhev-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: JWT_SECRET
+        value: kaayjob-super-secret-key-change-in-production-2024
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        value: https://kaay-job.vercel.app
