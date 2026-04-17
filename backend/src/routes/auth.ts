@@ -204,25 +204,22 @@ router.post("/debug-admin", async (req: Request, res: Response) => {
   }
 });
 
+// ROUTE TEMPORAIRE: Test simple
+// GET /api/auth/test-temp
+router.get("/test-temp", async (req: Request, res: Response) => {
+  res.json({ success: true, message: 'Route temporaire fonctionne' });
+});
+
 // ROUTE TEMPORAIRE: Créer l'admin (à supprimer après utilisation)
 // POST /api/auth/create-admin-temp
 router.post("/create-admin-temp", async (req: Request, res: Response) => {
   try {
     console.log('🔧 Création temporaire de l\'admin...');
 
-    // Supprimer l'ancien admin s'il existe
-    await prisma.user.deleteMany({
-      where: { email: 'admin@kaayjob.com' }
-    });
-
-    // Créer le nouvel admin
-    const hashedPassword = await bcrypt.hash('Password123', 10);
-    console.log('Password hash created, starting with:', hashedPassword.substring(0, 10));
-
     const admin = await prisma.user.create({
       data: {
         email: 'admin@kaayjob.com',
-        password: hashedPassword,
+        password: await bcrypt.hash('Password123', 10),
         firstName: 'Admin',
         lastName: 'KaayJob',
         phone: '+221000000000',
