@@ -76,24 +76,35 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
       "https://kaay-job-git-feature-production-monitoring-abzo-techs-projects.vercel.app",
     ];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+// CORS Configuration
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        console.log(`🚫 Origin not allowed: ${origin}`);
-        return callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  }),
-);
+  // Allow requests with no origin (mobile apps, curl, etc.)
+  if (!origin) {
+    res.header('Access-Control-Allow-Origin', '*');
+  } else if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else {
+    console.log(`🚫 Origin not allowed: ${origin}`);
+    // For debugging, allow all Vercel domains temporarily
+    if (origin.includes('vercel.app')) {
+      res.header('Access-Control-Allow-Origin', origin);
+      console.log(`✅ Vercel domain allowed: ${origin}`);
+    }
+  }
+
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // Servir les fichiers statiques (images) avec CORS
 app.use(
