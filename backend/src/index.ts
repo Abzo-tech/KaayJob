@@ -222,21 +222,16 @@ app.post("/api/create-test-data", async (req, res) => {
       });
     }
 
-    // Créer un utilisateur admin
+    // Supprimer l'ancien admin s'il existe et le recréer
+    await prisma.user.deleteMany({
+      where: { email: 'admin@kaayjob.com' }
+    });
+
+    // Créer un nouvel utilisateur admin
     const hashedPassword = await bcrypt.hash('Password123', 10);
-    console.log('Creating admin user with password hash starting with:', hashedPassword.substring(0, 10));
-    const adminUser = await prisma.user.upsert({
-      where: { email: 'admin@kaayjob.com' },
-      update: {
-        firstName: 'Admin',
-        lastName: 'KaayJob',
-        phone: '+221000000000',
-        role: 'ADMIN',
-        isVerified: true,
-        isActive: true,
-        password: hashedPassword,
-      },
-      create: {
+    console.log('Creating fresh admin user with password hash starting with:', hashedPassword.substring(0, 10));
+    const adminUser = await prisma.user.create({
+      data: {
         email: 'admin@kaayjob.com',
         password: hashedPassword,
         firstName: 'Admin',
@@ -247,7 +242,7 @@ app.post("/api/create-test-data", async (req, res) => {
         isActive: true,
       },
     });
-    console.log('Admin user created/updated:', adminUser.email);
+    console.log('Fresh admin user created:', adminUser.email);
 
     // Créer quelques prestataires
     const providers = [
