@@ -136,4 +136,50 @@ router.post("/logout", authenticate, async (req: Request, res: Response) => {
   res.json({ success: true, message: "Déconnexion réussie" });
 });
 
+// DEBUG: Endpoint temporaire pour vérifier/réinitialiser l'admin
+// POST /api/auth/debug-admin
+router.post("/debug-admin", async (req: Request, res: Response) => {
+  try {
+    const bcrypt = require('bcrypt');
+
+    // Vérifier si l'admin existe
+    const existingAdmin = await query('SELECT id, email, password, role FROM users WHERE email = $1', ['admin@kaayjob.com']);
+
+    if (existingAdmin.rows.length === 0) {
+      return res.json({
+        success: true,
+        message: 'Admin non trouvé, création en cours...',
+        action: 'create'
+      });
+    }
+
+    const admin = existingAdmin.rows[0];
+    const isValidPassword = await bcrypt.compare('Password123', admin.password);
+
+    if (!isValidPassword) {
+      // Réinitialiser le mot de passe
+      const hashedPassword = await bcrypt.hash('Password123', 10);
+      await query('UPDATE users SET password = $1 WHERE email = $2', [hashedPassword, 'admin@kaayjob.com']);
+
+      return res.json({
+        success: true,
+        message: 'Mot de passe admin réinitialisé',
+        admin: { id: admin.id, email: admin.email, role: admin.role },
+        action: 'reset'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Admin OK',
+      admin: { id: admin.id, email: admin.email, role: admin.role },
+      action: 'ok'
+    });
+
+  } catch (error) {
+    console.error('Erreur debug admin:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 export default router;
