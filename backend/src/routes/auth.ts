@@ -6,8 +6,9 @@
 
 import { Router, Request, Response } from "express";
 import { body, validationResult } from "express-validator";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma";
+import { query } from "../config/database";
 import AuthController from "../controllers/authController";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import {
