@@ -204,11 +204,7 @@ router.post("/debug-admin", async (req: Request, res: Response) => {
   }
 });
 
-// ROUTE TEMPORAIRE: Test simple
-// GET /api/auth/test-temp
-router.get("/test-temp", async (req: Request, res: Response) => {
-  res.json({ success: true, message: 'Route temporaire fonctionne' });
-});
+
 
 // ROUTE TEMPORAIRE: Créer l'admin (à supprimer après utilisation)
 // POST /api/auth/create-admin-temp

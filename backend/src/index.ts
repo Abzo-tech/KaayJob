@@ -222,27 +222,38 @@ app.post("/api/create-test-data", async (req, res) => {
       });
     }
 
-    // Supprimer l'ancien admin s'il existe et le recréer
-    await prisma.user.deleteMany({
-      where: { email: 'admin@kaayjob.com' }
-    });
+    // Créer un utilisateur admin
+    console.log('🔧 Vérification/création de l\'utilisateur admin...');
+    try {
+      const hashedPassword = await bcrypt.hash('Password123', 10);
+      console.log('Mot de passe hashé créé, commence par:', hashedPassword.substring(0, 10));
 
-    // Créer un nouvel utilisateur admin
-    const hashedPassword = await bcrypt.hash('Password123', 10);
-    console.log('Creating fresh admin user with password hash starting with:', hashedPassword.substring(0, 10));
-    const adminUser = await prisma.user.create({
-      data: {
-        email: 'admin@kaayjob.com',
-        password: hashedPassword,
-        firstName: 'Admin',
-        lastName: 'KaayJob',
-        phone: '+221000000000',
-        role: 'ADMIN',
-        isVerified: true,
-        isActive: true,
-      },
-    });
-    console.log('Fresh admin user created:', adminUser.email);
+      const adminUser = await prisma.user.upsert({
+        where: { email: 'admin@kaayjob.com' },
+        update: {
+          password: hashedPassword,
+          firstName: 'Admin',
+          lastName: 'KaayJob',
+          phone: '+221000000000',
+          role: 'ADMIN',
+          isVerified: true,
+          isActive: true,
+        },
+        create: {
+          email: 'admin@kaayjob.com',
+          password: hashedPassword,
+          firstName: 'Admin',
+          lastName: 'KaayJob',
+          phone: '+221000000000',
+          role: 'ADMIN',
+          isVerified: true,
+          isActive: true,
+        },
+      });
+      console.log('✅ Utilisateur admin créé/mis à jour:', adminUser.email);
+    } catch (error) {
+      console.error('❌ Erreur lors de la création de l\'admin:', error);
+    }
 
     // Créer quelques prestataires
     const providers = [
