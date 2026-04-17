@@ -64,16 +64,35 @@ const dbConfig = process.env.DATABASE_URL
 //   console.log('  - Utilisation des variables individuelles');
 // }
 
-export const pool = new Pool({
-  host: "127.0.0.1",
-  port: 5432,
-  database: "kaayjob",
-  user: "postgres",
-  password: "postgres",
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+// Configuration du pool de connexions
+let poolConfig: any;
+
+if (process.env.DATABASE_URL) {
+  // Utiliser DATABASE_URL complète pour production
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    max: 10, // Réduire pour éviter les limites de connexions
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    ssl: process.env.DATABASE_URL.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
+  };
+  console.log('🔗 Pool configuré avec DATABASE_URL');
+} else {
+  // Configuration locale pour développement
+  poolConfig = {
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: parseInt(process.env.DB_PORT || "5432"),
+    database: process.env.DB_NAME || "kaayjob",
+    user: process.env.DB_USER || "postgres",
+    password: process.env.DB_PASSWORD || "postgres",
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  };
+  console.log('🏠 Pool configuré avec variables individuelles');
+}
+
+export const pool = new Pool(poolConfig);
 
 pool.on("error", (err) => {
   console.error("Erreur inattendue avec la base de données:", err.message);
@@ -95,17 +114,31 @@ export const query = async (text: string, params?: any[]) => {
   let client: any = null;
 
   try {
-    // Utiliser des connexions individuelles pour éviter les problèmes de pool
-    client = new (require('pg')).Client({
-      host: '127.0.0.1',
-      port: 5432,
-      database: 'kaayjob',
-      user: 'postgres',
-      password: 'postgres',
-      connectionTimeoutMillis: 5000,
-      query_timeout: 5000,
-    });
+    // Utiliser DATABASE_URL en production, sinon les variables individuelles
+    let clientConfig: any;
 
+    if (process.env.DATABASE_URL) {
+      // Utiliser DATABASE_URL complète pour production
+      clientConfig = {
+        connectionString: process.env.DATABASE_URL,
+        connectionTimeoutMillis: 10000,
+        query_timeout: 15000,
+        ssl: process.env.DATABASE_URL.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
+      };
+    } else {
+      // Configuration locale pour développement
+      clientConfig = {
+        host: process.env.DB_HOST || '127.0.0.1',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'kaayjob',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
+        connectionTimeoutMillis: 5000,
+        query_timeout: 5000,
+      };
+    }
+
+    client = new (require('pg')).Client(clientConfig);
     await client.connect();
     const result = await client.query(text, params);
 
