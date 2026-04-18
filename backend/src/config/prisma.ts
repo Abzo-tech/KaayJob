@@ -4,11 +4,24 @@
 
 import { PrismaClient } from "@prisma/client";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const prismaClientSingleton = () => {
+  let dbUrl: string;
+  
+  if (isProduction && process.env.DATABASE_URL) {
+    // Production: utiliser Neon
+    dbUrl = process.env.DATABASE_URL;
+    console.log("🔗 Prisma configuré avec Neon (Production)");
+  } else {
+    // Développement: utiliser la base locale
+    dbUrl = "postgresql://postgres:postgres@127.0.0.1:5432/kaayjob";
+    console.log("🏠 Prisma configuré avec base locale (Développement)");
+  }
+  
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
-    // En production, utilise DATABASE_URL de l'environnement
-    // En développement, utilise la DB locale si pas spécifiée
+    datasourceUrl: dbUrl,
   });
 };
 

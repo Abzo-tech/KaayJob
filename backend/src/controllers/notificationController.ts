@@ -95,16 +95,16 @@ export class NotificationController {
       const totalQuery = `SELECT COUNT(*) as count FROM notifications WHERE ${whereClause}`;
       const totalResult = await query(totalQuery, params);
 
-      // Obtenir les notifications
-      const selectQuery = `
+      // Obtenir les notifications - version simplifiée
+      const simpleQuery = `
         SELECT id, title, message, type, read, link, created_at
         FROM notifications
-        WHERE ${whereClause}
+        WHERE user_id = $1
         ORDER BY created_at DESC
-        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+        LIMIT 20
       `;
 
-      const result = await query(selectQuery, [...params, parsedLimit, parsedOffset]);
+      const result = await query(simpleQuery, [userId]);
 
       const total = parseInt(totalResult.rows[0].count, 10);
       const totalPages = Math.ceil(total / parsedLimit);

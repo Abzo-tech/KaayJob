@@ -1,0 +1,5 @@
+backend/tsconfig.tsbuildinfo
+backend/tsconfig.tsbuildinfo
+backend/dist/
+backend/dist/**/*.map
+backend/tsconfig.tsbuildinfo

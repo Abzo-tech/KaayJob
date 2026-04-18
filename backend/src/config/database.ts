@@ -48,37 +48,28 @@ function parseDatabaseUrl(url: string): PoolConfig | null {
   }
 }
 
-// Utiliser DATABASE_URL ou les variables individuelles
-const dbConfig = process.env.DATABASE_URL 
+// Utiliser DATABASE_URL uniquement en production, sinon utiliser les variables individuelles
+const isProduction = process.env.NODE_ENV === "production";
+
+const dbConfig = !isProduction && process.env.DATABASE_URL 
   ? parseDatabaseUrl(process.env.DATABASE_URL)
   : null;
-
-// console.log('📦 Configuration de la base de données:');
-// console.log('  - DATABASE_URL présent:', !!process.env.DATABASE_URL);
-// if (dbConfig) {
-//   console.log('  - Host:', dbConfig.host);
-//   console.log('  - Port:', dbConfig.port);
-//   console.log('  - Database:', dbConfig.database);
-//   console.log('  - User:', dbConfig.user);
-// } else {
-//   console.log('  - Utilisation des variables individuelles');
-// }
 
 // Configuration du pool de connexions
 let poolConfig: any;
 
-if (process.env.DATABASE_URL) {
-  // Utiliser DATABASE_URL complète pour production
+if (isProduction && process.env.DATABASE_URL) {
+  // Production: utiliser DATABASE_URL complète
   poolConfig = {
     connectionString: process.env.DATABASE_URL,
-    max: 10, // Réduire pour éviter les limites de connexions
+    max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
     ssl: process.env.DATABASE_URL.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
   };
-  console.log('🔗 Pool configuré avec DATABASE_URL');
+  console.log('🔗 Pool configuré avec DATABASE_URL (Production)');
 } else {
-  // Configuration locale pour développement
+  // Développement: utiliser les variables individuelles (locale)
   poolConfig = {
     host: process.env.DB_HOST || "127.0.0.1",
     port: parseInt(process.env.DB_PORT || "5432"),
@@ -89,7 +80,7 @@ if (process.env.DATABASE_URL) {
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
   };
-  console.log('🏠 Pool configuré avec variables individuelles');
+  console.log('🏠 Pool configuré avec variables individuelles (Développement local)');
 }
 
 export const pool = new Pool(poolConfig);
