@@ -94,9 +94,9 @@ export class SubscriptionController {
    * Obtenir les abonnements de l'utilisateur connecté
    */
   static async getMySubscriptions(req: Request, res: Response): Promise<void> {
-    try {
-      const user = (req as any).user;
+    const user = (req as any).user;
 
+    try {
       if (!user?.id) {
         res
           .status(401)
