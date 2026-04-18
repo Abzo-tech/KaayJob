@@ -17,28 +17,40 @@ export class CategoryController {
       const { parentOnly, activeOnly } = req.query as any;
       console.log("📂 Requête catégories:", { parentOnly, activeOnly });
 
-      let sqlQuery = "SELECT id, name, slug, description, icon, image, is_active, created_at FROM categories WHERE 1=1";
-      const params: any[] = [];
+      // Utiliser Prisma au lieu de requête SQL directe
+      const where: any = {};
 
       if (activeOnly === "true") {
-        sqlQuery += " AND is_active = $1";
-        params.push(true);
+        where.isActive = true;
       }
 
       if (parentOnly === "true") {
-        sqlQuery += " AND parent_id IS NULL";
+        where.parentId = null;
       }
 
-      sqlQuery += " ORDER BY name ASC";
-      console.log("🔍 Requête SQL:", sqlQuery, "Params:", params);
+      console.log("🔍 Filtre Prisma:", where);
 
-      const categories = await query(sqlQuery, params);
-      console.log("📊 Résultat:", categories.rows.length, "catégories");
-      console.log("📋 Données:", categories.rows);
+      const categories = await prisma.category.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          icon: true,
+          image: true,
+          isActive: true,
+          createdAt: true
+        }
+      });
+
+      console.log("📊 Résultat:", categories.length, "catégories");
+      console.log("📋 Données:", categories);
 
       res.json({
         success: true,
-        data: categories.rows
+        data: categories
       });
 
       if (!category) {
