@@ -30,84 +30,15 @@ export class CategoryController {
       }
 
       sqlQuery += " ORDER BY name ASC";
+      console.log("🔍 Requête SQL:", sqlQuery, "Params:", params);
 
       const categories = await query(sqlQuery, params);
+      console.log("📊 Résultat:", categories.rows.length, "catégories");
+      console.log("📋 Données:", categories.rows);
 
-      res.json({ success: true, data: categories.rows });
-    } catch (error) {
-      console.error("Erreur liste catégories:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
-  }
-
-  /**
-   * Obtenir une catégorie par ID
-   */
-  static async getById(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-
-      const categoryResult = await query(`
-        SELECT c.id, c.name, c.slug, c.description, c.icon, c.image, c.is_active, c.created_at,
-               p.id as parent_id, p.name as parent_name
-        FROM categories c
-        LEFT JOIN categories p ON c.parent_id = p.id
-        WHERE c.id = $1
-      `, [id]);
-
-      if (categoryResult.rows.length === 0) {
-        res.status(404).json({ success: false, message: "Catégorie non trouvée" });
-        return;
-      }
-
-      const category = categoryResult.rows[0];
-
-      // Récupérer les enfants
-      const childrenResult = await query(`
-        SELECT id, name, slug, description, icon, image, is_active
-        FROM categories
-        WHERE parent_id = $1
-        ORDER BY name ASC
-      `, [id]);
-
-      category.children = childrenResult.rows;
-
-      // Compter les services actifs
-      const servicesCountResult = await query(`
-        SELECT COUNT(*) as count
-        FROM services
-        WHERE category_id = $1 AND is_active = true
-      `, [id]);
-
-      category._count = {
-        services: parseInt(servicesCountResult.rows[0].count)
-      };
-
-      res.json({ success: true, data: category });
-    } catch (error) {
-      console.error("Erreur récupération catégorie:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
-  }
-
-  /**
-   * Obtenir une catégorie par slug
-   */
-  static async getBySlug(req: Request, res: Response): Promise<void> {
-    try {
-      const { slug } = req.params;
-
-      const category = await prisma.category.findUnique({
-        where: { slug },
-        include: {
-          _count: {
-            select: {
-              services: {
-                where: { isActive: true },
-              },
-            },
-          },
-        },
+      res.json({
+        success: true,
+        data: categories.rows
       });
 
       if (!category) {
