@@ -46,7 +46,6 @@ export class CategoryController {
       });
 
       console.log("📊 Résultat:", categories.length, "catégories");
-      console.log("📋 Données:", categories);
 
       res.json({
         success: true,
