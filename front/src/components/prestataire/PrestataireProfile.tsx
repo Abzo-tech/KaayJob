@@ -382,15 +382,31 @@ export function PrestataireProfile() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      const response = await api.put("/auth/profile", profileData);
-      if (response.data?.success) {
-        const updatedUser = { ...user, ...profileData };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        setUser(updatedUser);
-        toast.success("Profil mis à jour avec succès!");
-      } else {
-        toast.error(response.data?.message || "Erreur lors de la mise à jour");
-      }
+      // 1. Mettre à jour les infos utilisateur de base (firstName, lastName, phone)
+      const userFields = {
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phone: profileData.phone,
+      };
+
+      await api.put("/auth/profile", userFields);
+
+      // 2. Mettre à jour les infos prestataire (specialty, bio, address, zone)
+      const providerFields = {
+        specialty: profileData.specialization,
+        bio: profileData.bio,
+        address: profileData.address,
+        location: profileData.zone,
+        latitude: profileData.latitude,
+        longitude: profileData.longitude,
+      };
+
+      await api.put("/providers/profile", providerFields);
+
+      const updatedUser = { ...user, ...profileData };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      toast.success("Profil mis à jour avec succès!");
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast.error(error.response?.data?.message || "Erreur lors de la mise à jour du profil");
