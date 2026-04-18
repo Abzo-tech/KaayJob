@@ -15,3 +15,4 @@ services:
         value: 7d
       - key: FRONTEND_URL
         value: https://kaay-job.vercel.app
+        
