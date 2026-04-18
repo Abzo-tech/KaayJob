@@ -301,6 +301,32 @@ export class NotificationController {
       res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }
+
+  /**
+   * Marquer toutes les notifications comme lues
+   */
+  static async readAll(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+
+      if (!user?.id) {
+        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      await query(
+        "UPDATE notifications SET read = true, read_at = NOW() WHERE user_id = $1 AND read = false",
+        [user.id],
+      );
+
+      console.log('✅ Toutes les notifications marquées comme lues pour:', user.id);
+
+      res.json({ success: true, message: 'Toutes les notifications marquées comme lues' });
+    } catch (error) {
+      console.error('❌ Erreur marquage notifications lues:', error);
+      res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+  }
 }
 
 export default NotificationController;
