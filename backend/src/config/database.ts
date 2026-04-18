@@ -2,8 +2,7 @@
  * Configuration de la base de données PostgreSQL
  */
 
-
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 dotenv.config();
 
 import { Pool, PoolConfig } from "pg";
@@ -14,46 +13,53 @@ function parseDatabaseUrl(url: string): PoolConfig | null {
     // Le format Prisma Accelerate: postgres://username:password@host:port/database?sslmode=require
     // where password contains special characters like @ and :
     // We need to find the @ that separates user:password from host
-    
+
     // Remove protocol
-    let cleanUrl = url.replace(/^postgres:/, 'postgresql:');
-    
+    let cleanUrl = url.replace(/^postgres:/, "postgresql:");
+
     // Find the @ that's between the credentials and the host
     // The pattern is: protocol://username:password@host:port/database
-    const atSignIndex = cleanUrl.indexOf('@');
+    const atSignIndex = cleanUrl.indexOf("@");
     if (atSignIndex === -1) return null;
-    
+
     // Extract everything before @ (credentials) and after @ (host+db)
-    const credentials = cleanUrl.substring(cleanUrl.indexOf('://') + 3, atSignIndex);
+    const credentials = cleanUrl.substring(
+      cleanUrl.indexOf("://") + 3,
+      atSignIndex,
+    );
     const hostPart = cleanUrl.substring(atSignIndex + 1);
-    
+
     // Split credentials into user and password
     // The password may contain : or @ so we need to find the last : before @
-    const lastColonInCredentials = credentials.lastIndexOf(':');
+    const lastColonInCredentials = credentials.lastIndexOf(":");
     const user = credentials.substring(0, lastColonInCredentials);
     const password = credentials.substring(lastColonInCredentials + 1);
-    
+
     // Parse host part
-    const slashIndex = hostPart.indexOf('/');
+    const slashIndex = hostPart.indexOf("/");
     const hostPort = hostPart.substring(0, slashIndex);
-    const database = hostPart.substring(slashIndex + 1).split('?')[0];
-    
-    const [host, portStr] = hostPort.split(':');
+    const database = hostPart.substring(slashIndex + 1).split("?")[0];
+
+    const [host, portStr] = hostPort.split(":");
     const port = parseInt(portStr) || 5432;
-    
+
     return { user, password, host, port, database };
   } catch (e) {
-    console.error('Erreur lors du parsing de DATABASE_URL:', e);
+    console.error("Erreur lors du parsing de DATABASE_URL:", e);
     return null;
   }
 }
 
-// Utiliser DATABASE_URL uniquement en production, sinon utiliser les variables individuelles
+// Utiliser Neon en production ; en local on utilise la base PostgreSQL locale
 const isProduction = process.env.NODE_ENV === "production";
 
-const dbConfig = !isProduction && process.env.DATABASE_URL 
-  ? parseDatabaseUrl(process.env.DATABASE_URL)
-  : null;
+const shouldUseSsl = (connectionString?: string) => {
+  if (!connectionString) return false;
+  return (
+    /sslmode=(require|verify-full)/i.test(connectionString) ||
+    connectionString.includes("neon.tech")
+  );
+};
 
 // Configuration du pool de connexions
 let poolConfig: any;
@@ -65,9 +71,11 @@ if (isProduction && process.env.DATABASE_URL) {
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
-    ssl: process.env.DATABASE_URL.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
+    ssl: shouldUseSsl(process.env.DATABASE_URL)
+      ? { rejectUnauthorized: false }
+      : false,
   };
-  console.log('🔗 Pool configuré avec DATABASE_URL (Production)');
+  console.log("🔗 Pool configuré avec DATABASE_URL (Production)");
 } else {
   // Développement: utiliser les variables individuelles (locale)
   poolConfig = {
@@ -80,7 +88,9 @@ if (isProduction && process.env.DATABASE_URL) {
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
   };
-  console.log('🏠 Pool configuré avec variables individuelles (Développement local)');
+  console.log(
+    "🏠 Pool configuré avec variables individuelles (Développement local)",
+  );
 }
 
 export const pool = new Pool(poolConfig);
@@ -108,28 +118,30 @@ export const query = async (text: string, params?: any[]) => {
     // Utiliser DATABASE_URL en production, sinon les variables individuelles
     let clientConfig: any;
 
-    if (process.env.DATABASE_URL) {
+    if (isProduction && process.env.DATABASE_URL) {
       // Utiliser DATABASE_URL complète pour production
       clientConfig = {
         connectionString: process.env.DATABASE_URL,
         connectionTimeoutMillis: 10000,
         query_timeout: 15000,
-        ssl: process.env.DATABASE_URL.includes('sslmode=require') ? { rejectUnauthorized: false } : false,
+        ssl: shouldUseSsl(process.env.DATABASE_URL)
+          ? { rejectUnauthorized: false }
+          : false,
       };
     } else {
       // Configuration locale pour développement
       clientConfig = {
-        host: process.env.DB_HOST || '127.0.0.1',
-        port: parseInt(process.env.DB_PORT || '5432'),
-        database: process.env.DB_NAME || 'kaayjob',
-        user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'postgres',
+        host: process.env.DB_HOST || "127.0.0.1",
+        port: parseInt(process.env.DB_PORT || "5432"),
+        database: process.env.DB_NAME || "kaayjob",
+        user: process.env.DB_USER || "postgres",
+        password: process.env.DB_PASSWORD || "postgres",
         connectionTimeoutMillis: 5000,
         query_timeout: 5000,
       };
     }
 
-    client = new (require('pg')).Client(clientConfig);
+    client = new (require("pg").Client)(clientConfig);
     await client.connect();
     const result = await client.query(text, params);
 
