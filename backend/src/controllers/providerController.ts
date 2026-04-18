@@ -426,6 +426,140 @@ export class ProviderController {
       res.status(500).json({ success: false, message: "Erreur serveur" });
     }
   }
+
+  /**
+   * Obtenir l'abonnement actif du prestataire
+   */
+  static async getMySubscription(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+
+      if (!user?.id) {
+        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      // Pour l'instant, retourner un abonnement fictif
+      // TODO: Implémenter la vraie logique d'abonnement
+      res.json({
+        success: true,
+        data: {
+          plan: "premium",
+          status: "active",
+          startDate: new Date().toISOString(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          planName: "Plan Premium",
+          planPrice: 49.99
+        }
+      });
+    } catch (error) {
+      console.error("❌ Erreur récupération abonnement:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  }
+
+  /**
+   * Obtenir l'historique des abonnements
+   */
+  static async getSubscriptionHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+
+      if (!user?.id) {
+        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      // Pour l'instant, retourner un historique fictif
+      res.json({
+        success: true,
+        data: []
+      });
+    } catch (error) {
+      console.error("❌ Erreur récupération historique abonnement:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  }
+
+  /**
+   * S'abonner à un plan
+   */
+  static async subscribeToPlan(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+      const { planId } = req.body;
+
+      if (!user?.id) {
+        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      if (!planId) {
+        res.status(400).json({ success: false, message: 'planId requis' });
+        return;
+      }
+
+      // Pour l'instant, simuler un abonnement réussi
+      res.json({
+        success: true,
+        message: "Abonnement créé avec succès",
+        data: {
+          planId,
+          status: "active",
+          startDate: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error("❌ Erreur abonnement:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  }
+
+  /**
+   * Annuler l'abonnement
+   */
+  static async cancelSubscription(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+
+      if (!user?.id) {
+        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      // Pour l'instant, simuler une annulation réussie
+      res.json({
+        success: true,
+        message: "Abonnement annulé avec succès"
+      });
+    } catch (error) {
+      console.error("❌ Erreur annulation abonnement:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  }
+
+  /**
+   * Obtenir l'historique des paiements
+   */
+  static async getPaymentHistory(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+
+      if (!user?.id) {
+        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      // Pour l'instant, retourner un historique fictif
+      res.json({
+        success: true,
+        data: []
+      });
+    } catch (error) {
+      console.error("❌ Erreur récupération historique paiements:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  }
 }
 
 export default ProviderController;
