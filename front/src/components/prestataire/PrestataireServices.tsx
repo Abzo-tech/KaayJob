@@ -30,7 +30,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -373,10 +372,10 @@ export function PrestataireServices() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Ajouter un Nouveau Service</DialogTitle>
-            <DialogDescription>
-              Remplissez les informations pour créer un nouveau service.
-            </DialogDescription>
+            <DialogTitle>Créer un nouveau service</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Ajoutez un nouveau service à votre offre
+            </p>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -451,10 +450,10 @@ export function PrestataireServices() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Modifier le Service</DialogTitle>
-            <DialogDescription>
-              Modifiez les informations du service.
-            </DialogDescription>
+            <DialogTitle>Modifier le service</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Modifiez les informations du service sélectionné
+            </p>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">

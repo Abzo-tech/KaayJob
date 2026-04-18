@@ -29,7 +29,6 @@ import { Label } from "../ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
@@ -559,9 +558,9 @@ export function PrestataireSubscription() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmer votre abonnement</DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Vous êtes sur le point de passer au plan {selectedPlan?.name}
-            </DialogDescription>
+            </p>
           </DialogHeader>
 
           {selectedPlan && (
@@ -614,9 +613,9 @@ export function PrestataireSubscription() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Paiement de votre abonnement</DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Completez votre paiement pour activer le plan {selectedPlan?.name}
-            </DialogDescription>
+            </p>
           </DialogHeader>
 
           {selectedPlan && (

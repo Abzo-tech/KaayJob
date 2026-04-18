@@ -350,9 +350,9 @@ export function AdminCategories() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Détails de la catégorie</DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Informations détaillées sur la catégorie sélectionnée
-            </DialogDescription>
+            </p>
           </DialogHeader>
           {viewCategory && (
             <div className="space-y-4">
@@ -401,9 +401,9 @@ export function AdminCategories() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Créer une nouvelle catégorie</DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Ajoutez une nouvelle catégorie à votre plateforme
-            </DialogDescription>
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -479,9 +479,9 @@ export function AdminCategories() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Modifier la catégorie</DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Modifiez les informations de la catégorie sélectionnée
-            </DialogDescription>
+            </p>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -565,9 +565,9 @@ export function AdminCategories() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Confirmer la suppression</DialogTitle>
-            <DialogDescription>
+            <p className="text-sm text-muted-foreground">
               Cette action est irréversible. Voulez-vous vraiment supprimer cette catégorie ?
-            </DialogDescription>
+            </p>
           </DialogHeader>
           <p>
             Êtes-vous sûr de vouloir supprimer la catégorie "
