@@ -14,8 +14,9 @@ env | grep -E '^(DATABASE_URL|DB_HOST|DB_PORT|PORT|NODE_ENV)=' | sed 's/=.*/=***
 if [ -n "$DATABASE_URL" ]; then
     # Format: postgresql://user:password@host:port/database
     # Utiliser awk pour extraire host et port de manière sécurisée
-    DB_HOST=$(echo "$DATABASE_URL" | awk -F[@:/] '{print $4}')
-    DB_PORT=$(echo "$DATABASE_URL" | awk -F[@:/] '{print $5}')
+    DB_HOST_PORT=$(echo "$DATABASE_URL" | sed -e 's|.*@||' -e 's|/.*||')
+    DB_HOST=$(echo "$DB_HOST_PORT" | cut -d":" -f1)
+    DB_PORT=$(echo "$DB_HOST_PORT" | cut -d":" -f2)
 
     echo "📦 Base de données détectée - Host: $DB_HOST, Port: $DB_PORT"
     echo "🔒 URL de connexion: [MASQUÉE pour sécurité]"

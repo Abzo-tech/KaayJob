@@ -8,7 +8,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const prismaClientSingleton = () => {
   let dbUrl: string;
-  if (isProduction && process.env.DATABASE_URL) {
+  if (process.env.DATABASE_URL) {
     dbUrl = process.env.DATABASE_URL;
     console.log("🔗 Prisma configuré avec DATABASE_URL");
   } else {

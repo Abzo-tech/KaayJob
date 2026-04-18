@@ -50,7 +50,7 @@ function parseDatabaseUrl(url: string): PoolConfig | null {
   }
 }
 
-// Utiliser Neon en production ; en local on utilise la base PostgreSQL locale
+// Utiliser DATABASE_URL si disponible ; sinon utiliser la base locale
 const isProduction = process.env.NODE_ENV === "production";
 
 const shouldUseSsl = (connectionString?: string) => {
@@ -64,7 +64,7 @@ const shouldUseSsl = (connectionString?: string) => {
 // Configuration du pool de connexions
 let poolConfig: any;
 
-if (isProduction && process.env.DATABASE_URL) {
+if (process.env.DATABASE_URL) {
   // Production: utiliser DATABASE_URL complète
   poolConfig = {
     connectionString: process.env.DATABASE_URL,
@@ -75,7 +75,7 @@ if (isProduction && process.env.DATABASE_URL) {
       ? { rejectUnauthorized: false }
       : false,
   };
-  console.log("🔗 Pool configuré avec DATABASE_URL (Production)");
+  console.log("🔗 Pool configuré avec DATABASE_URL");
 } else {
   // Développement: utiliser les variables individuelles (locale)
   poolConfig = {
@@ -118,7 +118,7 @@ export const query = async (text: string, params?: any[]) => {
     // Utiliser DATABASE_URL en production, sinon les variables individuelles
     let clientConfig: any;
 
-    if (isProduction && process.env.DATABASE_URL) {
+    if (process.env.DATABASE_URL) {
       // Utiliser DATABASE_URL complète pour production
       clientConfig = {
         connectionString: process.env.DATABASE_URL,
