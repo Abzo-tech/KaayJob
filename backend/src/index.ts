@@ -197,6 +197,11 @@ app.get("/admin-users", (req, res) => {
   res.redirect(301, "/api/admin/users");
 });
 
+// Route de compatibilité pour les outils de monitoring
+app.get("/admin-users", (req, res) => {
+  res.redirect(301, "/api/admin/users");
+});
+
 // Routes API
 app.use("/api/auth", authRoutes);
 app.use("/api/bookings", bookingsRoutes);
