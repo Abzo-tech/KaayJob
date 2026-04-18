@@ -332,6 +332,9 @@ export function AdminServices() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Détails du service</DialogTitle>
+            <DialogDescription>
+              Informations détaillées sur le service sélectionné
+            </DialogDescription>
           </DialogHeader>
           {viewService && (
             <div className="space-y-4">
@@ -377,6 +380,9 @@ export function AdminServices() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Modifier le service</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations du service sélectionné
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -445,6 +451,9 @@ export function AdminServices() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogDescription>
+              Cette action est irréversible. Voulez-vous vraiment supprimer ce service ?
+            </DialogDescription>
           </DialogHeader>
           <p>Êtes-vous sûr de vouloir supprimer le service "{deleteService?.name}"? Cette action est irréversible.</p>
           <DialogFooter className="mt-4">
