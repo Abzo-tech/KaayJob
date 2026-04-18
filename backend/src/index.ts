@@ -662,8 +662,48 @@ const startServer = async () => {
   }
 };
 
+// Fonction pour attendre que la DB soit prête
+async function waitForDatabase(): Promise<void> {
+  console.log('⏳ Attente de la connexion à la base de données...');
+
+  let connected = false;
+  let retries = 0;
+  const maxRetries = 30;
+
+  while (!connected && retries < maxRetries) {
+    try {
+      // Tester la connexion Prisma
+      await prisma.$queryRaw`SELECT 1 as test`;
+      connected = true;
+      console.log('✅ Base de données connectée et prête !');
+    } catch (error) {
+      retries++;
+      console.log(`⏳ Tentative ${retries}/${maxRetries} - Base de données non prête...`);
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes
+    }
+  }
+
+  if (!connected) {
+    throw new Error(`❌ Impossible de se connecter à la base de données après ${maxRetries} tentatives`);
+  }
+}
+
+// Démarrage du serveur avec attente DB
+async function startServerWithDB() {
+  try {
+    // Attendre que la DB soit prête AVANT de lancer le serveur
+    await waitForDatabase();
+
+    console.log('🚀 Démarrage du serveur...');
+    startServer();
+  } catch (error) {
+    console.error('❌ Échec de connexion à la base de données:', error);
+    process.exit(1);
+  }
+}
+
 if (process.env.NODE_ENV !== "test") {
-  startServer();
+  startServerWithDB();
 }
 
 export { app };

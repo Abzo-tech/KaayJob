@@ -8,7 +8,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        value: postgresql://neondb_owner:npg_x6ov5qSikWXV@ep-hidden-queen-amjlvhev-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+        value: postgresql://neondb_owner:npg_x6ov5qSikWXV@ep-hidden-queen-amjlvhev-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=verify-full&channel_binding=require
       - key: JWT_SECRET
         value: kaayjob-super-secret-key-change-in-production-2024
       - key: JWT_EXPIRES_IN
