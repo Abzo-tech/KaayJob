@@ -51,11 +51,35 @@ export class CategoryController {
         success: true,
         data: categories
       });
+    } catch (error) {
+      console.error("Erreur récupération catégorie:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  }
+
+  /**
+   * Récupérer une catégorie par son ID
+   */
+  static async getById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const category = await prisma.category.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          icon: true,
+          image: true,
+          isActive: true,
+          createdAt: true
+        }
+      });
 
       if (!category) {
-        res
-          .status(404)
-          .json({ success: false, message: "Catégorie non trouvée" });
+        res.status(404).json({ success: false, message: "Catégorie non trouvée" });
         return;
       }
 
@@ -67,8 +91,8 @@ export class CategoryController {
   }
 
   /**
-   * Créer une catégorie (admin)
-   */
+    * Créer une catégorie (admin)
+    */
   static async create(req: Request, res: Response): Promise<void> {
     try {
       const user = (req as any).user;
