@@ -694,7 +694,7 @@ async function startServerWithDB() {
     // Attendre que la DB soit prête AVANT de lancer le serveur
     await waitForDatabase();
 
-    console.log('🚀 Démarrage du serveur...');
+    // Démarrer le serveur maintenant que la DB est prête
     startServer();
   } catch (error) {
     console.error('❌ Échec de connexion à la base de données:', error);

@@ -10,18 +10,15 @@ echo "🐳 Backend Docker - Démarrage..."
 echo "📋 Variables d'environnement:"
 env | grep -E '^(DATABASE_URL|DB_HOST|DB_PORT|PORT|NODE_ENV)=' | sed 's/=.*/=***/g' || true
 
-# Extraire l'host et le port de DATABASE_URL si disponible
+# Extraire l'host et le port de DATABASE_URL si disponible (SÉCURISÉ)
 if [ -n "$DATABASE_URL" ]; then
     # Format: postgresql://user:password@host:port/database
-    # ou: postgresql://user@host:port/database
-    
-    # Extraire le host (tout ce qui est après @ et avant :)
-    DB_HOST=$(echo "$DATABASE_URL" | sed -E 's/.*@([^:]+):.*/\1/')
-    # Extraire le port (tout ce qui est après : et avant /)
-    DB_PORT=$(echo "$DATABASE_URL" | sed -E 's/.*:[0-9]+\/.*/\0/' | sed -E 's/.*:([0-9]+)\/.*/\1/')
-    
-    echo "📦 Database URL détectée - Host: $DB_HOST, Port: $DB_PORT"
-    echo "📦 URL complète: $DATABASE_URL"
+    # Utiliser awk pour extraire host et port de manière sécurisée
+    DB_HOST=$(echo "$DATABASE_URL" | awk -F[@:/] '{print $4}')
+    DB_PORT=$(echo "$DATABASE_URL" | awk -F[@:/] '{print $5}')
+
+    echo "📦 Base de données détectée - Host: $DB_HOST, Port: $DB_PORT"
+    echo "🔒 URL de connexion: [MASQUÉE pour sécurité]"
     
     # Vérifier que DB_HOST n'est pas vide ou localhost
     if [ -z "$DB_HOST" ] || [ "$DB_HOST" = "localhost" ] || [ "$DB_HOST" = "127.0.0.1" ]; then
