@@ -503,9 +503,19 @@ class ProviderController {
             }
             else {
                 // Mettre à jour le profil existant
-                const availValue = isAvailable !== undefined ? isAvailable : true;
-                const availJson = availability ? JSON.stringify(availability) : undefined;
-                if (availJson !== undefined) {
+                // Si isAvailable n'est pas fourni, garder la valeur actuelle
+                let availValue;
+                let availJson;
+                if (isAvailable !== undefined) {
+                    availValue = isAvailable;
+                }
+                else {
+                    // Récupérer la valeur actuelle
+                    const current = await (0, database_1.query)(`SELECT is_available FROM provider_profiles WHERE user_id = $1`, [user.id]);
+                    availValue = current.rows[0]?.is_available ?? true;
+                }
+                if (availability) {
+                    availJson = JSON.stringify(availability);
                     await (0, database_1.query)(`
             UPDATE provider_profiles
             SET is_available = $1, availability = $2, updated_at = NOW()

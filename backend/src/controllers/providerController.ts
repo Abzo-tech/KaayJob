@@ -612,10 +612,23 @@ export class ProviderController {
         );
       } else {
         // Mettre à jour le profil existant
-        const availValue = isAvailable !== undefined ? isAvailable : true;
-        const availJson = availability ? JSON.stringify(availability) : undefined;
+        // Si isAvailable n'est pas fourni, garder la valeur actuelle
+        let availValue: boolean;
+        let availJson: string | undefined;
         
-        if (availJson !== undefined) {
+        if (isAvailable !== undefined) {
+          availValue = isAvailable;
+        } else {
+          // Récupérer la valeur actuelle
+          const current = await query(
+            `SELECT is_available FROM provider_profiles WHERE user_id = $1`,
+            [user.id]
+          );
+          availValue = current.rows[0]?.is_available ?? true;
+        }
+        
+        if (availability) {
+          availJson = JSON.stringify(availability);
           await query(
             `
             UPDATE provider_profiles
