@@ -481,7 +481,8 @@ class ProviderController {
                     .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
-            const { isAvailable } = req.body;
+            // Accepter isAvailable (bool) ou availability (object pour les horaires)
+            const { isAvailable, availability } = req.body;
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
                 res
                     .status(403)
@@ -492,19 +493,32 @@ class ProviderController {
             const checkRes = await (0, database_1.query)(`SELECT id FROM provider_profiles WHERE user_id = $1`, [user.id]);
             if (checkRes.rows.length === 0) {
                 // Créer le profil s'il n'existe pas avec des valeurs par défaut
+                const availValue = isAvailable !== undefined ? isAvailable : true;
+                const availJson = availability ? JSON.stringify(availability) : null;
                 await (0, database_1.query)(`
           INSERT INTO provider_profiles (
-            user_id, is_available, created_at, updated_at
-          ) VALUES ($1, $2, NOW(), NOW())
-        `, [user.id, isAvailable]);
+            user_id, is_available, availability, created_at, updated_at
+          ) VALUES ($1, $2, $3, NOW(), NOW())
+        `, [user.id, availValue, availJson]);
             }
             else {
                 // Mettre à jour le profil existant
-                await (0, database_1.query)(`
-          UPDATE provider_profiles
-          SET is_available = $1, updated_at = NOW()
-          WHERE user_id = $2
-        `, [isAvailable, user.id]);
+                const availValue = isAvailable !== undefined ? isAvailable : true;
+                const availJson = availability ? JSON.stringify(availability) : undefined;
+                if (availJson !== undefined) {
+                    await (0, database_1.query)(`
+            UPDATE provider_profiles
+            SET is_available = $1, availability = $2, updated_at = NOW()
+            WHERE user_id = $3
+          `, [availValue, availJson, user.id]);
+                }
+                else {
+                    await (0, database_1.query)(`
+            UPDATE provider_profiles
+            SET is_available = $1, updated_at = NOW()
+            WHERE user_id = $2
+          `, [availValue, user.id]);
+                }
             }
             res.json({
                 success: true,
