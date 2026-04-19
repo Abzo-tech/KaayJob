@@ -39,13 +39,12 @@ export class PaymentController {
           p.transaction_id as "transactionId", p.created_at as "createdAt",
           s.id as "subscriptionId", s.plan as "subscriptionPlan",
           s.start_date as "subscriptionStart", s.end_date as "subscriptionEnd",
-          sp.name as "planName", sp.price as "planPrice"
+          s.plan as "planName", 0 as "planPrice"
         FROM payments p
         LEFT JOIN subscriptions s ON p.user_id = s.user_id
           AND s.status = 'active'
           AND p.created_at >= s.start_date
           AND p.created_at <= s.end_date
-        LEFT JOIN subscription_plans sp ON s.subscription_plan_id = sp.id
         WHERE p.user_id = $1 AND p.payment_method = 'subscription'
         ORDER BY p.created_at DESC
         LIMIT $2 OFFSET $3

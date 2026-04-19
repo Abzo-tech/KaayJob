@@ -17,7 +17,7 @@ class ProviderController {
             let paramIndex = 1;
             let sqlQuery;
             if (category) {
-                // Filtrer par catégorie (prestataires doivent être complets et avoir au moins un service)
+                // Filtrer par catégorie (retourner prestataires vérifiés même sans services dans cette catégorie)
                 sqlQuery = `
           SELECT DISTINCT
             pp.id, pp.user_id as userId, pp.specialty, pp.bio,
@@ -27,8 +27,8 @@ class ProviderController {
             pp.is_verified as isVerified, pp.created_at, p.first_name, p.last_name, p.avatar
           FROM provider_profiles pp
           JOIN users p ON pp.user_id = p.id
-          JOIN services s ON pp.user_id = s.provider_id AND s.is_active = true
-          JOIN categories c ON s.category_id = c.id
+          LEFT JOIN services s ON pp.user_id = s.provider_id AND s.is_active = true
+          LEFT JOIN categories c ON s.category_id = c.id
           WHERE p.role = 'PRESTATAIRE'
             AND p.is_verified = true
             AND pp.is_verified = true
@@ -36,13 +36,13 @@ class ProviderController {
             AND pp.bio IS NOT NULL
             AND pp.hourly_rate IS NOT NULL
             AND pp.location IS NOT NULL
-            AND (c.slug = $${paramIndex} OR c.id = $${paramIndex})
+            AND (c.slug = $${paramIndex} OR c.id = $${paramIndex} OR $${paramIndex} IS NULL)
         `;
                 params.push(category);
                 paramIndex++;
             }
             else {
-                // Tous les prestataires (doivent être vérifiés, avoir un profil complet et au moins un service actif)
+                // Tous les prestataires vérifiés (ne pas exiger de services)
                 sqlQuery = `
           SELECT DISTINCT
             pp.id, pp.user_id as userId, pp.specialty, pp.bio,
@@ -52,7 +52,6 @@ class ProviderController {
             pp.is_verified as isVerified, pp.created_at, p.first_name, p.last_name, p.avatar
           FROM provider_profiles pp
           JOIN users p ON pp.user_id = p.id
-          JOIN services s ON pp.user_id = s.provider_id AND s.is_active = true
           WHERE p.role = 'PRESTATAIRE'
             AND p.is_verified = true
             AND pp.is_verified = true
@@ -109,7 +108,6 @@ class ProviderController {
           u.first_name, u.last_name
         FROM provider_profiles pp
         JOIN users u ON pp.user_id = u.id
-        JOIN services s ON pp.user_id = s.provider_id AND s.is_active = true
         WHERE u.role = 'PRESTATAIRE'
           AND u.is_verified = true
           AND pp.is_verified = true

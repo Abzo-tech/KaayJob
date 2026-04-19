@@ -176,17 +176,21 @@ export class SubscriptionController {
         SELECT
           s.id, s.plan, s.status, s.start_date as "startDate", s.end_date as "endDate",
           s.created_at as "createdAt",
-          COALESCE(sp.id, null) as "planId", 
-          COALESCE(sp.name, s.plan) as "planName", 
-          COALESCE(sp.price, 0) as "planPrice",
-          COALESCE(sp.duration, 30) as "planDuration", 
-          COALESCE(sp.features, '[]'::jsonb) as "planFeatures"
+          null as "planId", 
+          s.plan as "planName", 
+          0 as "planPrice",
+          30 as "planDuration", 
+          '[]'::jsonb as "planFeatures"
         FROM subscriptions s
-        LEFT JOIN subscription_plans sp ON s.subscription_plan_id = sp.id AND sp.is_active = true
         WHERE s.user_id = $1 AND s.status = 'active' AND s.end_date > NOW()
         ORDER BY s.created_at DESC
         LIMIT 1
       `;
+
+      // Debug: vérifier les colonnes de la table subscriptions
+      // const debugQuery = `SELECT column_name FROM information_schema.columns WHERE table_name = 'subscriptions'`;
+      // const debugResult = await query(debugQuery, []);
+      // console.log('Colonnes de subscriptions:', debugResult.rows.map((r: any) => r.column_name));
 
       const subscriptionResult = await query(subscriptionQuery, [user.id]);
 
