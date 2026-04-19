@@ -1,7 +1,7 @@
 /**
  * Contrôleur pour les catégories
  * Gère les opérations CRUD sur les catégories de services
- * Utilise Prisma pour les queries
+ * Utilise SQL direct pour éviter les problèmes Prisma en production
  */
 import { Request, Response } from "express";
 export declare class CategoryController {
@@ -14,8 +14,8 @@ export declare class CategoryController {
      */
     static getById(req: Request, res: Response): Promise<void>;
     /**
-      * Créer une catégorie (admin)
-      */
+     * Créer une catégorie (admin)
+     */
     static create(req: Request, res: Response): Promise<void>;
     /**
      * Mettre à jour une catégorie (admin)

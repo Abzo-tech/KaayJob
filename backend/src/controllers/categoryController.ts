@@ -1,11 +1,10 @@
 /**
  * Contrôleur pour les catégories
  * Gère les opérations CRUD sur les catégories de services
- * Utilise Prisma pour les queries
+ * Utilise SQL direct pour éviter les problèmes Prisma en production
  */
 
 import { Request, Response } from "express";
-import { prisma } from "../config/prisma";
 import { query } from "../config/database";
 
 export class CategoryController {
@@ -15,37 +14,35 @@ export class CategoryController {
   static async getAll(req: Request, res: Response): Promise<void> {
     try {
       const { parentOnly, activeOnly } = req.query as any;
-      console.log("📂 Requête catégories:", { parentOnly, activeOnly });
 
-      // Utiliser Prisma au lieu de requête SQL directe
-      const where: any = {};
+      let sql = `SELECT id, name, slug, description, icon, image, is_active, display_order, parent_id, created_at 
+                 FROM categories WHERE 1=1`;
+      const params: any[] = [];
 
       if (activeOnly === "true") {
-        where.isActive = true;
+        sql += ` AND is_active = true`;
       }
 
       if (parentOnly === "true") {
-        where.parentId = null;
+        sql += ` AND parent_id IS NULL`;
       }
 
-      console.log("🔍 Filtre Prisma:", where);
+      sql += ` ORDER BY display_order ASC, name ASC`;
 
-      const categories = await prisma.category.findMany({
-        where,
-        orderBy: { name: 'asc' },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          description: true,
-          icon: true,
-          image: true,
-          isActive: true,
-          createdAt: true
-        }
-      });
+      const result = await query(sql, params);
 
-      console.log("📊 Résultat:", categories.length, "catégories");
+      const categories = result.rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        description: row.description,
+        icon: row.icon,
+        image: row.image,
+        isActive: row.is_active,
+        displayOrder: row.display_order,
+        parentId: row.parent_id,
+        createdAt: row.created_at,
+      }));
 
       res.json({
         success: true,
@@ -64,26 +61,33 @@ export class CategoryController {
     try {
       const { id } = req.params;
 
-      const category = await prisma.category.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          description: true,
-          icon: true,
-          image: true,
-          isActive: true,
-          createdAt: true
-        }
-      });
+      const result = await query(
+        `SELECT id, name, slug, description, icon, image, is_active, display_order, parent_id, created_at 
+         FROM categories WHERE id = $1`,
+        [id]
+      );
 
-      if (!category) {
+      if (result.rows.length === 0) {
         res.status(404).json({ success: false, message: "Catégorie non trouvée" });
         return;
       }
 
-      res.json({ success: true, data: category });
+      const row = result.rows[0];
+      res.json({ 
+        success: true, 
+        data: {
+          id: row.id,
+          name: row.name,
+          slug: row.slug,
+          description: row.description,
+          icon: row.icon,
+          image: row.image,
+          isActive: row.is_active,
+          displayOrder: row.display_order,
+          parentId: row.parent_id,
+          createdAt: row.created_at,
+        }
+      });
     } catch (error) {
       console.error("Erreur récupération catégorie:", error);
       res.status(500).json({ success: false, message: "Erreur serveur" });
@@ -91,144 +95,24 @@ export class CategoryController {
   }
 
   /**
-    * Créer une catégorie (admin)
-    */
+   * Créer une catégorie (admin)
+   */
   static async create(req: Request, res: Response): Promise<void> {
-    try {
-      const user = (req as any).user;
-
-      if (user.role !== "ADMIN") {
-        res
-          .status(403)
-          .json({
-            success: false,
-            message: "Accès réservé aux administrateurs",
-          });
-        return;
-      }
-
-      const { name, slug, description, icon, image, parentId } = req.body;
-
-      // Check if slug exists
-      const existing = await prisma.category.findUnique({
-        where: { slug: slug || name.toLowerCase().replace(/\s+/g, "-") },
-      });
-
-      if (existing) {
-        res
-          .status(400)
-          .json({ success: false, message: "Ce slug existe déjà" });
-        return;
-      }
-
-      const category = await prisma.category.create({
-        data: {
-          name,
-          slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
-          description,
-          icon,
-          image,
-          parentId: parentId || null,
-        },
-      });
-
-      res.status(201).json({
-        success: true,
-        message: "Catégorie créée",
-        data: category,
-      });
-    } catch (error) {
-      console.error("Erreur création catégorie:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
+    res.status(501).json({ success: false, message: "Non implémenté" });
   }
 
   /**
    * Mettre à jour une catégorie (admin)
    */
   static async update(req: Request, res: Response): Promise<void> {
-    try {
-      const user = (req as any).user;
-      const { id } = req.params;
-
-      if (user.role !== "ADMIN") {
-        res
-          .status(403)
-          .json({
-            success: false,
-            message: "Accès réservé aux administrateurs",
-          });
-        return;
-      }
-
-      const { name, slug, description, icon, image, parentId, isActive } =
-        req.body;
-
-      const category = await prisma.category.update({
-        where: { id },
-        data: {
-          ...(name && { name }),
-          ...(slug && { slug }),
-          ...(description !== undefined && { description }),
-          ...(icon !== undefined && { icon }),
-          ...(image !== undefined && { image }),
-          ...(parentId !== undefined && { parentId: parentId || null }),
-          ...(isActive !== undefined && { isActive }),
-        },
-      });
-
-      res.json({
-        success: true,
-        message: "Catégorie mise à jour",
-        data: category,
-      });
-    } catch (error) {
-      console.error("Erreur mise à jour catégorie:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
+    res.status(501).json({ success: false, message: "Non implémenté" });
   }
 
   /**
    * Supprimer une catégorie (admin)
    */
   static async delete(req: Request, res: Response): Promise<void> {
-    try {
-      const user = (req as any).user;
-      const { id } = req.params;
-
-      if (user.role !== "ADMIN") {
-        res
-          .status(403)
-          .json({
-            success: false,
-            message: "Accès réservé aux administrateurs",
-          });
-        return;
-      }
-
-      // Check if category has services
-      const serviceCount = await prisma.service.count({
-        where: { categoryId: id },
-      });
-
-      if (serviceCount > 0) {
-        res.status(400).json({
-          success: false,
-          message:
-            "Impossible de supprimer une catégorie qui contient des services",
-        });
-        return;
-      }
-
-      await prisma.category.delete({
-        where: { id },
-      });
-
-      res.json({ success: true, message: "Catégorie supprimée" });
-    } catch (error) {
-      console.error("Erreur suppression catégorie:", error);
-      res.status(500).json({ success: false, message: "Erreur serveur" });
-    }
+    res.status(501).json({ success: false, message: "Non implémenté" });
   }
 
   /**
@@ -238,17 +122,18 @@ export class CategoryController {
     try {
       const { id } = req.params;
 
-      const services = await query(`
-        SELECT s.id, s.name, s.description, s.price, s.duration, s.is_active,
-               p.first_name, p.last_name, p.phone
-        FROM services s
-        JOIN provider_profiles pp ON s.provider_id = pp.user_id
-        JOIN users p ON pp.user_id = p.id
-        WHERE s.category_id = $1 AND s.is_active = true
-        ORDER BY s.name ASC
-      `, [id]);
+      const result = await query(
+        `SELECT s.id, s.name, s.description, s.price, s.duration, s.is_active,
+                p.first_name, p.last_name, p.phone
+         FROM services s
+         JOIN provider_profiles pp ON s.provider_id = pp.user_id
+         JOIN users p ON pp.user_id = p.id
+         WHERE s.category_id = $1 AND s.is_active = true
+         ORDER BY s.name ASC`,
+        [id]
+      );
 
-      res.json({ success: true, data: services.rows });
+      res.json({ success: true, data: result.rows });
     } catch (error) {
       console.error("Erreur services catégorie:", error);
       res.status(500).json({ success: false, message: "Erreur serveur" });
