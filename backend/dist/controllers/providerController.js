@@ -77,7 +77,7 @@ class ProviderController {
                 yearsExperience: row.yearsexperience,
                 location: row.location,
                 isAvailable: row.isavailable,
-                rating: parseFloat(row.rating || '0'),
+                rating: parseFloat(row.rating || "0"),
                 totalReviews: row.totalreviews || 0,
                 totalBookings: row.totalbookings || 0,
                 isVerified: row.isverified,
@@ -85,12 +85,12 @@ class ProviderController {
                     id: row.userid,
                     firstName: row.first_name,
                     lastName: row.last_name,
-                    avatar: row.avatar
-                }
+                    avatar: row.avatar,
+                },
             }));
             res.json({
                 success: true,
-                data: transformedProviders
+                data: transformedProviders,
             });
         }
         catch (error) {
@@ -127,12 +127,12 @@ class ProviderController {
                 longitude: parseFloat(row.longitude),
                 user: {
                     firstName: row.first_name,
-                    lastName: row.last_name
-                }
+                    lastName: row.last_name,
+                },
             }));
             res.json({
                 success: true,
-                data: transformedProviders
+                data: transformedProviders,
             });
         }
         catch (error) {
@@ -158,7 +158,9 @@ class ProviderController {
         WHERE pp.id = $1 AND u.role = 'PRESTATAIRE' AND u.is_verified = true
       `, [id]);
             if (providerResult.rows.length === 0) {
-                res.status(404).json({ success: false, message: "Prestataire non trouvé" });
+                res
+                    .status(404)
+                    .json({ success: false, message: "Prestataire non trouvé" });
                 return;
             }
             const row = providerResult.rows[0];
@@ -173,7 +175,7 @@ class ProviderController {
                 latitude: parseFloat(row.latitude),
                 longitude: parseFloat(row.longitude),
                 isAvailable: row.isavailable,
-                rating: parseFloat(row.rating || '0'),
+                rating: parseFloat(row.rating || "0"),
                 totalReviews: row.totalreviews || 0,
                 isVerified: row.isverified,
                 user: {
@@ -182,8 +184,8 @@ class ProviderController {
                     lastName: row.last_name,
                     email: row.email,
                     phone: row.phone,
-                    avatar: row.avatar
-                }
+                    avatar: row.avatar,
+                },
             };
             // Récupérer les services actifs du prestataire
             const servicesResult = await (0, database_1.query)(`
@@ -199,11 +201,11 @@ class ProviderController {
                 price: parseFloat(serviceRow.price),
                 priceType: serviceRow.pricetype,
                 duration: serviceRow.duration,
-                isActive: serviceRow.isactive
+                isActive: serviceRow.isactive,
             }));
             res.json({
                 success: true,
-                data: provider
+                data: provider,
             });
         }
         catch (error) {
@@ -218,11 +220,15 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-                res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
             const providerResult = await (0, database_1.query)(`
@@ -243,7 +249,9 @@ class ProviderController {
         WHERE pp.user_id = $1
       `, [user.id]);
             if (providerResult.rows.length === 0) {
-                res.status(404).json({ success: false, message: "Profil prestataire non trouvé" });
+                res
+                    .status(404)
+                    .json({ success: false, message: "Profil prestataire non trouvé" });
                 return;
             }
             const row = providerResult.rows[0];
@@ -264,7 +272,7 @@ class ProviderController {
                 longitude: parseFloat(row.longitude) || null,
                 serviceRadius: row.serviceradius,
                 isAvailable: row.isavailable,
-                rating: parseFloat(row.rating || '0'),
+                rating: parseFloat(row.rating || "0"),
                 totalReviews: row.totalreviews || 0,
                 totalBookings: row.totalbookings || 0,
                 isVerified: row.isverified,
@@ -277,8 +285,8 @@ class ProviderController {
                     lastName: row.lastname,
                     email: row.email,
                     phone: row.phone,
-                    avatar: row.avatar
-                }
+                    avatar: row.avatar,
+                },
             };
             res.json({ success: true, data: profile });
         }
@@ -294,14 +302,22 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-                res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
-            const { businessName, specialty, bio, hourlyRate, yearsExperience, location, address, city, region, postalCode, serviceRadius, isAvailable, profileImage } = req.body;
+            const { businessName, specialty, bio, hourlyRate, yearsExperience, location, address, city, region, postalCode, serviceRadius, isAvailable, profileImage, phone, country, } = req.body;
+            // Mettre à jour les informations utilisateur si fourni
+            if (phone) {
+                await (0, database_1.query)(`UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2`, [phone, user.id]);
+            }
             // Vérifier si le profil prestataire existe
             const checkRes = await (0, database_1.query)(`SELECT id FROM provider_profiles WHERE user_id = $1`, [user.id]);
             if (checkRes.rows.length === 0) {
@@ -325,23 +341,37 @@ class ProviderController {
                     region,
                     postalCode,
                     serviceRadius,
-                    isAvailable,
+                    isAvailable !== undefined ? isAvailable : true, // Valeur par défaut true
                     profileImage,
                 ]);
             }
             else {
                 // Mettre à jour le profil existant
+                // Déterminer la valeur de is_available
+                const finalIsAvailable = isAvailable !== undefined && isAvailable !== null ? isAvailable : true;
+                console.log("DEBUG_PROVIDER_UPDATE: Final isAvailable value:", finalIsAvailable);
                 await (0, database_1.query)(`
           UPDATE provider_profiles SET
             business_name = $1, specialty = $2, bio = $3, hourly_rate = $4,
             years_experience = $5, location = $6, address = $7, city = $8,
             region = $9, postal_code = $10, service_radius = $11,
-            is_available = $12, profile_image = $13, updated_at = NOW()
+            is_available = COALESCE(is_available, $12), profile_image = $13, updated_at = NOW()
           WHERE user_id = $14
         `, [
-                    businessName, specialty, bio, hourlyRate, yearsExperience,
-                    location, address, city, region, postalCode, serviceRadius,
-                    isAvailable, profileImage, user.id
+                    businessName,
+                    specialty,
+                    bio,
+                    hourlyRate,
+                    yearsExperience,
+                    location,
+                    address,
+                    city,
+                    region,
+                    postalCode,
+                    serviceRadius,
+                    finalIsAvailable,
+                    profileImage,
+                    user.id,
                 ]);
             }
             res.json({ success: true, message: "Profil mis à jour avec succès" });
@@ -358,11 +388,15 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-                res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
             const { documents } = req.body;
@@ -389,12 +423,16 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             const { latitude, longitude, address } = req.body;
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-                res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
             await (0, database_1.query)(`
@@ -409,7 +447,7 @@ class ProviderController {
       `, [latitude, longitude, address || null, user.id]);
             res.json({
                 success: true,
-                message: "Localisation mise à jour avec succès"
+                message: "Localisation mise à jour avec succès",
             });
         }
         catch (error) {
@@ -424,12 +462,16 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             const { isAvailable } = req.body;
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-                res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+                res
+                    .status(403)
+                    .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
             // Vérifier si le profil prestataire existe
@@ -452,7 +494,7 @@ class ProviderController {
             }
             res.json({
                 success: true,
-                message: "Disponibilité mise à jour avec succès"
+                message: "Disponibilité mise à jour avec succès",
             });
         }
         catch (error) {
@@ -467,7 +509,9 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             // Pour l'instant, retourner un abonnement fictif
@@ -480,8 +524,8 @@ class ProviderController {
                     startDate: new Date().toISOString(),
                     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                     planName: "Plan Premium",
-                    planPrice: 49.99
-                }
+                    planPrice: 49.99,
+                },
             });
         }
         catch (error) {
@@ -496,13 +540,15 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             // Pour l'instant, retourner un historique fictif
             res.json({
                 success: true,
-                data: []
+                data: [],
             });
         }
         catch (error) {
@@ -518,11 +564,13 @@ class ProviderController {
             const user = req.user;
             const { planId } = req.body;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             if (!planId) {
-                res.status(400).json({ success: false, message: 'planId requis' });
+                res.status(400).json({ success: false, message: "planId requis" });
                 return;
             }
             // Pour l'instant, simuler un abonnement réussi
@@ -532,8 +580,8 @@ class ProviderController {
                 data: {
                     planId,
                     status: "active",
-                    startDate: new Date().toISOString()
-                }
+                    startDate: new Date().toISOString(),
+                },
             });
         }
         catch (error) {
@@ -548,13 +596,15 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             // Pour l'instant, simuler une annulation réussie
             res.json({
                 success: true,
-                message: "Abonnement annulé avec succès"
+                message: "Abonnement annulé avec succès",
             });
         }
         catch (error) {
@@ -569,13 +619,15 @@ class ProviderController {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             // Pour l'instant, retourner un historique fictif
             res.json({
                 success: true,
-                data: []
+                data: [],
             });
         }
         catch (error) {

@@ -1,13 +1,637 @@
-
-> kaayjob-backend@1.0.0 start
-> node dist/index.js
-
+🏠 Prisma configuré avec base locale (Développement)
+🏠 Pool configuré avec variables individuelles (Développement local)
+⏳ Attente de la connexion à la base de données...
+prisma:query SELECT 1 as test
+✅ Base de données connectée et prête !
 🚀 Démarrage du serveur...
 ✅ Connexion à la base de données établie
 ✅ Test de connexion DB réussi
-🔄 Tentative de démarrage du serveur sur le port 5000...
+🔄 Tentative de démarrage du serveur sur le port 3001...
 🔄 Serveur en attente de connexions...
-✅ Serveur KaayJob démarré sur le port 5000
-   API: http://localhost:5000/api
-   Écoute sur toutes les interfaces: 0.0.0.0:5000
+✅ Serveur KaayJob démarré sur le port 3001
+   API: http://localhost:3001/api
+   Écoute sur toutes les interfaces: 0.0.0.0:3001
 ✅ Serveur en écoute active
+[0mGET /api/health [32m200[0m 6.547 ms - 95[0m
+📨 Route /register atteinte
+✅ Validation passée, appel contrôleur
+📝 Inscription pour: client-1776616182545-2gp1yxyfi@example.com
+✅ Requête exécutée {
+  text: 'SELECT id FROM users WHERE email = $1',
+  duration: 29,
+  rows: 0
+}
+✅ Requête exécutée {
+  text: '\n        INSERT INTO users (id, email, password, f',
+  duration: 22,
+  rows: 1
+}
+✅ Inscription réussie: client-1776616182545-2gp1yxyfi@example.com
+[0mPOST /api/auth/register [32m201[0m 318.078 ms - 544[0m
+📨 Route /register atteinte
+✅ Validation passée, appel contrôleur
+📝 Inscription pour: provider-1776616182869-r5dh9wu50@example.com
+✅ Requête exécutée {
+  text: 'SELECT id FROM users WHERE email = $1',
+  duration: 15,
+  rows: 0
+}
+✅ Requête exécutée {
+  text: '\n        INSERT INTO users (id, email, password, f',
+  duration: 20,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n          INSERT INTO provider_profiles (id, user',
+  duration: 20,
+  rows: 1
+}
+👷 Profil prestataire créé avec is_available = true
+✅ Inscription réussie: provider-1776616182869-r5dh9wu50@example.com
+[0mPOST /api/auth/register [32m201[0m 272.084 ms - 563[0m
+✅ Requête exécutée {
+  text: 'UPDATE users SET phone = $1, updated_at = NOW() WH',
+  duration: 19,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: 'SELECT id FROM provider_profiles WHERE user_id = $',
+  duration: 20,
+  rows: 1
+}
+DEBUG_PROVIDER_UPDATE: Final isAvailable value: true
+✅ Requête exécutée {
+  text: '\n          UPDATE provider_profiles SET\n          ',
+  duration: 21,
+  rows: 1
+}
+[0mPUT /api/providers/profile [32m200[0m 92.932 ms - 60[0m
+✅ Requête exécutée {
+  text: '\n        UPDATE provider_profiles\n        SET lati',
+  duration: 30,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n        UPDATE users\n        SET latitude = $1, l',
+  duration: 20,
+  rows: 1
+}
+[0mPUT /api/providers/profile/location [32m200[0m 72.938 ms - 67[0m
+📂 Requête catégories: { parentOnly: undefined, activeOnly: undefined }
+🔍 Filtre Prisma: {}
+prisma:query SELECT "public"."categories"."id", "public"."categories"."name", "public"."categories"."slug", "public"."categories"."description", "public"."categories"."icon", "public"."categories"."image", "public"."categories"."is_active", "public"."categories"."created_at" FROM "public"."categories" WHERE 1=1 ORDER BY "public"."categories"."name" ASC OFFSET $1
+📊 Résultat: 14 catégories
+[0mGET /api/categories [32m200[0m 13.333 ms - 4000[0m
+✅ Requête exécutée {
+  text: '\n        SELECT pp.id, pp.user_id\n        FROM pro',
+  duration: 20,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: 'SELECT id FROM categories WHERE id = $1',
+  duration: 16,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n        INSERT INTO services (\n          id, prov',
+  duration: 26,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n        SELECT\n          s.id, s.name, s.descript',
+  duration: 24,
+  rows: 1
+}
+[0mPOST /api/services [32m201[0m 119.778 ms - 639[0m
+✅ Requête exécutée {
+  text: 'SELECT COUNT(*) as count FROM (\n        SELECT\n   ',
+  duration: 23,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n        SELECT\n          s.id, s.name, s.descript',
+  duration: 31,
+  rows: 12
+}
+[0mGET /api/services [32m200[0m 68.463 ms - 7000[0m
+✅ Requête exécutée {
+  text: '\n        SELECT s.id, s.name, s.description, s.pri',
+  duration: 20,
+  rows: 26
+}
+[0mGET /api/categories/77667a81-1d76-42d6-bfb3-39f3f221e23c/services [32m200[0m 27.631 ms - 6278[0m
+✅ Requête exécutée {
+  text: '\n          SELECT DISTINCT\n            pp.id, pp.u',
+  duration: 27,
+  rows: 16
+}
+[0mGET /api/providers [32m200[0m 36.824 ms - 7439[0m
+✅ Requête exécutée {
+  text: '\n        SELECT DISTINCT\n          pp.id, pp.user_',
+  duration: 25,
+  rows: 7
+}
+[0mGET /api/providers/map [32m200[0m 31.377 ms - 1303[0m
+📅 Création réservation - données reçues: {
+  serviceId: 'fe65774b-636e-438a-a78f-bc373849718b',
+  date: '2026-04-26',
+  time: '10:00',
+  address: '123 rue de la Paix, 75000 Paris',
+  city: 'Paris',
+  phone: undefined
+}
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE ("public"."services"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+✅ Requête exécutée {
+  text: 'INSERT INTO bookings (id, client_id, service_id, b',
+  duration: 28,
+  rows: 1
+}
+[0mPOST /api/bookings [32m201[0m 59.083 ms - 550[0m
+✅ Requête exécutée {
+  text: 'SELECT COUNT(*) as total FROM bookings b JOIN serv',
+  duration: 24,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n        SELECT\n          b.id,\n          b.bookin',
+  duration: 28,
+  rows: 1
+}
+[0mGET /api/bookings/me [32m200[0m 38.652 ms - 656[0m
+✅ Requête exécutée {
+  text: '\n        SELECT\n          id, name, slug, descript',
+  duration: 27,
+  rows: 3
+}
+[0mGET /api/subscriptions/plans [32m200[0m 36.195 ms - 866[0m
+✅ Requête exécutée {
+  text: '\n        SELECT\n          s.id, s.plan, s.status, ',
+  duration: 25,
+  rows: 0
+}
+[0mGET /api/subscriptions/active [32m200[0m 38.019 ms - 63[0m
+=== GET /notifications for user: fde5885e-4a9e-49c1-8486-6cce66c374bf
+Full user object: {"id":"fde5885e-4a9e-49c1-8486-6cce66c374bf","email":"client-1776616182545-2gp1yxyfi@example.com","role":"CLIENT","iat":1776616182,"exp":1777220982}
+Step 1: Before findMany, userId: fde5885e-4a9e-49c1-8486-6cce66c374bf
+prisma:query SELECT "public"."notifications"."id", "public"."notifications"."user_id", "public"."notifications"."title", "public"."notifications"."message", "public"."notifications"."type", "public"."notifications"."read", "public"."notifications"."link", "public"."notifications"."created_at" FROM "public"."notifications" WHERE "public"."notifications"."user_id" = $1 ORDER BY "public"."notifications"."id" ASC LIMIT $2 OFFSET $3
+Step 2: After findMany, count: 0
+[0mGET /api/notifications [32m200[0m 11.096 ms - 42[0m
+prisma:query SELECT "public"."bookings"."id", "public"."bookings"."client_id", "public"."bookings"."service_id", "public"."bookings"."booking_date", "public"."bookings"."booking_time", "public"."bookings"."duration", "public"."bookings"."status"::text, "public"."bookings"."address", "public"."bookings"."city", "public"."bookings"."phone", "public"."bookings"."notes", "public"."bookings"."total_amount", "public"."bookings"."payment_status"::text, "public"."bookings"."created_at", "public"."bookings"."updated_at" FROM "public"."bookings" WHERE ("public"."bookings"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE "public"."services"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE ("public"."services"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query UPDATE "public"."bookings" SET "status" = CAST($1::text AS "public"."BookingStatus"), "updated_at" = $2 WHERE ("public"."bookings"."id" = $3 AND 1=1) RETURNING "public"."bookings"."id", "public"."bookings"."client_id", "public"."bookings"."service_id", "public"."bookings"."booking_date", "public"."bookings"."booking_time", "public"."bookings"."duration", "public"."bookings"."status"::text, "public"."bookings"."address", "public"."bookings"."city", "public"."bookings"."phone", "public"."bookings"."notes", "public"."bookings"."total_amount", "public"."bookings"."payment_status"::text, "public"."bookings"."created_at", "public"."bookings"."updated_at"
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+✅ Requête exécutée {
+  text: '\n        ALTER TABLE notifications\n        ADD COL',
+  duration: 16,
+  rows: null
+}
+Creating notification for user: fde5885e-4a9e-49c1-8486-6cce66c374bf title: Statut de réservation mis à jour message: Votre réservation pour "Nettoyage Complet" est maintenant confirmed privateRecipients: [ 'fde5885e-4a9e-49c1-8486-6cce66c374bf' ]
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 25,
+  rows: 1
+}
+Notification created successfully for user: fde5885e-4a9e-49c1-8486-6cce66c374bf
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."users"."id", "public"."users"."first_name", "public"."users"."last_name" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+✅ Requête exécutée {
+  text: "SELECT id FROM users WHERE role = 'ADMIN'",
+  duration: 20,
+  rows: 14
+}
+Creating notification for user: 3dc6b991-32a0-401d-a0c7-87d87ce7ad4f title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 26,
+  rows: 1
+}
+Notification created successfully for user: 3dc6b991-32a0-401d-a0c7-87d87ce7ad4f
+Creating notification for user: 2f445f90-7042-4d14-a97b-7a28443aa84c title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 25,
+  rows: 1
+}
+Notification created successfully for user: 2f445f90-7042-4d14-a97b-7a28443aa84c
+Creating notification for user: 71ce19e9-9a28-466e-af2e-40f090fcdf79 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 22,
+  rows: 1
+}
+Notification created successfully for user: 71ce19e9-9a28-466e-af2e-40f090fcdf79
+Creating notification for user: 32b8b95b-e1ff-4949-87cc-bce2d3c987a1 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 32b8b95b-e1ff-4949-87cc-bce2d3c987a1
+Creating notification for user: 72a51477-c201-4625-a458-2a68825cbb7c title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 21,
+  rows: 1
+}
+Notification created successfully for user: 72a51477-c201-4625-a458-2a68825cbb7c
+Creating notification for user: f5bc5d19-735d-4276-9c0b-5d53387fe5ce title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: f5bc5d19-735d-4276-9c0b-5d53387fe5ce
+Creating notification for user: 9bb79c85-d8a5-4c32-b34a-85584959b474 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 9bb79c85-d8a5-4c32-b34a-85584959b474
+Creating notification for user: 877d93db-0872-4257-942c-7ad12e3010bb title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 877d93db-0872-4257-942c-7ad12e3010bb
+Creating notification for user: 9dbe1979-8160-4e8f-9e01-444867523697 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 9dbe1979-8160-4e8f-9e01-444867523697
+Creating notification for user: b9c3db6e-f029-4ae4-82e1-addd284064af title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: b9c3db6e-f029-4ae4-82e1-addd284064af
+Creating notification for user: 52fc9c5d-1d78-495a-ae9b-ac0b215ba6c7 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 22,
+  rows: 1
+}
+Notification created successfully for user: 52fc9c5d-1d78-495a-ae9b-ac0b215ba6c7
+Creating notification for user: 51a61008-102b-4042-ada1-381954d10786 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 19,
+  rows: 1
+}
+Notification created successfully for user: 51a61008-102b-4042-ada1-381954d10786
+Creating notification for user: 503c7937-7266-4b81-9c11-72643cf1fc4a title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 503c7937-7266-4b81-9c11-72643cf1fc4a
+Creating notification for user: 896d05a3-6589-44d6-a8cc-be9c50b8457b title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: confirmed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 896d05a3-6589-44d6-a8cc-be9c50b8457b
+[0mPUT /api/bookings/58632872-f153-4bf9-8807-f827eb0c5b34/status [32m200[0m 503.141 ms - 547[0m
+prisma:query SELECT "public"."bookings"."id", "public"."bookings"."client_id", "public"."bookings"."service_id", "public"."bookings"."booking_date", "public"."bookings"."booking_time", "public"."bookings"."duration", "public"."bookings"."status"::text, "public"."bookings"."address", "public"."bookings"."city", "public"."bookings"."phone", "public"."bookings"."notes", "public"."bookings"."total_amount", "public"."bookings"."payment_status"::text, "public"."bookings"."created_at", "public"."bookings"."updated_at" FROM "public"."bookings" WHERE ("public"."bookings"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE "public"."services"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE ("public"."services"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query UPDATE "public"."bookings" SET "status" = CAST($1::text AS "public"."BookingStatus"), "updated_at" = $2 WHERE ("public"."bookings"."id" = $3 AND 1=1) RETURNING "public"."bookings"."id", "public"."bookings"."client_id", "public"."bookings"."service_id", "public"."bookings"."booking_date", "public"."bookings"."booking_time", "public"."bookings"."duration", "public"."bookings"."status"::text, "public"."bookings"."address", "public"."bookings"."city", "public"."bookings"."phone", "public"."bookings"."notes", "public"."bookings"."total_amount", "public"."bookings"."payment_status"::text, "public"."bookings"."created_at", "public"."bookings"."updated_at"
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+Creating notification for user: fde5885e-4a9e-49c1-8486-6cce66c374bf title: Statut de réservation mis à jour message: Votre réservation pour "Nettoyage Complet" est maintenant in_progress privateRecipients: [ 'fde5885e-4a9e-49c1-8486-6cce66c374bf' ]
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: fde5885e-4a9e-49c1-8486-6cce66c374bf
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."users"."id", "public"."users"."first_name", "public"."users"."last_name" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+✅ Requête exécutée {
+  text: "SELECT id FROM users WHERE role = 'ADMIN'",
+  duration: 20,
+  rows: 14
+}
+Creating notification for user: 3dc6b991-32a0-401d-a0c7-87d87ce7ad4f title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 16,
+  rows: 1
+}
+Notification created successfully for user: 3dc6b991-32a0-401d-a0c7-87d87ce7ad4f
+Creating notification for user: 2f445f90-7042-4d14-a97b-7a28443aa84c title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 2f445f90-7042-4d14-a97b-7a28443aa84c
+Creating notification for user: 71ce19e9-9a28-466e-af2e-40f090fcdf79 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 22,
+  rows: 1
+}
+Notification created successfully for user: 71ce19e9-9a28-466e-af2e-40f090fcdf79
+Creating notification for user: 32b8b95b-e1ff-4949-87cc-bce2d3c987a1 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 23,
+  rows: 1
+}
+Notification created successfully for user: 32b8b95b-e1ff-4949-87cc-bce2d3c987a1
+Creating notification for user: 72a51477-c201-4625-a458-2a68825cbb7c title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 72a51477-c201-4625-a458-2a68825cbb7c
+Creating notification for user: f5bc5d19-735d-4276-9c0b-5d53387fe5ce title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: f5bc5d19-735d-4276-9c0b-5d53387fe5ce
+Creating notification for user: 9bb79c85-d8a5-4c32-b34a-85584959b474 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 16,
+  rows: 1
+}
+Notification created successfully for user: 9bb79c85-d8a5-4c32-b34a-85584959b474
+Creating notification for user: 877d93db-0872-4257-942c-7ad12e3010bb title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 21,
+  rows: 1
+}
+Notification created successfully for user: 877d93db-0872-4257-942c-7ad12e3010bb
+Creating notification for user: 9dbe1979-8160-4e8f-9e01-444867523697 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 16,
+  rows: 1
+}
+Notification created successfully for user: 9dbe1979-8160-4e8f-9e01-444867523697
+Creating notification for user: b9c3db6e-f029-4ae4-82e1-addd284064af title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 20,
+  rows: 1
+}
+Notification created successfully for user: b9c3db6e-f029-4ae4-82e1-addd284064af
+Creating notification for user: 52fc9c5d-1d78-495a-ae9b-ac0b215ba6c7 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 52fc9c5d-1d78-495a-ae9b-ac0b215ba6c7
+Creating notification for user: 51a61008-102b-4042-ada1-381954d10786 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 51a61008-102b-4042-ada1-381954d10786
+Creating notification for user: 503c7937-7266-4b81-9c11-72643cf1fc4a title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 503c7937-7266-4b81-9c11-72643cf1fc4a
+Creating notification for user: 896d05a3-6589-44d6-a8cc-be9c50b8457b title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: in_progress privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 19,
+  rows: 1
+}
+Notification created successfully for user: 896d05a3-6589-44d6-a8cc-be9c50b8457b
+[0mPUT /api/bookings/58632872-f153-4bf9-8807-f827eb0c5b34/status [32m200[0m 429.504 ms - 549[0m
+prisma:query SELECT "public"."bookings"."id", "public"."bookings"."client_id", "public"."bookings"."service_id", "public"."bookings"."booking_date", "public"."bookings"."booking_time", "public"."bookings"."duration", "public"."bookings"."status"::text, "public"."bookings"."address", "public"."bookings"."city", "public"."bookings"."phone", "public"."bookings"."notes", "public"."bookings"."total_amount", "public"."bookings"."payment_status"::text, "public"."bookings"."created_at", "public"."bookings"."updated_at" FROM "public"."bookings" WHERE ("public"."bookings"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE "public"."services"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE ("public"."services"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query UPDATE "public"."bookings" SET "status" = CAST($1::text AS "public"."BookingStatus"), "updated_at" = $2 WHERE ("public"."bookings"."id" = $3 AND 1=1) RETURNING "public"."bookings"."id", "public"."bookings"."client_id", "public"."bookings"."service_id", "public"."bookings"."booking_date", "public"."bookings"."booking_time", "public"."bookings"."duration", "public"."bookings"."status"::text, "public"."bookings"."address", "public"."bookings"."city", "public"."bookings"."phone", "public"."bookings"."notes", "public"."bookings"."total_amount", "public"."bookings"."payment_status"::text, "public"."bookings"."created_at", "public"."bookings"."updated_at"
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+Creating notification for user: fde5885e-4a9e-49c1-8486-6cce66c374bf title: Statut de réservation mis à jour message: Votre réservation pour "Nettoyage Complet" est maintenant completed privateRecipients: [ 'fde5885e-4a9e-49c1-8486-6cce66c374bf' ]
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 16,
+  rows: 1
+}
+Notification created successfully for user: fde5885e-4a9e-49c1-8486-6cce66c374bf
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."users"."id", "public"."users"."first_name", "public"."users"."last_name" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+✅ Requête exécutée {
+  text: "SELECT id FROM users WHERE role = 'ADMIN'",
+  duration: 18,
+  rows: 14
+}
+Creating notification for user: 3dc6b991-32a0-401d-a0c7-87d87ce7ad4f title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 3dc6b991-32a0-401d-a0c7-87d87ce7ad4f
+Creating notification for user: 2f445f90-7042-4d14-a97b-7a28443aa84c title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 2f445f90-7042-4d14-a97b-7a28443aa84c
+Creating notification for user: 71ce19e9-9a28-466e-af2e-40f090fcdf79 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 20,
+  rows: 1
+}
+Notification created successfully for user: 71ce19e9-9a28-466e-af2e-40f090fcdf79
+Creating notification for user: 32b8b95b-e1ff-4949-87cc-bce2d3c987a1 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 32b8b95b-e1ff-4949-87cc-bce2d3c987a1
+Creating notification for user: 72a51477-c201-4625-a458-2a68825cbb7c title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 72a51477-c201-4625-a458-2a68825cbb7c
+Creating notification for user: f5bc5d19-735d-4276-9c0b-5d53387fe5ce title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 22,
+  rows: 1
+}
+Notification created successfully for user: f5bc5d19-735d-4276-9c0b-5d53387fe5ce
+Creating notification for user: 9bb79c85-d8a5-4c32-b34a-85584959b474 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 9bb79c85-d8a5-4c32-b34a-85584959b474
+Creating notification for user: 877d93db-0872-4257-942c-7ad12e3010bb title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 19,
+  rows: 1
+}
+Notification created successfully for user: 877d93db-0872-4257-942c-7ad12e3010bb
+Creating notification for user: 9dbe1979-8160-4e8f-9e01-444867523697 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 16,
+  rows: 1
+}
+Notification created successfully for user: 9dbe1979-8160-4e8f-9e01-444867523697
+Creating notification for user: b9c3db6e-f029-4ae4-82e1-addd284064af title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 19,
+  rows: 1
+}
+Notification created successfully for user: b9c3db6e-f029-4ae4-82e1-addd284064af
+Creating notification for user: 52fc9c5d-1d78-495a-ae9b-ac0b215ba6c7 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 18,
+  rows: 1
+}
+Notification created successfully for user: 52fc9c5d-1d78-495a-ae9b-ac0b215ba6c7
+Creating notification for user: 51a61008-102b-4042-ada1-381954d10786 title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 51a61008-102b-4042-ada1-381954d10786
+Creating notification for user: 503c7937-7266-4b81-9c11-72643cf1fc4a title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 503c7937-7266-4b81-9c11-72643cf1fc4a
+Creating notification for user: 896d05a3-6589-44d6-a8cc-be9c50b8457b title: Nouvelle activité de réservation message: Jean Client a mis à jour sa réservation pour "Nettoyage Complet" - Statut: completed privateRecipients: undefined
+✅ Requête exécutée {
+  text: 'INSERT INTO notifications (id, user_id, title, mes',
+  duration: 17,
+  rows: 1
+}
+Notification created successfully for user: 896d05a3-6589-44d6-a8cc-be9c50b8457b
+[0mPUT /api/bookings/58632872-f153-4bf9-8807-f827eb0c5b34/status [32m200[0m 425.868 ms - 547[0m
+prisma:query SELECT "public"."reviews"."id", "public"."reviews"."booking_id", "public"."reviews"."client_id", "public"."reviews"."provider_id", "public"."reviews"."service_id", "public"."reviews"."rating", "public"."reviews"."comment", "public"."reviews"."is_verified", "public"."reviews"."created_at", "public"."reviews"."updated_at" FROM "public"."reviews" WHERE ("public"."reviews"."booking_id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+[0mGET /api/reviews/booking/58632872-f153-4bf9-8807-f827eb0c5b34 [32m200[0m 4.590 ms - 28[0m
+📝 POST /api/reviews called with body: {
+  bookingId: '58632872-f153-4bf9-8807-f827eb0c5b34',
+  rating: 5,
+  comment: 'Excellent service, très professionnel!'
+}
+✅ Validation passed, calling controller
+prisma:query SELECT "public"."bookings"."id", "public"."bookings"."client_id", "public"."bookings"."service_id", "public"."bookings"."booking_date", "public"."bookings"."booking_time", "public"."bookings"."duration", "public"."bookings"."status"::text, "public"."bookings"."address", "public"."bookings"."city", "public"."bookings"."phone", "public"."bookings"."notes", "public"."bookings"."total_amount", "public"."bookings"."payment_status"::text, "public"."bookings"."created_at", "public"."bookings"."updated_at" FROM "public"."bookings" WHERE ("public"."bookings"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+prisma:query SELECT "public"."services"."id", "public"."services"."provider_id", "public"."services"."category_id", "public"."services"."name", "public"."services"."description", "public"."services"."price", "public"."services"."price_type"::text, "public"."services"."duration", "public"."services"."is_active", "public"."services"."created_at", "public"."services"."updated_at" FROM "public"."services" WHERE "public"."services"."id" IN ($1) OFFSET $2
+prisma:query SELECT "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at" FROM "public"."provider_profiles" WHERE ("public"."provider_profiles"."user_id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+Checking existing review for bookingId: 58632872-f153-4bf9-8807-f827eb0c5b34
+prisma:query SELECT "public"."reviews"."id", "public"."reviews"."booking_id", "public"."reviews"."client_id", "public"."reviews"."provider_id", "public"."reviews"."service_id", "public"."reviews"."rating", "public"."reviews"."comment", "public"."reviews"."is_verified", "public"."reviews"."created_at", "public"."reviews"."updated_at" FROM "public"."reviews" WHERE ("public"."reviews"."booking_id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+Existing review check result: null
+Creating review with data:
+- bookingId: 58632872-f153-4bf9-8807-f827eb0c5b34
+- clientId: fde5885e-4a9e-49c1-8486-6cce66c374bf
+- providerId (profile): d91217bf-9d50-4958-9cbd-e2e123130708
+- serviceId: fe65774b-636e-438a-a78f-bc373849718b
+- rating: 5
+- comment: Excellent service, très professionnel!
+prisma:query INSERT INTO "public"."reviews" ("id","booking_id","client_id","provider_id","service_id","rating","comment","is_verified","created_at","updated_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "public"."reviews"."id", "public"."reviews"."booking_id", "public"."reviews"."client_id", "public"."reviews"."provider_id", "public"."reviews"."service_id", "public"."reviews"."rating", "public"."reviews"."comment", "public"."reviews"."is_verified", "public"."reviews"."created_at", "public"."reviews"."updated_at"
+prisma:query SELECT AVG("rating"), COUNT(*) FROM (SELECT "public"."reviews"."rating", "public"."reviews"."id" FROM "public"."reviews" WHERE "public"."reviews"."provider_id" = $1 OFFSET $2) AS "sub"
+prisma:query UPDATE "public"."provider_profiles" SET "rating" = $1, "total_reviews" = $2, "updated_at" = $3 WHERE ("public"."provider_profiles"."id" = $4 AND 1=1) RETURNING "public"."provider_profiles"."id", "public"."provider_profiles"."user_id", "public"."provider_profiles"."business_name", "public"."provider_profiles"."specialty", "public"."provider_profiles"."bio", "public"."provider_profiles"."hourly_rate", "public"."provider_profiles"."years_experience", "public"."provider_profiles"."location", "public"."provider_profiles"."address", "public"."provider_profiles"."city", "public"."provider_profiles"."region", "public"."provider_profiles"."postal_code", "public"."provider_profiles"."latitude", "public"."provider_profiles"."longitude", "public"."provider_profiles"."service_radius", "public"."provider_profiles"."is_available", "public"."provider_profiles"."rating", "public"."provider_profiles"."total_reviews", "public"."provider_profiles"."total_bookings", "public"."provider_profiles"."is_verified", "public"."provider_profiles"."profile_image", "public"."provider_profiles"."specialties", "public"."provider_profiles"."availability", "public"."provider_profiles"."created_at", "public"."provider_profiles"."updated_at"
+[0mPOST /api/reviews [32m201[0m 39.962 ms - 456[0m
+prisma:query SELECT "public"."users"."id", "public"."users"."email", "public"."users"."password", "public"."users"."first_name", "public"."users"."last_name", "public"."users"."phone", "public"."users"."role"::text, "public"."users"."avatar", "public"."users"."bio", "public"."users"."specialization", "public"."users"."address", "public"."users"."zone", "public"."users"."latitude", "public"."users"."longitude", "public"."users"."is_verified", "public"."users"."is_active", "public"."users"."created_at", "public"."users"."updated_at" FROM "public"."users" WHERE ("public"."users"."id" = $1 AND 1=1) LIMIT $2 OFFSET $3
+[0mGET /api/auth/me [32m200[0m 10.033 ms - 277[0m
+[0mGET /api/profile [32m200[0m 2.397 ms - 138[0m
+✅ Requête exécutée {
+  text: '\n        UPDATE users SET\n          first_name = $',
+  duration: 21,
+  rows: 1
+}
+[0mPUT /api/profile [32m200[0m 33.714 ms - 60[0m
+✅ Requête exécutée {
+  text: '\n        SELECT COUNT(*) as count FROM payments\n  ',
+  duration: 26,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n        SELECT\n          p.id, p.amount, p.paymen',
+  duration: 29,
+  rows: 0
+}
+[0mGET /api/payments/me [32m200[0m 42.388 ms - 86[0m
+[0mGET /api/users/profile [32m200[0m 3.017 ms - 138[0m
+📨 Route /register atteinte
+✅ Validation passée, appel contrôleur
+📝 Inscription pour: admin-1776616185380@kaayjob.com
+✅ Requête exécutée {
+  text: 'SELECT id FROM users WHERE email = $1',
+  duration: 21,
+  rows: 0
+}
+✅ Requête exécutée {
+  text: '\n        INSERT INTO users (id, email, password, f',
+  duration: 21,
+  rows: 1
+}
+✅ Inscription réussie: admin-1776616185380@kaayjob.com
+[0mPOST /api/auth/register [32m201[0m 247.834 ms - 518[0m
+✅ Requête exécutée {
+  text: 'SELECT COUNT(*) as total, role FROM users GROUP BY',
+  duration: 19,
+  rows: 3
+}
+✅ Requête exécutée {
+  text: '\n      SELECT COUNT(*) as total,\n             SUM(',
+  duration: 23,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n      SELECT COALESCE(SUM(total_amount), 0) as to',
+  duration: 18,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n      SELECT COUNT(*) as total,\n             SUM(',
+  duration: 20,
+  rows: 1
+}
+[0mGET /api/admin/stats [32m200[0m 107.788 ms - 265[0m
+✅ Requête exécutée {
+  text: 'SELECT COUNT(*) as count FROM payments p',
+  duration: 24,
+  rows: 1
+}
+✅ Requête exécutée {
+  text: '\n        SELECT\n          p.id, p.amount, p.paymen',
+  duration: 28,
+  rows: 0
+}
+[0mGET /api/payments [32m200[0m 38.660 ms - 86[0m
+prisma:query SELECT COUNT(*) FROM (SELECT "public"."reviews"."id" FROM "public"."reviews" WHERE 1=1 OFFSET $1) AS "sub"
+prisma:query SELECT "public"."reviews"."id", "public"."reviews"."booking_id", "public"."reviews"."client_id", "public"."reviews"."provider_id", "public"."reviews"."service_id", "public"."reviews"."rating", "public"."reviews"."comment", "public"."reviews"."is_verified", "public"."reviews"."created_at", "public"."reviews"."updated_at" FROM "public"."reviews" WHERE 1=1 ORDER BY "public"."reviews"."created_at" DESC LIMIT $1 OFFSET $2
+prisma:query SELECT "public"."users"."id", "public"."users"."first_name", "public"."users"."last_name", "public"."users"."avatar" FROM "public"."users" WHERE "public"."users"."id" IN ($1,$2,$3,$4,$5) OFFSET $6
+prisma:query SELECT "public"."services"."id", "public"."services"."name" FROM "public"."services" WHERE "public"."services"."id" IN ($1,$2,$3,$4,$5) OFFSET $6
+[0mGET /api/reviews [32m200[0m 40.563 ms - 3186[0m

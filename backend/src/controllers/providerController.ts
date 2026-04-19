@@ -362,7 +362,17 @@ export class ProviderController {
         serviceRadius,
         isAvailable,
         profileImage,
+        phone,
+        country,
       } = req.body;
+
+      // Mettre à jour les informations utilisateur si fourni
+      if (phone) {
+        await query(
+          `UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2`,
+          [phone, user.id],
+        );
+      }
 
       // Vérifier si le profil prestataire existe
       const checkRes = await query(
@@ -393,19 +403,24 @@ export class ProviderController {
             region,
             postalCode,
             serviceRadius,
-            isAvailable,
+            isAvailable !== undefined ? isAvailable : true, // Valeur par défaut true
             profileImage,
           ],
         );
       } else {
         // Mettre à jour le profil existant
+        // Déterminer la valeur de is_available
+        const finalIsAvailable = isAvailable !== undefined && isAvailable !== null ? isAvailable : true;
+
+        console.log("DEBUG_PROVIDER_UPDATE: Final isAvailable value:", finalIsAvailable);
+
         await query(
           `
           UPDATE provider_profiles SET
             business_name = $1, specialty = $2, bio = $3, hourly_rate = $4,
             years_experience = $5, location = $6, address = $7, city = $8,
             region = $9, postal_code = $10, service_radius = $11,
-            is_available = $12, profile_image = $13, updated_at = NOW()
+            is_available = COALESCE(is_available, $12), profile_image = $13, updated_at = NOW()
           WHERE user_id = $14
         `,
           [
@@ -420,7 +435,7 @@ export class ProviderController {
             region,
             postalCode,
             serviceRadius,
-            isAvailable,
+            finalIsAvailable,
             profileImage,
             user.id,
           ],

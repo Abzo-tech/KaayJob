@@ -38,10 +38,13 @@ router.post(
   authenticate,
   createReviewValidation,
   async (req: Request, res: Response) => {
+    console.log("📝 POST /api/reviews called with body:", req.body);
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log("❌ Validation errors:", errors.array());
       return res.status(400).json({ success: false, errors: errors.array() });
     }
+    console.log("✅ Validation passed, calling controller");
     await ReviewController.create(req, res);
   },
 );

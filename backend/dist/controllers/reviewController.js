@@ -18,9 +18,7 @@ class ReviewController {
             const skip = (Number(page) - 1) * Number(limit);
             // Only admins can see all reviews
             if (user.role !== "ADMIN") {
-                res
-                    .status(403)
-                    .json({
+                res.status(403).json({
                     success: false,
                     message: "Accès réservé aux administrateurs",
                 });
@@ -231,10 +229,23 @@ class ReviewController {
                 });
                 return;
             }
+            // Get provider profile ID (not user ID)
+            const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: booking.service.providerId },
+            });
+            if (!providerProfile) {
+                res.status(404).json({
+                    success: false,
+                    message: "Profil prestataire non trouvé",
+                });
+                return;
+            }
             // Check review doesn't already exist
+            console.log("Checking existing review for bookingId:", bookingId);
             const existingReview = await prisma_1.prisma.review.findUnique({
                 where: { bookingId },
             });
+            console.log("Existing review check result:", existingReview);
             if (existingReview) {
                 res.status(400).json({
                     success: false,
@@ -242,12 +253,20 @@ class ReviewController {
                 });
                 return;
             }
+            // Debug logging before creating review
+            console.log("Creating review with data:");
+            console.log("- bookingId:", bookingId);
+            console.log("- clientId:", user.id);
+            console.log("- providerId (profile):", providerProfile.id);
+            console.log("- serviceId:", booking.serviceId);
+            console.log("- rating:", rating);
+            console.log("- comment:", comment);
             // Create review
             const review = await prisma_1.prisma.review.create({
                 data: {
                     bookingId,
                     clientId: user.id,
-                    providerId: booking.service.providerId,
+                    providerId: providerProfile.id, // Use provider profile ID
                     serviceId: booking.serviceId,
                     rating,
                     comment,
@@ -255,12 +274,12 @@ class ReviewController {
             });
             // Update provider stats
             const stats = await prisma_1.prisma.review.aggregate({
-                where: { providerId: booking.service.providerId },
+                where: { providerId: providerProfile.id },
                 _avg: { rating: true },
                 _count: true,
             });
             await prisma_1.prisma.providerProfile.update({
-                where: { id: booking.service.providerId },
+                where: { id: providerProfile.id },
                 data: {
                     rating: stats._avg.rating || 0,
                     totalReviews: stats._count,

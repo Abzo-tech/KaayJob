@@ -290,8 +290,28 @@ const runTests = async () => {
   // ===== FLOW 8: REVIEWS & RATINGS =====
   console.log("\n📋 FLOW 8: Reviews & Ratings");
   if (bookingId && clientToken) {
-    // First, mark booking as completed (using provider token)
+    // First, confirm booking (using provider token)
     if (providerToken) {
+      await test(
+        "Confirm Booking",
+        "PUT",
+        `/api/bookings/${bookingId}/status`,
+        { status: "CONFIRMED" },
+        200,
+        { Authorization: `Bearer ${providerToken}` },
+      );
+
+      // Then mark as in progress
+      await test(
+        "Mark Booking as In Progress",
+        "PUT",
+        `/api/bookings/${bookingId}/status`,
+        { status: "IN_PROGRESS" },
+        200,
+        { Authorization: `Bearer ${providerToken}` },
+      );
+
+      // Finally mark as completed
       await test(
         "Mark Booking as Completed",
         "PUT",

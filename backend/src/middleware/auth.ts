@@ -3,7 +3,7 @@
  */
 
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "kaayjob-secret-key-change-in-production";
@@ -42,7 +42,7 @@ export const requireAdmin = (
   next: NextFunction,
 ) => {
   const user = (req as AuthRequest).user;
-  if (!user || (user.role?.toUpperCase() !== "ADMIN")) {
+  if (!user || user.role?.toUpperCase() !== "ADMIN") {
     return res.status(403).json({ success: false, message: "Accès refusé" });
   }
   next();
@@ -54,7 +54,7 @@ export const requireProvider = (
   next: NextFunction,
 ) => {
   const user = (req as AuthRequest).user;
-  if (!user || (user.role?.toUpperCase() !== "PRESTATAIRE")) {
+  if (!user || user.role?.toUpperCase() !== "PRESTATAIRE") {
     return res.status(403).json({ success: false, message: "Accès refusé" });
   }
   next();

@@ -18,7 +18,8 @@ const bookings_1 = __importDefault(require("./routes/bookings"));
 const providers_1 = __importDefault(require("./routes/providers"));
 const categories_1 = __importDefault(require("./routes/categories"));
 const services_1 = __importDefault(require("./routes/services"));
-// import reviewsRoutes from "./routes/reviews";
+const reviews_1 = __importDefault(require("./routes/reviews"));
+const users_1 = __importDefault(require("./routes/users"));
 const admin_1 = __importDefault(require("./routes/admin"));
 const notifications_1 = __importDefault(require("./routes/notifications"));
 const payments_1 = __importDefault(require("./routes/payments"));
@@ -36,10 +37,10 @@ const PORT = process.env.PORT || 3001;
 // Rate limiting
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: process.env.NODE_ENV === 'test' ? 1000 : 100, // Higher limit for tests
     message: {
         success: false,
-        message: "Trop de requêtes, veuillez réessayer plus tard"
+        message: "Trop de requêtes, veuillez réessayer plus tard",
     },
     standardHeaders: true,
     legacyHeaders: false,
@@ -77,24 +78,24 @@ app.use((req, res, next) => {
     const origin = req.headers.origin;
     // Allow requests with no origin (mobile apps, curl, etc.)
     if (!origin) {
-        res.header('Access-Control-Allow-Origin', '*');
+        res.header("Access-Control-Allow-Origin", "*");
     }
     else if (allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin);
+        res.header("Access-Control-Allow-Origin", origin);
     }
     else {
         console.log(`🚫 Origin not allowed: ${origin}`);
         // For debugging, allow all Vercel domains temporarily
-        if (origin.includes('vercel.app')) {
-            res.header('Access-Control-Allow-Origin', origin);
+        if (origin.includes("vercel.app")) {
+            res.header("Access-Control-Allow-Origin", origin);
             console.log(`✅ Vercel domain allowed: ${origin}`);
         }
     }
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
     // Handle preflight requests
-    if (req.method === 'OPTIONS') {
+    if (req.method === "OPTIONS") {
         res.sendStatus(200);
     }
     else {
@@ -113,7 +114,9 @@ app.get("/api/profile", auth_2.authenticate, async (req, res) => {
     try {
         const user = req.user;
         if (!user?.role) {
-            return res.status(401).json({ success: false, message: "Utilisateur non authentifié" });
+            return res
+                .status(401)
+                .json({ success: false, message: "Utilisateur non authentifié" });
         }
         // Rediriger vers la bonne route selon le rôle
         if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
@@ -132,8 +135,8 @@ app.get("/api/profile", auth_2.authenticate, async (req, res) => {
                     email: user.email,
                     phone: user.phone,
                     avatar: user.avatar,
-                    role: user.role
-                }
+                    role: user.role,
+                },
             });
         }
         else {
@@ -150,7 +153,9 @@ app.put("/api/profile", auth_2.authenticate, async (req, res) => {
     try {
         const user = req.user;
         if (!user?.role) {
-            return res.status(401).json({ success: false, message: "Utilisateur non authentifié" });
+            return res
+                .status(401)
+                .json({ success: false, message: "Utilisateur non authentifié" });
         }
         // Rediriger vers la bonne route selon le rôle
         if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
@@ -193,14 +198,19 @@ app.use("/api/bookings", bookings_1.default);
 app.use("/api/providers", providers_1.default);
 app.use("/api/categories", categories_1.default);
 app.use("/api/services", services_1.default);
-// app.use("/api/reviews", reviewsRoutes);
+app.use("/api/reviews", reviews_1.default);
+app.use("/api/users", users_1.default);
 app.use("/api/admin", admin_1.default);
 app.use("/api/notifications", notifications_1.default);
 app.use("/api/payments", payments_1.default);
 app.use("/api/subscriptions", subscriptions_1.default);
 // Health check
 app.get("/api/health", async (req, res) => {
-    res.json({ success: true, message: "API KaayJob opérationnelle", timestamp: new Date().toISOString() });
+    res.json({
+        success: true,
+        message: "API KaayJob opérationnelle",
+        timestamp: new Date().toISOString(),
+    });
 });
 // Documentation Swagger
 app.use("/api/docs", swagger_1.swaggerUi.serve, swagger_1.swaggerUi.setup(swagger_1.specs));
@@ -226,69 +236,114 @@ app.post("/api/seed", async (req, res) => {
 // Create basic test data endpoint (emergency solution)
 app.post("/api/create-test-data", async (req, res) => {
     try {
-        console.log('🌱 Création de données de test basiques...');
+        console.log("🌱 Création de données de test basiques...");
         // Créer quelques catégories de base
         const categories = [
-            { name: 'Jardinage', slug: 'jardinage', description: 'Services de jardinage et espaces verts', icon: '🌿', isActive: true },
-            { name: 'Plomberie', slug: 'plomberie', description: 'Réparations et installations de plomberie', icon: '🔧', isActive: true },
-            { name: 'Électricité', slug: 'electricite', description: 'Travaux électriques et dépannages', icon: '⚡', isActive: true },
-            { name: 'Ménage', slug: 'menage', description: 'Services de nettoyage et entretien', icon: '🧹', isActive: true },
-            { name: 'Réparations', slug: 'reparations', description: 'Réparations diverses à domicile', icon: '🔨', isActive: true }
+            {
+                name: "Jardinage",
+                slug: "jardinage",
+                description: "Services de jardinage et espaces verts",
+                icon: "🌿",
+                isActive: true,
+            },
+            {
+                name: "Plomberie",
+                slug: "plomberie",
+                description: "Réparations et installations de plomberie",
+                icon: "🔧",
+                isActive: true,
+            },
+            {
+                name: "Électricité",
+                slug: "electricite",
+                description: "Travaux électriques et dépannages",
+                icon: "⚡",
+                isActive: true,
+            },
+            {
+                name: "Ménage",
+                slug: "menage",
+                description: "Services de nettoyage et entretien",
+                icon: "🧹",
+                isActive: true,
+            },
+            {
+                name: "Réparations",
+                slug: "reparations",
+                description: "Réparations diverses à domicile",
+                icon: "🔨",
+                isActive: true,
+            },
         ];
         for (const cat of categories) {
             await prisma_1.prisma.category.upsert({
                 where: { slug: cat.slug },
                 update: cat,
-                create: cat
+                create: cat,
             });
         }
         // Créer un utilisateur admin
-        console.log('🔧 Vérification/création de l\'utilisateur admin...');
+        console.log("🔧 Vérification/création de l'utilisateur admin...");
         try {
-            const hashedPassword = await bcryptjs_1.default.hash('Password123', 10);
-            console.log('Mot de passe hashé créé, commence par:', hashedPassword.substring(0, 10));
+            const hashedPassword = await bcryptjs_1.default.hash("Password123", 10);
+            console.log("Mot de passe hashé créé, commence par:", hashedPassword.substring(0, 10));
             const adminUser = await prisma_1.prisma.user.upsert({
-                where: { email: 'admin@kaayjob.com' },
+                where: { email: "admin@kaayjob.com" },
                 update: {
                     password: hashedPassword,
-                    firstName: 'Admin',
-                    lastName: 'KaayJob',
-                    phone: '+221000000000',
-                    role: 'ADMIN',
+                    firstName: "Admin",
+                    lastName: "KaayJob",
+                    phone: "+221000000000",
+                    role: "ADMIN",
                     isVerified: true,
                     isActive: true,
                 },
                 create: {
-                    email: 'admin@kaayjob.com',
+                    email: "admin@kaayjob.com",
                     password: hashedPassword,
-                    firstName: 'Admin',
-                    lastName: 'KaayJob',
-                    phone: '+221000000000',
-                    role: 'ADMIN',
+                    firstName: "Admin",
+                    lastName: "KaayJob",
+                    phone: "+221000000000",
+                    role: "ADMIN",
                     isVerified: true,
                     isActive: true,
                 },
             });
-            console.log('✅ Utilisateur admin créé/mis à jour:', adminUser.email);
+            console.log("✅ Utilisateur admin créé/mis à jour:", adminUser.email);
         }
         catch (error) {
-            console.error('❌ Erreur lors de la création de l\'admin:', error);
+            console.error("❌ Erreur lors de la création de l'admin:", error);
         }
         // Créer quelques prestataires
         const providers = [
-            { email: 'jardinier@email.com', firstName: 'Ahmed', lastName: 'Diallo', specialty: 'Jardinage' },
-            { email: 'plombier@email.com', firstName: 'Moussa', lastName: 'Sow', specialty: 'Plomberie' },
-            { email: 'electricien@email.com', firstName: 'Fatou', lastName: 'Diop', specialty: 'Électricité' }
+            {
+                email: "jardinier@email.com",
+                firstName: "Ahmed",
+                lastName: "Diallo",
+                specialty: "Jardinage",
+            },
+            {
+                email: "plombier@email.com",
+                firstName: "Moussa",
+                lastName: "Sow",
+                specialty: "Plomberie",
+            },
+            {
+                email: "electricien@email.com",
+                firstName: "Fatou",
+                lastName: "Diop",
+                specialty: "Électricité",
+            },
         ];
         for (const prov of providers) {
-            const userPassword = await bcryptjs_1.default.hash('test123', 10);
+            const userPassword = await bcryptjs_1.default.hash("test123", 10);
             const user = await prisma_1.prisma.user.upsert({
                 where: { email: prov.email },
                 update: {
                     firstName: prov.firstName,
                     lastName: prov.lastName,
-                    phone: '+221000000000',
-                    role: 'PRESTATAIRE',
+                    phone: "+221000000000",
+                    role: "PRESTATAIRE",
                     isVerified: true,
                     isActive: true,
                     password: userPassword,
@@ -298,11 +353,11 @@ app.post("/api/create-test-data", async (req, res) => {
                     password: userPassword,
                     firstName: prov.firstName,
                     lastName: prov.lastName,
-                    phone: '+221000000000',
-                    role: 'PRESTATAIRE',
+                    phone: "+221000000000",
+                    role: "PRESTATAIRE",
                     isVerified: true,
                     isActive: true,
-                }
+                },
             });
             // Créer le profil prestataire
             await prisma_1.prisma.providerProfile.upsert({
@@ -327,29 +382,32 @@ app.post("/api/create-test-data", async (req, res) => {
                     totalReviews: 10,
                     totalBookings: 25,
                     isVerified: true,
-                }
+                },
             });
         }
-        console.log('✅ Données de test créées avec succès');
+        console.log("✅ Données de test créées avec succès");
         res.json({
             success: true,
-            message: 'Données de test créées avec succès',
+            message: "Données de test créées avec succès",
             data: {
                 categories: categories.length,
                 users: providers.length + 1, // + admin
                 credentials: {
-                    admin: { email: 'admin@kaayjob.com', password: 'admin123' },
-                    providers: providers.map(p => ({ email: p.email, password: 'test123' }))
-                }
-            }
+                    admin: { email: "admin@kaayjob.com", password: "admin123" },
+                    providers: providers.map((p) => ({
+                        email: p.email,
+                        password: "test123",
+                    })),
+                },
+            },
         });
     }
     catch (error) {
-        console.error('❌ Erreur création données test:', error);
+        console.error("❌ Erreur création données test:", error);
         res.status(500).json({
             success: false,
-            message: 'Erreur lors de la création des données de test',
-            error: error.message
+            message: "Erreur lors de la création des données de test",
+            error: error.message,
         });
     }
 });
@@ -360,15 +418,17 @@ app.post("/api/setup-admin", async (req, res) => {
         if (!email || !password || !firstName || !lastName) {
             return res.status(400).json({
                 success: false,
-                message: "Tous les champs sont requis: email, password, firstName, lastName"
+                message: "Tous les champs sont requis: email, password, firstName, lastName",
             });
         }
         // Vérifier si l'admin existe déjà
-        const existingAdmin = await (0, database_1.query)("SELECT id FROM users WHERE email = $1", [email]);
+        const existingAdmin = await (0, database_1.query)("SELECT id FROM users WHERE email = $1", [
+            email,
+        ]);
         if (existingAdmin.rows.length > 0) {
             return res.status(400).json({
                 success: false,
-                message: "Un utilisateur avec cet email existe déjà"
+                message: "Un utilisateur avec cet email existe déjà",
             });
         }
         // Créer l'admin
@@ -383,8 +443,8 @@ app.post("/api/setup-admin", async (req, res) => {
             credentials: {
                 email,
                 password: "••••••••",
-                role: "ADMIN"
-            }
+                role: "ADMIN",
+            },
         });
     }
     catch (error) {
@@ -398,23 +458,23 @@ app.post("/api/setup-admin", async (req, res) => {
 // Endpoint de migration des données depuis la base locale
 app.post("/api/migrate-from-local", async (req, res) => {
     try {
-        console.log('🚀 Démarrage de la migration depuis la base locale...');
+        console.log("🚀 Démarrage de la migration depuis la base locale...");
         // Connexion à la base locale
         const localDb = {
-            host: '127.0.0.1',
+            host: "127.0.0.1",
             port: 5432,
-            database: 'kaayjob',
-            user: 'postgres',
-            password: 'postgres'
+            database: "kaayjob",
+            user: "postgres",
+            password: "postgres",
         };
         // 1. Récupérer les données de la base locale
-        console.log('📦 Récupération des données locales...');
-        const localUsers = await (0, database_1.query)('SELECT * FROM users');
-        const localCategories = await (0, database_1.query)('SELECT * FROM categories');
-        const localProfiles = await (0, database_1.query)('SELECT * FROM provider_profiles');
-        const localServices = await (0, database_1.query)('SELECT * FROM services');
-        const localBookings = await (0, database_1.query)('SELECT * FROM bookings');
-        const localReviews = await (0, database_1.query)('SELECT * FROM reviews');
+        console.log("📦 Récupération des données locales...");
+        const localUsers = await (0, database_1.query)("SELECT * FROM users");
+        const localCategories = await (0, database_1.query)("SELECT * FROM categories");
+        const localProfiles = await (0, database_1.query)("SELECT * FROM provider_profiles");
+        const localServices = await (0, database_1.query)("SELECT * FROM services");
+        const localBookings = await (0, database_1.query)("SELECT * FROM bookings");
+        const localReviews = await (0, database_1.query)("SELECT * FROM reviews");
         console.log(`   Utilisateurs: ${localUsers.rows.length}`);
         console.log(`   Catégories: ${localCategories.rows.length}`);
         console.log(`   Profils: ${localProfiles.rows.length}`);
@@ -422,7 +482,7 @@ app.post("/api/migrate-from-local", async (req, res) => {
         console.log(`   Réservations: ${localBookings.rows.length}`);
         console.log(`   Avis: ${localReviews.rows.length}`);
         // 2. Insérer dans Prisma Cloud (en gérant les conflits)
-        console.log('☁️ Migration vers Prisma Cloud...');
+        console.log("☁️ Migration vers Prisma Cloud...");
         // Utilisateurs
         for (const user of localUsers.rows) {
             try {
@@ -448,7 +508,7 @@ app.post("/api/migrate-from-local", async (req, res) => {
                         avatar: user.avatar,
                         isVerified: user.is_verified,
                         isActive: user.is_active,
-                    }
+                    },
                 });
             }
             catch (err) {
@@ -478,7 +538,7 @@ app.post("/api/migrate-from-local", async (req, res) => {
                         isActive: cat.is_active,
                         displayOrder: cat.display_order,
                         parentId: cat.parent_id,
-                    }
+                    },
                 });
             }
             catch (err) {
@@ -528,7 +588,7 @@ app.post("/api/migrate-from-local", async (req, res) => {
                         totalBookings: profile.total_bookings,
                         isVerified: profile.is_verified,
                         profileImage: profile.profile_image,
-                    }
+                    },
                 });
             }
             catch (err) {
@@ -536,15 +596,15 @@ app.post("/api/migrate-from-local", async (req, res) => {
             }
         }
         // Services - Désactivé temporairement à cause des relations complexes
-        console.log('⏭️ Services ignorés (relations complexes)');
+        console.log("⏭️ Services ignorés (relations complexes)");
         // Réservations - Désactivé temporairement à cause des relations complexes
-        console.log('⏭️ Réservations ignorées (relations complexes)');
+        console.log("⏭️ Réservations ignorées (relations complexes)");
         // Avis - Désactivé temporairement à cause des relations complexes
-        console.log('⏭️ Avis ignorés (relations complexes)');
-        console.log('✅ Migration terminée !');
+        console.log("⏭️ Avis ignorés (relations complexes)");
+        console.log("✅ Migration terminée !");
         res.json({
             success: true,
-            message: 'Migration terminée avec succès',
+            message: "Migration terminée avec succès",
             stats: {
                 users: localUsers.rows.length,
                 categories: localCategories.rows.length,
@@ -552,15 +612,15 @@ app.post("/api/migrate-from-local", async (req, res) => {
                 services: localServices.rows.length,
                 bookings: localBookings.rows.length,
                 reviews: localReviews.rows.length,
-            }
+            },
         });
     }
     catch (error) {
-        console.error('❌ Erreur de migration:', error);
+        console.error("❌ Erreur de migration:", error);
         res.status(500).json({
             success: false,
-            message: 'Erreur lors de la migration',
-            error: error.message
+            message: "Erreur lors de la migration",
+            error: error.message,
         });
     }
 });
@@ -582,24 +642,24 @@ const startServer = async () => {
         await (0, database_1.testConnection)();
         console.log("✅ Test de connexion DB réussi");
         console.log(`🔄 Tentative de démarrage du serveur sur le port ${PORT}...`);
-        const server = app.listen(Number(PORT), '0.0.0.0', () => {
+        const server = app.listen(Number(PORT), "0.0.0.0", () => {
             console.log(`✅ Serveur KaayJob démarré sur le port ${PORT}`);
             console.log(`   API: http://localhost:${PORT}/api`);
             console.log(`   Écoute sur toutes les interfaces: 0.0.0.0:${PORT}`);
         });
-        server.on('error', (err) => {
-            console.error('❌ Erreur du serveur:', err);
+        server.on("error", (err) => {
+            console.error("❌ Erreur du serveur:", err);
         });
-        server.on('listening', () => {
-            console.log('✅ Serveur en écoute active');
+        server.on("listening", () => {
+            console.log("✅ Serveur en écoute active");
         });
         // Keep the process alive
-        console.log('🔄 Serveur en attente de connexions...');
+        console.log("🔄 Serveur en attente de connexions...");
         // Handle shutdown signals only for Ctrl+C (SIGINT)
-        process.on('SIGINT', () => {
-            console.log('🛑 Arrêt du serveur demandé (Ctrl+C)...');
+        process.on("SIGINT", () => {
+            console.log("🛑 Arrêt du serveur demandé (Ctrl+C)...");
             server.close(() => {
-                console.log('✅ Serveur arrêté proprement');
+                console.log("✅ Serveur arrêté proprement");
                 process.exit(0);
             });
         });
@@ -615,7 +675,7 @@ const startServer = async () => {
 };
 // Fonction pour attendre que la DB soit prête
 async function waitForDatabase() {
-    console.log('⏳ Attente de la connexion à la base de données...');
+    console.log("⏳ Attente de la connexion à la base de données...");
     let connected = false;
     let retries = 0;
     const maxRetries = 30;
@@ -624,12 +684,12 @@ async function waitForDatabase() {
             // Tester la connexion Prisma
             await prisma_1.prisma.$queryRaw `SELECT 1 as test`;
             connected = true;
-            console.log('✅ Base de données connectée et prête !');
+            console.log("✅ Base de données connectée et prête !");
         }
         catch (error) {
             retries++;
             console.log(`⏳ Tentative ${retries}/${maxRetries} - Base de données non prête...`);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Attendre 2 secondes
         }
     }
     if (!connected) {
@@ -645,7 +705,7 @@ async function startServerWithDB() {
         startServer();
     }
     catch (error) {
-        console.error('❌ Échec de connexion à la base de données:', error);
+        console.error("❌ Échec de connexion à la base de données:", error);
         process.exit(1);
     }
 }

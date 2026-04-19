@@ -60,10 +60,10 @@ export class AuthController {
       // Créer le profil prestataire si nécessaire
       if (role === "prestataire") {
         await query(`
-          INSERT INTO provider_profiles (id, user_id, created_at, updated_at)
-          VALUES (gen_random_uuid(), $1, NOW(), NOW())
+          INSERT INTO provider_profiles (id, user_id, is_available, created_at, updated_at)
+          VALUES (gen_random_uuid(), $1, true, NOW(), NOW())
         `, [user.id]);
-        console.log('👷 Profil prestataire créé');
+        console.log('👷 Profil prestataire créé avec is_available = true');
       }
 
       // Générer le token JWT

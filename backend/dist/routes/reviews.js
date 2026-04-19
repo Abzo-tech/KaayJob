@@ -32,10 +32,13 @@ router.get("/booking/:bookingId", async (req, res) => {
 });
 // POST /api/reviews - Créer un avis
 router.post("/", auth_1.authenticate, validations_1.createReviewValidation, async (req, res) => {
+    console.log("📝 POST /api/reviews called with body:", req.body);
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
+        console.log("❌ Validation errors:", errors.array());
         return res.status(400).json({ success: false, errors: errors.array() });
     }
+    console.log("✅ Validation passed, calling controller");
     await reviewController_1.default.create(req, res);
 });
 // PUT /api/reviews/:id - Modifier son avis
