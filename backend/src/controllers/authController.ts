@@ -28,7 +28,10 @@ export class AuthController {
       console.log("📝 Inscription pour:", email);
 
       // Vérifier si l'email existe déjà
-      const existingUser = await query("SELECT id FROM users WHERE email = $1", [email]);
+      const existingUser = await query(
+        "SELECT id FROM users WHERE email = $1",
+        [email],
+      );
       if (existingUser.rows.length > 0) {
         res.status(400).json({
           success: false,
@@ -41,36 +44,42 @@ export class AuthController {
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Mapper le rôle pour la base de données
-      let dbRole = 'CLIENT';
+      let dbRole = "CLIENT";
       if (role === "prestataire") {
-        dbRole = 'PRESTATAIRE';
+        dbRole = "PRESTATAIRE";
       } else if (role === "admin") {
-        dbRole = 'ADMIN';
+        dbRole = "ADMIN";
       }
 
       // Créer l'utilisateur
-      const userResult = await query(`
+      const userResult = await query(
+        `
         INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, NOW(), NOW())
         RETURNING id, email, first_name, last_name, phone, role
-      `, [email, hashedPassword, firstName, lastName, phone, dbRole]);
+      `,
+        [email, hashedPassword, firstName, lastName, phone, dbRole],
+      );
 
       const user = userResult.rows[0];
 
       // Créer le profil prestataire si nécessaire
       if (role === "prestataire") {
-        await query(`
+        await query(
+          `
           INSERT INTO provider_profiles (id, user_id, is_available, created_at, updated_at)
           VALUES (gen_random_uuid(), $1, true, NOW(), NOW())
-        `, [user.id]);
-        console.log('👷 Profil prestataire créé avec is_available = true');
+        `,
+          [user.id],
+        );
+        console.log("👷 Profil prestataire créé avec is_available = true");
       }
 
       // Générer le token JWT
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "7d" }
+        { expiresIn: "7d" },
       );
 
       console.log("✅ Inscription réussie:", email);
@@ -112,7 +121,7 @@ export class AuthController {
       // Rechercher l'utilisateur
       const userResult = await query(
         "SELECT id, email, password, first_name, last_name, phone, role, avatar FROM users WHERE email = $1",
-        [email]
+        [email],
       );
 
       const user = userResult.rows[0];
@@ -138,7 +147,7 @@ export class AuthController {
       const token = jwt.sign(
         { id: user.id, email: user.email, role: user.role },
         JWT_SECRET,
-        { expiresIn: "7d" }
+        { expiresIn: "7d" },
       );
 
       console.log("✅ Connexion réussie:", email);

@@ -38,7 +38,7 @@ const PORT = process.env.PORT || 3001;
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'test' ? 1000 : 100, // Higher limit for tests
+  max: process.env.NODE_ENV === "test" ? 1000 : 100, // Higher limit for tests
   message: {
     success: false,
     message: "Trop de requêtes, veuillez réessayer plus tard",
