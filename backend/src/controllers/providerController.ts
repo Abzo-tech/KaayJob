@@ -82,7 +82,7 @@ export class ProviderController {
         yearsExperience: row.yearsexperience,
         location: row.location,
         isAvailable: row.isavailable,
-        rating: parseFloat(row.rating || '0'),
+        rating: parseFloat(row.rating || "0"),
         totalReviews: row.totalreviews || 0,
         totalBookings: row.totalbookings || 0,
         isVerified: row.isverified,
@@ -90,13 +90,13 @@ export class ProviderController {
           id: row.userid,
           firstName: row.first_name,
           lastName: row.last_name,
-          avatar: row.avatar
-        }
+          avatar: row.avatar,
+        },
       }));
 
       res.json({
         success: true,
-        data: transformedProviders
+        data: transformedProviders,
       });
     } catch (error) {
       console.error("❌ Erreur liste prestataires:", error);
@@ -109,7 +109,8 @@ export class ProviderController {
    */
   static async getProvidersForMap(req: Request, res: Response): Promise<void> {
     try {
-      const providersResult = await query(`
+      const providersResult = await query(
+        `
         SELECT DISTINCT
           pp.id, pp.user_id as userId, pp.latitude, pp.longitude,
           u.first_name, u.last_name
@@ -125,7 +126,9 @@ export class ProviderController {
           AND pp.bio IS NOT NULL
           AND pp.hourly_rate IS NOT NULL
           AND pp.location IS NOT NULL
-      `, []);
+      `,
+        [],
+      );
 
       const transformedProviders = providersResult.rows.map((row: any) => ({
         id: row.id,
@@ -134,13 +137,13 @@ export class ProviderController {
         longitude: parseFloat(row.longitude),
         user: {
           firstName: row.first_name,
-          lastName: row.last_name
-        }
+          lastName: row.last_name,
+        },
       }));
 
       res.json({
         success: true,
-        data: transformedProviders
+        data: transformedProviders,
       });
     } catch (error) {
       console.error("❌ Erreur prestataires carte:", error);
@@ -155,7 +158,8 @@ export class ProviderController {
     try {
       const { id } = req.params;
 
-      const providerResult = await query(`
+      const providerResult = await query(
+        `
         SELECT
           pp.id, pp.user_id as userId, pp.specialty, pp.bio,
           pp.hourly_rate as hourlyRate, pp.years_experience as yearsExperience,
@@ -165,10 +169,14 @@ export class ProviderController {
         FROM provider_profiles pp
         JOIN users u ON pp.user_id = u.id
         WHERE pp.id = $1 AND u.role = 'PRESTATAIRE' AND u.is_verified = true
-      `, [id]);
+      `,
+        [id],
+      );
 
       if (providerResult.rows.length === 0) {
-        res.status(404).json({ success: false, message: "Prestataire non trouvé" });
+        res
+          .status(404)
+          .json({ success: false, message: "Prestataire non trouvé" });
         return;
       }
 
@@ -184,7 +192,7 @@ export class ProviderController {
         latitude: parseFloat(row.latitude),
         longitude: parseFloat(row.longitude),
         isAvailable: row.isavailable,
-        rating: parseFloat(row.rating || '0'),
+        rating: parseFloat(row.rating || "0"),
         totalReviews: row.totalreviews || 0,
         isVerified: row.isverified,
         user: {
@@ -193,17 +201,20 @@ export class ProviderController {
           lastName: row.last_name,
           email: row.email,
           phone: row.phone,
-          avatar: row.avatar
-        }
+          avatar: row.avatar,
+        },
       };
 
       // Récupérer les services actifs du prestataire
-      const servicesResult = await query(`
+      const servicesResult = await query(
+        `
         SELECT s.id, s.name, s.description, s.price, s.price_type as priceType, s.duration, s.is_active as isActive
         FROM services s
         WHERE s.provider_id = $1 AND s.is_active = true
         ORDER BY s.name ASC
-      `, [row.userid]);
+      `,
+        [row.userid],
+      );
 
       provider.services = servicesResult.rows.map((serviceRow: any) => ({
         id: serviceRow.id,
@@ -212,12 +223,12 @@ export class ProviderController {
         price: parseFloat(serviceRow.price),
         priceType: serviceRow.pricetype,
         duration: serviceRow.duration,
-        isActive: serviceRow.isactive
+        isActive: serviceRow.isactive,
       }));
 
       res.json({
         success: true,
-        data: provider
+        data: provider,
       });
     } catch (error) {
       console.error("❌ Erreur prestataire par ID:", error);
@@ -233,16 +244,21 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-        res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+        res
+          .status(403)
+          .json({ success: false, message: "Accès réservé aux prestataires" });
         return;
       }
 
-      const providerResult = await query(`
+      const providerResult = await query(
+        `
         SELECT
           pp.id, pp.user_id as userId, pp.business_name as businessName,
           pp.specialty, pp.bio, pp.hourly_rate as hourlyRate,
@@ -258,10 +274,14 @@ export class ProviderController {
         FROM provider_profiles pp
         JOIN users u ON pp.user_id = u.id
         WHERE pp.user_id = $1
-      `, [user.id]);
+      `,
+        [user.id],
+      );
 
       if (providerResult.rows.length === 0) {
-        res.status(404).json({ success: false, message: "Profil prestataire non trouvé" });
+        res
+          .status(404)
+          .json({ success: false, message: "Profil prestataire non trouvé" });
         return;
       }
 
@@ -283,7 +303,7 @@ export class ProviderController {
         longitude: parseFloat(row.longitude) || null,
         serviceRadius: row.serviceradius,
         isAvailable: row.isavailable,
-        rating: parseFloat(row.rating || '0'),
+        rating: parseFloat(row.rating || "0"),
         totalReviews: row.totalreviews || 0,
         totalBookings: row.totalbookings || 0,
         isVerified: row.isverified,
@@ -296,8 +316,8 @@ export class ProviderController {
           lastName: row.lastname,
           email: row.email,
           phone: row.phone,
-          avatar: row.avatar
-        }
+          avatar: row.avatar,
+        },
       };
 
       res.json({ success: true, data: profile });
@@ -315,33 +335,97 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-        res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+        res
+          .status(403)
+          .json({ success: false, message: "Accès réservé aux prestataires" });
         return;
       }
 
       const {
-        businessName, specialty, bio, hourlyRate, yearsExperience,
-        location, address, city, region, postalCode, serviceRadius,
-        isAvailable, profileImage
+        businessName,
+        specialty,
+        bio,
+        hourlyRate,
+        yearsExperience,
+        location,
+        address,
+        city,
+        region,
+        postalCode,
+        serviceRadius,
+        isAvailable,
+        profileImage,
       } = req.body;
 
-      await query(`
-        UPDATE provider_profiles SET
-          business_name = $1, specialty = $2, bio = $3, hourly_rate = $4,
-          years_experience = $5, location = $6, address = $7, city = $8,
-          region = $9, postal_code = $10, service_radius = $11,
-          is_available = $12, profile_image = $13, updated_at = NOW()
-        WHERE user_id = $14
-      `, [
-        businessName, specialty, bio, hourlyRate, yearsExperience,
-        location, address, city, region, postalCode, serviceRadius,
-        isAvailable, profileImage, user.id
-      ]);
+      // Vérifier si le profil prestataire existe
+      const checkRes = await query(
+        `SELECT id FROM provider_profiles WHERE user_id = $1`,
+        [user.id],
+      );
+
+      if (checkRes.rows.length === 0) {
+        // Créer le profil s'il n'existe pas
+        await query(
+          `
+          INSERT INTO provider_profiles (
+            user_id, business_name, specialty, bio, hourly_rate,
+            years_experience, location, address, city, region, postal_code,
+            service_radius, is_available, profile_image, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
+        `,
+          [
+            user.id,
+            businessName,
+            specialty,
+            bio,
+            hourlyRate,
+            yearsExperience,
+            location,
+            address,
+            city,
+            region,
+            postalCode,
+            serviceRadius,
+            isAvailable,
+            profileImage,
+          ],
+        );
+      } else {
+        // Mettre à jour le profil existant
+        await query(
+          `
+          UPDATE provider_profiles SET
+            business_name = $1, specialty = $2, bio = $3, hourly_rate = $4,
+            years_experience = $5, location = $6, address = $7, city = $8,
+            region = $9, postal_code = $10, service_radius = $11,
+            is_available = $12, profile_image = $13, updated_at = NOW()
+          WHERE user_id = $14
+        `,
+          [
+            businessName,
+            specialty,
+            bio,
+            hourlyRate,
+            yearsExperience,
+            location,
+            address,
+            city,
+            region,
+            postalCode,
+            serviceRadius,
+            isAvailable,
+            profileImage,
+            user.id,
+          ],
+        );
+      }
 
       res.json({ success: true, message: "Profil mis à jour avec succès" });
     } catch (error) {
@@ -358,26 +442,33 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-        res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+        res
+          .status(403)
+          .json({ success: false, message: "Accès réservé aux prestataires" });
         return;
       }
 
       const { documents } = req.body;
 
       // Créer une demande de vérification
-      await query(`
+      await query(
+        `
         INSERT INTO verification_requests (user_id, documents, status, created_at)
         VALUES ($1, $2, 'pending', NOW())
         ON CONFLICT (user_id) DO UPDATE SET
           documents = EXCLUDED.documents,
           status = 'pending',
           updated_at = NOW()
-      `, [user.id, JSON.stringify(documents || {})]);
+      `,
+        [user.id, JSON.stringify(documents || {})],
+      );
 
       res.json({ success: true, message: "Demande de vérification envoyée" });
     } catch (error) {
@@ -394,32 +485,42 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       const { latitude, longitude, address } = req.body;
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-        res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+        res
+          .status(403)
+          .json({ success: false, message: "Accès réservé aux prestataires" });
         return;
       }
 
-      await query(`
+      await query(
+        `
         UPDATE provider_profiles
         SET latitude = $1, longitude = $2, location = $3, updated_at = NOW()
         WHERE user_id = $4
-      `, [latitude, longitude, address || null, user.id]);
+      `,
+        [latitude, longitude, address || null, user.id],
+      );
 
-      await query(`
+      await query(
+        `
         UPDATE users
         SET latitude = $1, longitude = $2, address = $3, updated_at = NOW()
         WHERE id = $4
-      `, [latitude, longitude, address || null, user.id]);
+      `,
+        [latitude, longitude, address || null, user.id],
+      );
 
       res.json({
         success: true,
-        message: "Localisation mise à jour avec succès"
+        message: "Localisation mise à jour avec succès",
       });
     } catch (error) {
       console.error("❌ Erreur mise à jour localisation:", error);
@@ -435,26 +536,52 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       const { isAvailable } = req.body;
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
-        res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+        res
+          .status(403)
+          .json({ success: false, message: "Accès réservé aux prestataires" });
         return;
       }
 
-      await query(`
-        UPDATE provider_profiles
-        SET is_available = $1, updated_at = NOW()
-        WHERE user_id = $2
-      `, [isAvailable, user.id]);
+      // Vérifier si le profil prestataire existe
+      const checkRes = await query(
+        `SELECT id FROM provider_profiles WHERE user_id = $1`,
+        [user.id],
+      );
+
+      if (checkRes.rows.length === 0) {
+        // Créer le profil s'il n'existe pas avec des valeurs par défaut
+        await query(
+          `
+          INSERT INTO provider_profiles (
+            user_id, is_available, created_at, updated_at
+          ) VALUES ($1, $2, NOW(), NOW())
+        `,
+          [user.id, isAvailable],
+        );
+      } else {
+        // Mettre à jour le profil existant
+        await query(
+          `
+          UPDATE provider_profiles
+          SET is_available = $1, updated_at = NOW()
+          WHERE user_id = $2
+        `,
+          [isAvailable, user.id],
+        );
+      }
 
       res.json({
         success: true,
-        message: "Disponibilité mise à jour avec succès"
+        message: "Disponibilité mise à jour avec succès",
       });
     } catch (error) {
       console.error("❌ Erreur mise à jour disponibilité:", error);
@@ -470,7 +597,9 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
@@ -482,10 +611,12 @@ export class ProviderController {
           plan: "premium",
           status: "active",
           startDate: new Date().toISOString(),
-          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000,
+          ).toISOString(),
           planName: "Plan Premium",
-          planPrice: 49.99
-        }
+          planPrice: 49.99,
+        },
       });
     } catch (error) {
       console.error("❌ Erreur récupération abonnement:", error);
@@ -496,19 +627,24 @@ export class ProviderController {
   /**
    * Obtenir l'historique des abonnements
    */
-  static async getSubscriptionHistory(req: Request, res: Response): Promise<void> {
+  static async getSubscriptionHistory(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
     try {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       // Pour l'instant, retourner un historique fictif
       res.json({
         success: true,
-        data: []
+        data: [],
       });
     } catch (error) {
       console.error("❌ Erreur récupération historique abonnement:", error);
@@ -525,12 +661,14 @@ export class ProviderController {
       const { planId } = req.body;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       if (!planId) {
-        res.status(400).json({ success: false, message: 'planId requis' });
+        res.status(400).json({ success: false, message: "planId requis" });
         return;
       }
 
@@ -541,8 +679,8 @@ export class ProviderController {
         data: {
           planId,
           status: "active",
-          startDate: new Date().toISOString()
-        }
+          startDate: new Date().toISOString(),
+        },
       });
     } catch (error) {
       console.error("❌ Erreur abonnement:", error);
@@ -558,14 +696,16 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       // Pour l'instant, simuler une annulation réussie
       res.json({
         success: true,
-        message: "Abonnement annulé avec succès"
+        message: "Abonnement annulé avec succès",
       });
     } catch (error) {
       console.error("❌ Erreur annulation abonnement:", error);
@@ -581,14 +721,16 @@ export class ProviderController {
       const user = (req as any).user;
 
       if (!user?.id) {
-        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        res
+          .status(401)
+          .json({ success: false, message: "Utilisateur non authentifié" });
         return;
       }
 
       // Pour l'instant, retourner un historique fictif
       res.json({
         success: true,
-        data: []
+        data: [],
       });
     } catch (error) {
       console.error("❌ Erreur récupération historique paiements:", error);
