@@ -428,6 +428,41 @@ export class ProviderController {
   }
 
   /**
+   * Mettre à jour la disponibilité du prestataire
+   */
+  static async updateAvailability(req: Request, res: Response): Promise<void> {
+    try {
+      const user = (req as any).user;
+
+      if (!user?.id) {
+        res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+        return;
+      }
+
+      const { isAvailable } = req.body;
+
+      if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
+        res.status(403).json({ success: false, message: "Accès réservé aux prestataires" });
+        return;
+      }
+
+      await query(`
+        UPDATE provider_profiles
+        SET is_available = $1, updated_at = NOW()
+        WHERE user_id = $2
+      `, [isAvailable, user.id]);
+
+      res.json({
+        success: true,
+        message: "Disponibilité mise à jour avec succès"
+      });
+    } catch (error) {
+      console.error("❌ Erreur mise à jour disponibilité:", error);
+      res.status(500).json({ success: false, message: "Erreur serveur" });
+    }
+  }
+
+  /**
    * Obtenir l'abonnement actif du prestataire
    */
   static async getMySubscription(req: Request, res: Response): Promise<void> {

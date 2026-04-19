@@ -46,6 +46,11 @@ router.put("/profile/location", async (req: Request, res: Response) => {
   await ProviderController.updateLocation(req, res);
 });
 
+// PUT /api/providers/profile/availability - Mettre à jour la disponibilité
+router.put("/profile/availability", async (req: Request, res: Response) => {
+  await ProviderController.updateAvailability(req, res);
+});
+
 // PUT /api/providers/profile/verification - Demander vérification
 router.put("/profile/verification", async (req: Request, res: Response) => {
   await ProviderController.requestVerification(req, res);
