@@ -8,12 +8,23 @@ import ProviderController from "../controllers/providerController";
 
 const router = Router();
 
-// GET /api/providers/map - Prestataires avec coordonnées pour la carte (doit être avant /:id)
+// Routes publiques (pas d'authentification)
+// GET /api/providers/map - Prestataires avec coordonnées pour la carte
 router.get("/map", async (req: Request, res: Response) => {
   await ProviderController.getProvidersForMap(req, res);
 });
 
-// Routes pour la gestion du profil prestataire (authentifiées) - AVANT /:id
+// GET /api/providers - Liste des prestataires (public)
+router.get("/", async (req: Request, res: Response) => {
+  await ProviderController.getAll(req, res);
+});
+
+// GET /api/providers/:id - Détails d'un prestataire (public, doit être après les routes spécifiques)
+router.get("/:id", async (req: Request, res: Response) => {
+  await ProviderController.getById(req, res);
+});
+
+// Routes nécessitant une authentification (pour la gestion du profil)
 router.use(authenticate);
 
 // GET /api/providers/me - Profil du prestataire connecté (alias pour /profile)
@@ -44,16 +55,6 @@ router.put("/profile/availability", async (req: Request, res: Response) => {
 // PUT /api/providers/profile/verification - Demander vérification
 router.put("/profile/verification", async (req: Request, res: Response) => {
   await ProviderController.requestVerification(req, res);
-});
-
-// GET /api/providers - Liste des prestataires (public)
-router.get("/", async (req: Request, res: Response) => {
-  await ProviderController.getAll(req, res);
-});
-
-// GET /api/providers/:id - Détails d'un prestataire (doit être après les routes spécifiques)
-router.get("/:id", async (req: Request, res: Response) => {
-  await ProviderController.getById(req, res);
 });
 
 export default router;

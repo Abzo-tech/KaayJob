@@ -430,23 +430,37 @@ class ProviderController {
                     .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
-            const { latitude, longitude, address } = req.body;
+            const { latitude, longitude, address, city, region } = req.body;
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
                 res
                     .status(403)
                     .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
-            await (0, database_1.query)(`
-        UPDATE provider_profiles
-        SET latitude = $1, longitude = $2, location = $3, updated_at = NOW()
-        WHERE user_id = $4
-      `, [latitude, longitude, address || null, user.id]);
-            await (0, database_1.query)(`
-        UPDATE users
-        SET latitude = $1, longitude = $2, address = $3, updated_at = NOW()
-        WHERE id = $4
-      `, [latitude, longitude, address || null, user.id]);
+            // Vérifier si le profil prestataire existe
+            const checkRes = await (0, database_1.query)(`SELECT id FROM provider_profiles WHERE user_id = $1`, [user.id]);
+            if (checkRes.rows.length === 0) {
+                // Créer le profil s'il n'existe pas
+                await (0, database_1.query)(`
+          INSERT INTO provider_profiles (
+            user_id, latitude, longitude, location, city, region, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        `, [user.id, latitude, longitude, address || null, city || null, region || null]);
+            }
+            else {
+                // Mettre à jour le profil existant
+                await (0, database_1.query)(`
+          UPDATE provider_profiles
+          SET latitude = $1, longitude = $2, location = $3, city = $4, region = $5, updated_at = NOW()
+          WHERE user_id = $6
+        `, [latitude, longitude, address || null, city || null, region || null, user.id]);
+                // Mettre à jour aussi dans la table users
+                await (0, database_1.query)(`
+          UPDATE users
+          SET latitude = $1, longitude = $2, address = $3, updated_at = NOW()
+          WHERE id = $4
+        `, [latitude, longitude, address || null, user.id]);
+            }
             res.json({
                 success: true,
                 message: "Localisation mise à jour avec succès",

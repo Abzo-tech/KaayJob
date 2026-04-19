@@ -512,7 +512,7 @@ export class ProviderController {
         return;
       }
 
-      const { latitude, longitude, address } = req.body;
+      const { latitude, longitude, address, city, region } = req.body;
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
         res
@@ -521,23 +521,43 @@ export class ProviderController {
         return;
       }
 
-      await query(
-        `
-        UPDATE provider_profiles
-        SET latitude = $1, longitude = $2, location = $3, updated_at = NOW()
-        WHERE user_id = $4
-      `,
-        [latitude, longitude, address || null, user.id],
+      // Vérifier si le profil prestataire existe
+      const checkRes = await query(
+        `SELECT id FROM provider_profiles WHERE user_id = $1`,
+        [user.id],
       );
 
-      await query(
-        `
-        UPDATE users
-        SET latitude = $1, longitude = $2, address = $3, updated_at = NOW()
-        WHERE id = $4
-      `,
-        [latitude, longitude, address || null, user.id],
-      );
+      if (checkRes.rows.length === 0) {
+        // Créer le profil s'il n'existe pas
+        await query(
+          `
+          INSERT INTO provider_profiles (
+            user_id, latitude, longitude, location, city, region, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        `,
+          [user.id, latitude, longitude, address || null, city || null, region || null],
+        );
+      } else {
+        // Mettre à jour le profil existant
+        await query(
+          `
+          UPDATE provider_profiles
+          SET latitude = $1, longitude = $2, location = $3, city = $4, region = $5, updated_at = NOW()
+          WHERE user_id = $6
+        `,
+          [latitude, longitude, address || null, city || null, region || null, user.id],
+        );
+
+        // Mettre à jour aussi dans la table users
+        await query(
+          `
+          UPDATE users
+          SET latitude = $1, longitude = $2, address = $3, updated_at = NOW()
+          WHERE id = $4
+        `,
+          [latitude, longitude, address || null, user.id],
+        );
+      }
 
       res.json({
         success: true,
