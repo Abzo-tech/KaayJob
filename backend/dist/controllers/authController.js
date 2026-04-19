@@ -35,12 +35,12 @@ class AuthController {
             // Hasher le mot de passe
             const hashedPassword = await bcryptjs_1.default.hash(password, 10);
             // Mapper le rôle pour la base de données
-            let dbRole = 'CLIENT';
+            let dbRole = "CLIENT";
             if (role === "prestataire") {
-                dbRole = 'PRESTATAIRE';
+                dbRole = "PRESTATAIRE";
             }
             else if (role === "admin") {
-                dbRole = 'ADMIN';
+                dbRole = "ADMIN";
             }
             // Créer l'utilisateur
             const userResult = await (0, database_1.query)(`
@@ -55,7 +55,7 @@ class AuthController {
           INSERT INTO provider_profiles (id, user_id, is_available, created_at, updated_at)
           VALUES (gen_random_uuid(), $1, true, NOW(), NOW())
         `, [user.id]);
-                console.log('👷 Profil prestataire créé avec is_available = true');
+                console.log("👷 Profil prestataire créé avec is_available = true");
             }
             // Générer le token JWT
             const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "7d" });

@@ -14,15 +14,7 @@ const router = (0, express_1.Router)();
 router.get("/map", async (req, res) => {
     await providerController_1.default.getProvidersForMap(req, res);
 });
-// GET /api/providers - Liste des prestataires (public)
-router.get("/", async (req, res) => {
-    await providerController_1.default.getAll(req, res);
-});
-// GET /api/providers/:id - Détails d'un prestataire (doit être après les routes spécifiques)
-router.get("/:id", async (req, res) => {
-    await providerController_1.default.getById(req, res);
-});
-// Routes pour la gestion du profil prestataire (authentifiées)
+// Routes pour la gestion du profil prestataire (authentifiées) - AVANT /:id
 router.use(auth_1.authenticate);
 // GET /api/providers/me - Profil du prestataire connecté (alias pour /profile)
 router.get("/me", async (req, res) => {
@@ -47,6 +39,14 @@ router.put("/profile/availability", async (req, res) => {
 // PUT /api/providers/profile/verification - Demander vérification
 router.put("/profile/verification", async (req, res) => {
     await providerController_1.default.requestVerification(req, res);
+});
+// GET /api/providers - Liste des prestataires (public)
+router.get("/", async (req, res) => {
+    await providerController_1.default.getAll(req, res);
+});
+// GET /api/providers/:id - Détails d'un prestataire (doit être après les routes spécifiques)
+router.get("/:id", async (req, res) => {
+    await providerController_1.default.getById(req, res);
 });
 exports.default = router;
 //# sourceMappingURL=providers.js.map

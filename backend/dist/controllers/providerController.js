@@ -348,7 +348,9 @@ class ProviderController {
             else {
                 // Mettre à jour le profil existant
                 // Déterminer la valeur de is_available
-                const finalIsAvailable = isAvailable !== undefined && isAvailable !== null ? isAvailable : true;
+                const finalIsAvailable = isAvailable !== undefined && isAvailable !== null
+                    ? isAvailable
+                    : true;
                 console.log("DEBUG_PROVIDER_UPDATE: Final isAvailable value:", finalIsAvailable);
                 await (0, database_1.query)(`
           UPDATE provider_profiles SET

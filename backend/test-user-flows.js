@@ -146,9 +146,9 @@ const runTests = async () => {
       "/api/providers/profile",
       {
         bio: "Expert en nettoyage professionnel",
-        phone: "+33612345678",
-        city: "Paris",
-        country: "France",
+        phone: "+2212345678",
+        city: "Dakar",
+        country: "Dakar",
       },
       200,
       { Authorization: `Bearer ${providerToken}` },
@@ -159,8 +159,8 @@ const runTests = async () => {
       "PUT",
       "/api/providers/profile/location",
       {
-        latitude: 48.8566,
-        longitude: 2.3522,
+        latitude: 17.8566,
+        longitude:142.3522,
         city: "Paris",
       },
       200,
@@ -362,7 +362,7 @@ const runTests = async () => {
       {
         firstName: "Jean-Paul",
         lastName: "Client",
-        phone: "+33687654321",
+        phone: "+2217654321",
       },
       200,
       { Authorization: `Bearer ${clientToken}` },
