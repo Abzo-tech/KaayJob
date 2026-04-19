@@ -76,15 +76,15 @@ class NotificationController {
             // Obtenir le nombre total
             const totalQuery = `SELECT COUNT(*) as count FROM notifications WHERE ${whereClause}`;
             const totalResult = await (0, database_1.query)(totalQuery, params);
-            // Obtenir les notifications
-            const selectQuery = `
+            // Obtenir les notifications - version simplifiée
+            const simpleQuery = `
         SELECT id, title, message, type, read, link, created_at
         FROM notifications
-        WHERE ${whereClause}
+        WHERE user_id = $1
         ORDER BY created_at DESC
-        LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+        LIMIT 20
       `;
-            const result = await (0, database_1.query)(selectQuery, [...params, parsedLimit, parsedOffset]);
+            const result = await (0, database_1.query)(simpleQuery, [userId]);
             const total = parseInt(totalResult.rows[0].count, 10);
             const totalPages = Math.ceil(total / parsedLimit);
             console.log('🔔 Récupération des notifications:', result.rows.length, 'trouvées');
@@ -237,6 +237,25 @@ class NotificationController {
         }
         catch (error) {
             console.error('❌ Erreur suppression notifications lues:', error);
+            res.status(500).json({ success: false, message: 'Erreur serveur' });
+        }
+    }
+    /**
+     * Marquer toutes les notifications comme lues
+     */
+    static async readAll(req, res) {
+        try {
+            const user = req.user;
+            if (!user?.id) {
+                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                return;
+            }
+            await (0, database_1.query)("UPDATE notifications SET read = true, read_at = NOW() WHERE user_id = $1 AND read = false", [user.id]);
+            console.log('✅ Toutes les notifications marquées comme lues pour:', user.id);
+            res.json({ success: true, message: 'Toutes les notifications marquées comme lues' });
+        }
+        catch (error) {
+            console.error('❌ Erreur marquage notifications lues:', error);
             res.status(500).json({ success: false, message: 'Erreur serveur' });
         }
     }

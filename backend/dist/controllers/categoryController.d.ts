@@ -10,16 +10,12 @@ export declare class CategoryController {
      */
     static getAll(req: Request, res: Response): Promise<void>;
     /**
-     * Obtenir une catégorie par ID
+     * Récupérer une catégorie par son ID
      */
     static getById(req: Request, res: Response): Promise<void>;
     /**
-     * Obtenir une catégorie par slug
-     */
-    static getBySlug(req: Request, res: Response): Promise<void>;
-    /**
-     * Créer une catégorie (admin)
-     */
+      * Créer une catégorie (admin)
+      */
     static create(req: Request, res: Response): Promise<void>;
     /**
      * Mettre à jour une catégorie (admin)

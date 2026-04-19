@@ -10,7 +10,6 @@ exports.app = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
-const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const path_1 = __importDefault(require("path"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
@@ -69,11 +68,39 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
         "https://kaay-job-git-main-abzo-techs-projects.vercel.app",
         "https://kaay-job-git-abzo-abzo-techs-projects.vercel.app",
         "https://kaay-job-git-dev-abzo-techs-projects.vercel.app",
+        "https://kaay-job-git-deployment-fix-abzo-techs-projects.vercel.app",
+        "https://kaay-job-git-fix-admin-login-abzo-techs-projects.vercel.app",
+        "https://kaay-job-git-feature-production-monitoring-abzo-techs-projects.vercel.app",
     ];
-app.use((0, cors_1.default)({
-    origin: allowedOrigins,
-    credentials: true,
-}));
+// CORS Configuration
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) {
+        res.header('Access-Control-Allow-Origin', '*');
+    }
+    else if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    else {
+        console.log(`🚫 Origin not allowed: ${origin}`);
+        // For debugging, allow all Vercel domains temporarily
+        if (origin.includes('vercel.app')) {
+            res.header('Access-Control-Allow-Origin', origin);
+            console.log(`✅ Vercel domain allowed: ${origin}`);
+        }
+    }
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    }
+    else {
+        next();
+    }
+});
 // Servir les fichiers statiques (images) avec CORS
 app.use("/images", (req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
@@ -148,7 +175,19 @@ app.put("/api/profile", auth_2.authenticate, async (req, res) => {
         res.status(500).json({ success: false, message: "Erreur serveur" });
     }
 });
-// Routes
+// Route de santé simple
+app.get("/", (req, res) => {
+    res.send("API KaayJob OK 🚀");
+});
+// Route de compatibilité pour les outils de monitoring
+app.get("/admin-users", (req, res) => {
+    res.redirect(301, "/api/admin/users");
+});
+// Route de compatibilité pour les outils de monitoring
+app.get("/admin-users", (req, res) => {
+    res.redirect(301, "/api/admin/users");
+});
+// Routes API
 app.use("/api/auth", auth_1.default);
 app.use("/api/bookings", bookings_1.default);
 app.use("/api/providers", providers_1.default);
@@ -204,29 +243,37 @@ app.post("/api/create-test-data", async (req, res) => {
             });
         }
         // Créer un utilisateur admin
-        const hashedPassword = await bcryptjs_1.default.hash('admin123', 10);
-        await prisma_1.prisma.user.upsert({
-            where: { email: 'admin@kaayjob.com' },
-            update: {
-                firstName: 'Admin',
-                lastName: 'KaayJob',
-                phone: '+221000000000',
-                role: 'ADMIN',
-                isVerified: true,
-                isActive: true,
-                password: hashedPassword,
-            },
-            create: {
-                email: 'admin@kaayjob.com',
-                password: hashedPassword,
-                firstName: 'Admin',
-                lastName: 'KaayJob',
-                phone: '+221000000000',
-                role: 'ADMIN',
-                isVerified: true,
-                isActive: true,
-            }
-        });
+        console.log('🔧 Vérification/création de l\'utilisateur admin...');
+        try {
+            const hashedPassword = await bcryptjs_1.default.hash('Password123', 10);
+            console.log('Mot de passe hashé créé, commence par:', hashedPassword.substring(0, 10));
+            const adminUser = await prisma_1.prisma.user.upsert({
+                where: { email: 'admin@kaayjob.com' },
+                update: {
+                    password: hashedPassword,
+                    firstName: 'Admin',
+                    lastName: 'KaayJob',
+                    phone: '+221000000000',
+                    role: 'ADMIN',
+                    isVerified: true,
+                    isActive: true,
+                },
+                create: {
+                    email: 'admin@kaayjob.com',
+                    password: hashedPassword,
+                    firstName: 'Admin',
+                    lastName: 'KaayJob',
+                    phone: '+221000000000',
+                    role: 'ADMIN',
+                    isVerified: true,
+                    isActive: true,
+                },
+            });
+            console.log('✅ Utilisateur admin créé/mis à jour:', adminUser.email);
+        }
+        catch (error) {
+            console.error('❌ Erreur lors de la création de l\'admin:', error);
+        }
         // Créer quelques prestataires
         const providers = [
             { email: 'jardinier@email.com', firstName: 'Ahmed', lastName: 'Diallo', specialty: 'Jardinage' },
@@ -566,8 +613,44 @@ const startServer = async () => {
         process.exit(1);
     }
 };
+// Fonction pour attendre que la DB soit prête
+async function waitForDatabase() {
+    console.log('⏳ Attente de la connexion à la base de données...');
+    let connected = false;
+    let retries = 0;
+    const maxRetries = 30;
+    while (!connected && retries < maxRetries) {
+        try {
+            // Tester la connexion Prisma
+            await prisma_1.prisma.$queryRaw `SELECT 1 as test`;
+            connected = true;
+            console.log('✅ Base de données connectée et prête !');
+        }
+        catch (error) {
+            retries++;
+            console.log(`⏳ Tentative ${retries}/${maxRetries} - Base de données non prête...`);
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Attendre 2 secondes
+        }
+    }
+    if (!connected) {
+        throw new Error(`❌ Impossible de se connecter à la base de données après ${maxRetries} tentatives`);
+    }
+}
+// Démarrage du serveur avec attente DB
+async function startServerWithDB() {
+    try {
+        // Attendre que la DB soit prête AVANT de lancer le serveur
+        await waitForDatabase();
+        // Démarrer le serveur maintenant que la DB est prête
+        startServer();
+    }
+    catch (error) {
+        console.error('❌ Échec de connexion à la base de données:', error);
+        process.exit(1);
+    }
+}
 if (process.env.NODE_ENV !== "test") {
-    startServer();
+    startServerWithDB();
 }
 exports.default = app;
 //# sourceMappingURL=index.js.map

@@ -28,6 +28,10 @@ export declare class NotificationController {
       * Supprimer toutes les notifications lues
       */
     static deleteReadNotifications(req: Request, res: Response): Promise<void>;
+    /**
+     * Marquer toutes les notifications comme lues
+     */
+    static readAll(req: Request, res: Response): Promise<void>;
 }
 export default NotificationController;
 //# sourceMappingURL=notificationController.d.ts.map

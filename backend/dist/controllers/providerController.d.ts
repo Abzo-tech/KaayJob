@@ -32,6 +32,30 @@ export declare class ProviderController {
      * Mettre à jour la localisation du prestataire
      */
     static updateLocation(req: Request, res: Response): Promise<void>;
+    /**
+     * Mettre à jour la disponibilité du prestataire
+     */
+    static updateAvailability(req: Request, res: Response): Promise<void>;
+    /**
+     * Obtenir l'abonnement actif du prestataire
+     */
+    static getMySubscription(req: Request, res: Response): Promise<void>;
+    /**
+     * Obtenir l'historique des abonnements
+     */
+    static getSubscriptionHistory(req: Request, res: Response): Promise<void>;
+    /**
+     * S'abonner à un plan
+     */
+    static subscribeToPlan(req: Request, res: Response): Promise<void>;
+    /**
+     * Annuler l'abonnement
+     */
+    static cancelSubscription(req: Request, res: Response): Promise<void>;
+    /**
+     * Obtenir l'historique des paiements
+     */
+    static getPaymentHistory(req: Request, res: Response): Promise<void>;
 }
 export default ProviderController;
 //# sourceMappingURL=providerController.d.ts.map

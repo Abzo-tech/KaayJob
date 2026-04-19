@@ -24,6 +24,10 @@ router.get("/:id", async (req, res) => {
 });
 // Routes pour la gestion du profil prestataire (authentifiées)
 router.use(auth_1.authenticate);
+// GET /api/providers/me - Profil du prestataire connecté (alias pour /profile)
+router.get("/me", async (req, res) => {
+    await providerController_1.default.getProfile(req, res);
+});
 // GET /api/providers/profile - Profil du prestataire connecté
 router.get("/profile", async (req, res) => {
     await providerController_1.default.getProfile(req, res);
@@ -35,6 +39,10 @@ router.put("/profile", async (req, res) => {
 // PUT /api/providers/profile/location - Mettre à jour la localisation
 router.put("/profile/location", async (req, res) => {
     await providerController_1.default.updateLocation(req, res);
+});
+// PUT /api/providers/profile/availability - Mettre à jour la disponibilité
+router.put("/profile/availability", async (req, res) => {
+    await providerController_1.default.updateAvailability(req, res);
 });
 // PUT /api/providers/profile/verification - Demander vérification
 router.put("/profile/verification", async (req, res) => {

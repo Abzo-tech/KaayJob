@@ -9,8 +9,8 @@ exports.SubscriptionController = void 0;
 const database_1 = require("../config/database");
 class SubscriptionController {
     /**
-      * Obtenir tous les plans d'abonnement disponibles
-      */
+     * Obtenir tous les plans d'abonnement disponibles
+     */
     static async getPlans(req, res) {
         try {
             const plansQuery = `
@@ -35,7 +35,7 @@ class SubscriptionController {
             }));
             res.json({
                 success: true,
-                data: plans
+                data: plans,
             });
         }
         catch (error) {
@@ -44,8 +44,8 @@ class SubscriptionController {
         }
     }
     /**
-      * Obtenir un plan d'abonnement par ID
-      */
+     * Obtenir un plan d'abonnement par ID
+     */
     static async getPlanById(req, res) {
         try {
             const { id } = req.params;
@@ -75,7 +75,7 @@ class SubscriptionController {
             };
             res.json({
                 success: true,
-                data: plan
+                data: plan,
             });
         }
         catch (error) {
@@ -84,13 +84,15 @@ class SubscriptionController {
         }
     }
     /**
-      * Obtenir les abonnements de l'utilisateur connecté
-      */
+     * Obtenir les abonnements de l'utilisateur connecté
+     */
     static async getMySubscriptions(req, res) {
+        const user = req.user;
         try {
-            const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             const subscriptionsQuery = `
@@ -112,42 +114,53 @@ class SubscriptionController {
                 startDate: row.startDate,
                 endDate: row.endDate,
                 createdAt: row.createdAt,
-                subscriptionPlan: row.planId ? {
-                    id: row.planId,
-                    name: row.planName,
-                    price: parseFloat(row.planPrice),
-                    duration: row.planDuration,
-                    features: row.planFeatures,
-                } : null,
+                subscriptionPlan: row.planId
+                    ? {
+                        id: row.planId,
+                        name: row.planName,
+                        price: parseFloat(row.planPrice),
+                        duration: row.planDuration,
+                        features: row.planFeatures,
+                    }
+                    : null,
             }));
             res.json({
                 success: true,
-                data: subscriptions
+                data: subscriptions,
             });
         }
         catch (error) {
-            console.error("Erreur récupération abonnements:", error);
-            res.status(500).json({ success: false, message: "Erreur serveur" });
+            console.error("Erreur récupération abonnements pour user", user?.id, ":", error.message || error, error.stack);
+            res.status(500).json({
+                success: false,
+                message: "Erreur serveur",
+                detail: error.message,
+            });
         }
     }
     /**
-      * Obtenir l'abonnement actif de l'utilisateur
-      */
+     * Obtenir l'abonnement actif de l'utilisateur
+     */
     static async getMyActiveSubscription(req, res) {
         try {
             const user = req.user;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             const subscriptionQuery = `
         SELECT
           s.id, s.plan, s.status, s.start_date as "startDate", s.end_date as "endDate",
           s.created_at as "createdAt",
-          sp.id as "planId", sp.name as "planName", sp.price as "planPrice",
-          sp.duration as "planDuration", sp.features as "planFeatures"
+          COALESCE(sp.id, null) as "planId", 
+          COALESCE(sp.name, s.plan) as "planName", 
+          COALESCE(sp.price, 0) as "planPrice",
+          COALESCE(sp.duration, 30) as "planDuration", 
+          COALESCE(sp.features, '[]'::jsonb) as "planFeatures"
         FROM subscriptions s
-        LEFT JOIN subscription_plans sp ON s.subscription_plan_id = sp.id
+        LEFT JOIN subscription_plans sp ON s.subscription_plan_id = sp.id AND sp.is_active = true
         WHERE s.user_id = $1 AND s.status = 'active' AND s.end_date > NOW()
         ORDER BY s.created_at DESC
         LIMIT 1
@@ -157,7 +170,7 @@ class SubscriptionController {
                 res.json({
                     success: true,
                     data: null,
-                    message: "Aucun abonnement actif"
+                    message: "Aucun abonnement actif",
                 });
                 return;
             }
@@ -170,7 +183,7 @@ class SubscriptionController {
                 endDate: row.endDate,
                 createdAt: row.createdAt,
                 subscriptionPlan: {
-                    id: row.planId,
+                    id: row.planId || null,
                     name: row.planName,
                     price: parseFloat(row.planPrice),
                     duration: row.planDuration,
@@ -179,30 +192,40 @@ class SubscriptionController {
             };
             res.json({
                 success: true,
-                data: subscription
+                data: subscription,
             });
         }
         catch (error) {
-            console.error("Erreur récupération abonnement actif:", error);
-            res.status(500).json({ success: false, message: "Erreur serveur" });
+            console.error("Erreur récupération abonnement actif pour user " +
+                (req.user?.id || "unknown") +
+                ":", error.message || error, error.stack);
+            res.status(500).json({
+                success: false,
+                message: "Erreur serveur",
+                detail: error.message,
+            });
         }
     }
     /**
-      * Souscrire à un plan d'abonnement
-      */
+     * Souscrire à un plan d'abonnement
+     */
     static async subscribe(req, res) {
         try {
             const user = req.user;
             const { planId } = req.body;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             // Vérifier que le plan existe
             const planQuery = `SELECT * FROM subscription_plans WHERE id = $1 AND is_active = true`;
             const planResult = await (0, database_1.query)(planQuery, [planId]);
             if (planResult.rows.length === 0) {
-                res.status(404).json({ success: false, message: "Plan d'abonnement non trouvé" });
+                res
+                    .status(404)
+                    .json({ success: false, message: "Plan d'abonnement non trouvé" });
                 return;
             }
             const plan = planResult.rows[0];
@@ -215,7 +238,7 @@ class SubscriptionController {
             if (existingResult.rows.length > 0) {
                 res.status(400).json({
                     success: false,
-                    message: "Vous avez déjà un abonnement actif"
+                    message: "Vous avez déjà un abonnement actif",
                 });
                 return;
             }
@@ -238,7 +261,7 @@ class SubscriptionController {
                 planId,
                 plan.name,
                 startDate,
-                endDate
+                endDate,
             ]);
             const newSubscription = subscribeResult.rows[0];
             // Note: Le paiement est géré en dehors de la plateforme pour cette version
@@ -254,16 +277,16 @@ class SubscriptionController {
                         price: parseFloat(plan.price),
                         duration: plan.duration,
                         features: plan.features,
-                    }
-                }
+                    },
+                },
             });
         }
         catch (error) {
             console.error("Erreur création abonnement:", error);
-            if (error.code === '23505') {
+            if (error.code === "23505") {
                 res.status(400).json({
                     success: false,
-                    message: "Vous avez déjà un abonnement à ce plan"
+                    message: "Vous avez déjà un abonnement à ce plan",
                 });
             }
             else {
@@ -272,14 +295,16 @@ class SubscriptionController {
         }
     }
     /**
-      * Annuler un abonnement
-      */
+     * Annuler un abonnement
+     */
     static async cancelSubscription(req, res) {
         try {
             const user = req.user;
             const { id } = req.params;
             if (!user?.id) {
-                res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
+                res
+                    .status(401)
+                    .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
             // Vérifier que l'abonnement appartient à l'utilisateur
@@ -289,7 +314,9 @@ class SubscriptionController {
       `;
             const subscriptionResult = await (0, database_1.query)(subscriptionQuery, [id, user.id]);
             if (subscriptionResult.rows.length === 0) {
-                res.status(404).json({ success: false, message: "Abonnement non trouvé" });
+                res
+                    .status(404)
+                    .json({ success: false, message: "Abonnement non trouvé" });
                 return;
             }
             // Annuler l'abonnement
@@ -304,7 +331,7 @@ class SubscriptionController {
             res.json({
                 success: true,
                 message: "Abonnement annulé avec succès",
-                data: cancelledSubscription
+                data: cancelledSubscription,
             });
         }
         catch (error) {

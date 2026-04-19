@@ -16,59 +16,63 @@ class CategoryController {
         try {
             const { parentOnly, activeOnly } = req.query;
             console.log("📂 Requête catégories:", { parentOnly, activeOnly });
-            let sqlQuery = "SELECT id, name, slug, description, icon, image, is_active, created_at FROM categories WHERE 1=1";
-            const params = [];
+            // Utiliser Prisma au lieu de requête SQL directe
+            const where = {};
             if (activeOnly === "true") {
-                sqlQuery += " AND is_active = $1";
-                params.push(true);
+                where.isActive = true;
             }
             if (parentOnly === "true") {
-                sqlQuery += " AND parent_id IS NULL";
+                where.parentId = null;
             }
-            sqlQuery += " ORDER BY name ASC";
-            const categories = await (0, database_1.query)(sqlQuery, params);
-            res.json({ success: true, data: categories.rows });
+            console.log("🔍 Filtre Prisma:", where);
+            const categories = await prisma_1.prisma.category.findMany({
+                where,
+                orderBy: { name: 'asc' },
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    description: true,
+                    icon: true,
+                    image: true,
+                    isActive: true,
+                    createdAt: true
+                }
+            });
+            console.log("📊 Résultat:", categories.length, "catégories");
+            res.json({
+                success: true,
+                data: categories
+            });
         }
         catch (error) {
-            console.error("Erreur liste catégories:", error);
+            console.error("Erreur récupération catégorie:", error);
             res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
     /**
-     * Obtenir une catégorie par ID
+     * Récupérer une catégorie par son ID
      */
     static async getById(req, res) {
         try {
             const { id } = req.params;
-            const categoryResult = await (0, database_1.query)(`
-        SELECT c.id, c.name, c.slug, c.description, c.icon, c.image, c.is_active, c.created_at,
-               p.id as parent_id, p.name as parent_name
-        FROM categories c
-        LEFT JOIN categories p ON c.parent_id = p.id
-        WHERE c.id = $1
-      `, [id]);
-            if (categoryResult.rows.length === 0) {
+            const category = await prisma_1.prisma.category.findUnique({
+                where: { id },
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    description: true,
+                    icon: true,
+                    image: true,
+                    isActive: true,
+                    createdAt: true
+                }
+            });
+            if (!category) {
                 res.status(404).json({ success: false, message: "Catégorie non trouvée" });
                 return;
             }
-            const category = categoryResult.rows[0];
-            // Récupérer les enfants
-            const childrenResult = await (0, database_1.query)(`
-        SELECT id, name, slug, description, icon, image, is_active
-        FROM categories
-        WHERE parent_id = $1
-        ORDER BY name ASC
-      `, [id]);
-            category.children = childrenResult.rows;
-            // Compter les services actifs
-            const servicesCountResult = await (0, database_1.query)(`
-        SELECT COUNT(*) as count
-        FROM services
-        WHERE category_id = $1 AND is_active = true
-      `, [id]);
-            category._count = {
-                services: parseInt(servicesCountResult.rows[0].count)
-            };
             res.json({ success: true, data: category });
         }
         catch (error) {
@@ -77,39 +81,8 @@ class CategoryController {
         }
     }
     /**
-     * Obtenir une catégorie par slug
-     */
-    static async getBySlug(req, res) {
-        try {
-            const { slug } = req.params;
-            const category = await prisma_1.prisma.category.findUnique({
-                where: { slug },
-                include: {
-                    _count: {
-                        select: {
-                            services: {
-                                where: { isActive: true },
-                            },
-                        },
-                    },
-                },
-            });
-            if (!category) {
-                res
-                    .status(404)
-                    .json({ success: false, message: "Catégorie non trouvée" });
-                return;
-            }
-            res.json({ success: true, data: category });
-        }
-        catch (error) {
-            console.error("Erreur récupération catégorie:", error);
-            res.status(500).json({ success: false, message: "Erreur serveur" });
-        }
-    }
-    /**
-     * Créer une catégorie (admin)
-     */
+      * Créer une catégorie (admin)
+      */
     static async create(req, res) {
         try {
             const user = req.user;
