@@ -110,6 +110,7 @@ export class NotificationController {
 
       const existing = await prisma.notification.findFirst({
         where: { id, userId: user.id },
+        select: { id: true },
       });
 
       if (!existing) {
@@ -185,6 +186,7 @@ export class NotificationController {
 
       const existing = await prisma.notification.findFirst({
         where: { id, userId: user.id },
+        select: { id: true },
       });
 
       if (!existing) {

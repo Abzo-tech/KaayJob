@@ -11,10 +11,38 @@ import {
   NotificationContext,
 } from "../utils/notificationFormatter";
 
-let notificationSchemaReady: Promise<void> | null = null;
+let privateRecipientsColumnAvailable: Promise<boolean> | null = null;
+
+async function hasPrivateRecipientsColumn(): Promise<boolean> {
+  if (!privateRecipientsColumnAvailable) {
+    privateRecipientsColumnAvailable = (async () => {
+      try {
+        const result = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+          SELECT EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = 'notifications'
+              AND column_name = 'private_recipients'
+          ) AS "exists"
+        `;
+
+        return Boolean(result[0]?.exists);
+      } catch (error) {
+        console.warn(
+          "Impossible de verifier la colonne notifications.private_recipients, fallback sans ce champ:",
+          error,
+        );
+        return false;
+      }
+    })();
+  }
+
+  return privateRecipientsColumnAvailable;
+}
 
 export async function ensureNotificationSchema(): Promise<void> {
-  // Le modèle Prisma gère désormais le champ privateRecipients.
+  await hasPrivateRecipientsColumn();
 }
 
 /**
@@ -29,7 +57,10 @@ export async function createNotification(
   privateRecipients?: string[],
 ): Promise<void> {
   try {
-    // await ensureNotificationSchema(); // Commented out as it's no longer needed
+    const canStorePrivateRecipients =
+      Array.isArray(privateRecipients) && privateRecipients.length > 0
+        ? await hasPrivateRecipientsColumn()
+        : false;
 
     console.log(
       "Creating notification for user:",
@@ -42,15 +73,24 @@ export async function createNotification(
       privateRecipients,
     );
 
+    const data: any = {
+      userId,
+      title,
+      message,
+      type,
+      link: link || null,
+    };
+
+    if (canStorePrivateRecipients) {
+      data.privateRecipients = privateRecipients;
+    } else if (privateRecipients?.length) {
+      console.warn(
+        "Colonne private_recipients absente, notification creee sans privateRecipients",
+      );
+    }
+
     await prisma.notification.create({
-      data: {
-        userId,
-        title,
-        message,
-        type,
-        link: link || null,
-        privateRecipients: privateRecipients ?? undefined,
-      },
+      data,
     });
     console.log("Notification created successfully for user:", userId);
   } catch (error) {
