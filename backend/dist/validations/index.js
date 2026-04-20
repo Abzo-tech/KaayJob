@@ -478,6 +478,10 @@ exports.updateProviderProfileValidation = [
     (0, exports.isYearsExperience)("experienceYears", false),
     (0, exports.isArray)("specialties", false),
     (0, exports.isObject)("availability", false),
+    (0, express_validator_1.body)("isAvailable")
+        .optional()
+        .isBoolean()
+        .withMessage("isAvailable doit être un boolean"),
 ];
 // Création d'avis
 exports.createReviewValidation = [
