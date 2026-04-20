@@ -2,39 +2,6 @@
 /**
  * Routes d'administration - Analytics
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const prisma_1 = require("../../config/prisma");
@@ -187,32 +154,40 @@ router.get("/", async (req, res) => {
 // GET /api/admin/stats - Statistiques globales (endpoint séparé pour compatibilité)
 router.get("/stats", async (req, res) => {
     try {
-        const { query: dbQuery } = await Promise.resolve().then(() => __importStar(require("../../config/database")));
-        const usersResult = await dbQuery("SELECT COUNT(*) as total, role FROM users GROUP BY role");
-        const bookingsResult = await dbQuery(`
-      SELECT COUNT(*) as total,
-             SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending,
-             SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
-      FROM bookings
-    `);
-        const revenueResult = await dbQuery(`
-      SELECT COALESCE(SUM(total_amount), 0) as total_revenue
-      FROM bookings
-      WHERE status = 'COMPLETED'
-    `);
-        const providersResult = await dbQuery(`
-      SELECT COUNT(*) as total,
-             SUM(CASE WHEN is_verified = true THEN 1 ELSE 0 END) as verified
-      FROM provider_profiles
-    `);
+        const [clientUsers, providerUsers, adminUsers, totalBookings, pendingBookings, completedBookings, cancelledBookings, completedRevenue, totalProviders, verifiedProviders,] = await Promise.all([
+            prisma_1.prisma.user.count({ where: { role: "CLIENT" } }),
+            prisma_1.prisma.user.count({ where: { role: "PRESTATAIRE" } }),
+            prisma_1.prisma.user.count({ where: { role: "ADMIN" } }),
+            prisma_1.prisma.booking.count(),
+            prisma_1.prisma.booking.count({ where: { status: "PENDING" } }),
+            prisma_1.prisma.booking.count({ where: { status: "COMPLETED" } }),
+            prisma_1.prisma.booking.count({ where: { status: "CANCELLED" } }),
+            prisma_1.prisma.booking.aggregate({
+                where: { status: "COMPLETED" },
+                _sum: { totalAmount: true },
+            }),
+            prisma_1.prisma.providerProfile.count(),
+            prisma_1.prisma.providerProfile.count({ where: { isVerified: true } }),
+        ]);
         res.json({
             success: true,
             data: {
-                users: usersResult.rows,
-                bookings: bookingsResult.rows[0],
-                revenue: parseFloat(revenueResult.rows[0].total_revenue),
-                providers: providersResult.rows[0],
+                users: [
+                    { role: "CLIENT", total: String(clientUsers) },
+                    { role: "PRESTATAIRE", total: String(providerUsers) },
+                    { role: "ADMIN", total: String(adminUsers) },
+                ],
+                bookings: {
+                    total: String(totalBookings),
+                    pending: String(pendingBookings),
+                    completed: String(completedBookings),
+                    cancelled: String(cancelledBookings),
+                },
+                revenue: Number(completedRevenue._sum.totalAmount?.toString() || 0),
+                providers: {
+                    total: String(totalProviders),
+                    verified: String(verifiedProviders),
+                },
             },
         });
     }
