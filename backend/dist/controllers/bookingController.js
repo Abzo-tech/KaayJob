@@ -219,15 +219,18 @@ class BookingController {
                     },
                 },
             });
+            const clientDisplayName = booking.client
+                ? `${booking.client.firstName} ${booking.client.lastName}`
+                : "Un client";
             if (providerProfile) {
-                await (0, notificationService_1.createNotification)(providerProfile.userId, "Nouvelle réservation", `${user.firstName} ${user.lastName} a réservé "${service.name}"`, "info", "/prestataire/bookings", [user.id, providerProfile.userId]);
+                await (0, notificationService_1.createNotification)(providerProfile.userId, "Nouvelle réservation", `${clientDisplayName} a réservé "${service.name}"`, "info", "/prestataire/bookings", [user.id, providerProfile.userId]);
             }
             const admins = await prisma_1.prisma.user.findMany({
                 where: { role: 'ADMIN' },
                 select: { id: true },
             });
             for (const admin of admins) {
-                await (0, notificationService_1.createNotification)(admin.id, "Nouvelle réservation créée", `${user.firstName} ${user.lastName} a réservé le service "${service.name}"${providerProfile ? ` auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}` : ''}`, "info", "/admin/bookings");
+                await (0, notificationService_1.createNotification)(admin.id, "Nouvelle réservation créée", `${clientDisplayName} a réservé le service "${service.name}"${providerProfile ? ` auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}` : ''}`, "info", "/admin/bookings");
             }
             res.status(201).json({ success: true, message: "Réservation créée", data: normalizeBookingPayload(booking) });
         }
