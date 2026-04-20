@@ -297,7 +297,7 @@ class ProviderController {
         }
     }
     /**
-     * Mettre à jour le profil du prestataire
+     * Mettre à jour le profil du prestataire (utilise Prisma)
      */
     static async updateProfile(req, res) {
         try {
@@ -314,68 +314,61 @@ class ProviderController {
                     .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
-            const { businessName, specialty, bio, hourlyRate, yearsExperience, location, address, city, region, postalCode, serviceRadius, isAvailable, profileImage, phone, country, } = req.body;
+            const { businessName, specialty, bio, hourlyRate, yearsExperience, location, address, city, region, postalCode, serviceRadius, isAvailable, profileImage, phone, } = req.body;
             // Mettre à jour les informations utilisateur si fourni
             if (phone) {
-                await (0, database_1.query)(`UPDATE users SET phone = $1, updated_at = NOW() WHERE id = $2`, [phone, user.id]);
+                await prisma_1.prisma.user.update({
+                    where: { id: user.id },
+                    data: { phone },
+                });
             }
             // Vérifier si le profil prestataire existe
-            const checkRes = await (0, database_1.query)(`SELECT id FROM provider_profiles WHERE user_id = $1`, [user.id]);
-            if (checkRes.rows.length === 0) {
+            const existingProfile = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+            });
+            const profileData = {};
+            if (businessName !== undefined)
+                profileData.businessName = businessName;
+            if (specialty !== undefined)
+                profileData.specialty = specialty;
+            if (bio !== undefined)
+                profileData.bio = bio;
+            if (hourlyRate !== undefined)
+                profileData.hourlyRate = hourlyRate;
+            if (yearsExperience !== undefined)
+                profileData.yearsExperience = yearsExperience;
+            if (location !== undefined)
+                profileData.location = location;
+            if (address !== undefined)
+                profileData.address = address;
+            if (city !== undefined)
+                profileData.city = city;
+            if (region !== undefined)
+                profileData.region = region;
+            if (postalCode !== undefined)
+                profileData.postalCode = postalCode;
+            if (serviceRadius !== undefined)
+                profileData.serviceRadius = serviceRadius;
+            if (profileImage !== undefined)
+                profileData.profileImage = profileImage;
+            if (isAvailable !== undefined)
+                profileData.isAvailable = isAvailable;
+            if (!existingProfile) {
                 // Créer le profil s'il n'existe pas
-                await (0, database_1.query)(`
-          INSERT INTO provider_profiles (
-            user_id, business_name, specialty, bio, hourly_rate,
-            years_experience, location, address, city, region, postal_code,
-            service_radius, is_available, profile_image, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
-        `, [
-                    user.id,
-                    businessName,
-                    specialty,
-                    bio,
-                    hourlyRate,
-                    yearsExperience,
-                    location,
-                    address,
-                    city,
-                    region,
-                    postalCode,
-                    serviceRadius,
-                    isAvailable !== undefined ? isAvailable : true, // Valeur par défaut true
-                    profileImage,
-                ]);
+                profileData.userId = user.id;
+                if (profileData.isAvailable === undefined) {
+                    profileData.isAvailable = true;
+                }
+                await prisma_1.prisma.providerProfile.create({
+                    data: profileData,
+                });
             }
             else {
                 // Mettre à jour le profil existant
-                // Déterminer la valeur de is_available
-                const finalIsAvailable = isAvailable !== undefined && isAvailable !== null
-                    ? isAvailable
-                    : true;
-                console.log("DEBUG_PROVIDER_UPDATE: Final isAvailable value:", finalIsAvailable);
-                await (0, database_1.query)(`
-          UPDATE provider_profiles SET
-            business_name = $1, specialty = $2, bio = $3, hourly_rate = $4,
-            years_experience = $5, location = $6, address = $7, city = $8,
-            region = $9, postal_code = $10, service_radius = $11,
-            is_available = COALESCE(is_available, $12), profile_image = $13, updated_at = NOW()
-          WHERE user_id = $14
-        `, [
-                    businessName,
-                    specialty,
-                    bio,
-                    hourlyRate,
-                    yearsExperience,
-                    location,
-                    address,
-                    city,
-                    region,
-                    postalCode,
-                    serviceRadius,
-                    finalIsAvailable,
-                    profileImage,
-                    user.id,
-                ]);
+                await prisma_1.prisma.providerProfile.update({
+                    where: { userId: user.id },
+                    data: profileData,
+                });
             }
             res.json({ success: true, message: "Profil mis à jour avec succès" });
         }
@@ -420,7 +413,7 @@ class ProviderController {
         }
     }
     /**
-     * Mettre à jour la localisation du prestataire
+     * Mettre à jour la localisation du prestataire (utilise Prisma)
      */
     static async updateLocation(req, res) {
         try {
@@ -438,30 +431,36 @@ class ProviderController {
                     .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
-            // Vérifier si le profil prestataire existe
-            const checkRes = await (0, database_1.query)(`SELECT id FROM provider_profiles WHERE user_id = $1`, [user.id]);
-            if (checkRes.rows.length === 0) {
-                // Créer le profil s'il n'existe pas
-                await (0, database_1.query)(`
-          INSERT INTO provider_profiles (
-            user_id, latitude, longitude, location, city, region, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-        `, [user.id, latitude, longitude, address || null, city || null, region || null]);
+            const existingProfile = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+            });
+            const locationData = {};
+            if (latitude !== undefined)
+                locationData.latitude = latitude;
+            if (longitude !== undefined)
+                locationData.longitude = longitude;
+            if (address !== undefined)
+                locationData.address = address;
+            if (city !== undefined)
+                locationData.city = city;
+            if (region !== undefined)
+                locationData.region = region;
+            if (!existingProfile) {
+                locationData.userId = user.id;
+                await prisma_1.prisma.providerProfile.create({
+                    data: locationData,
+                });
             }
             else {
-                // Mettre à jour le profil existant
-                await (0, database_1.query)(`
-          UPDATE provider_profiles
-          SET latitude = $1, longitude = $2, location = $3, city = $4, region = $5, updated_at = NOW()
-          WHERE user_id = $6
-        `, [latitude, longitude, address || null, city || null, region || null, user.id]);
-                // Mettre à jour aussi dans la table users
-                await (0, database_1.query)(`
-          UPDATE users
-          SET latitude = $1, longitude = $2, address = $3, updated_at = NOW()
-          WHERE id = $4
-        `, [latitude, longitude, address || null, user.id]);
+                await prisma_1.prisma.providerProfile.update({
+                    where: { userId: user.id },
+                    data: locationData,
+                });
             }
+            await prisma_1.prisma.user.update({
+                where: { id: user.id },
+                data: { latitude, longitude, address },
+            });
             res.json({
                 success: true,
                 message: "Localisation mise à jour avec succès",

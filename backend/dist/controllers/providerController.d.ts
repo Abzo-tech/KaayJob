@@ -21,7 +21,7 @@ export declare class ProviderController {
      */
     static getProfile(req: Request, res: Response): Promise<void>;
     /**
-     * Mettre à jour le profil du prestataire
+     * Mettre à jour le profil du prestataire (utilise Prisma)
      */
     static updateProfile(req: Request, res: Response): Promise<void>;
     /**
@@ -29,7 +29,7 @@ export declare class ProviderController {
      */
     static requestVerification(req: Request, res: Response): Promise<void>;
     /**
-     * Mettre à jour la localisation du prestataire
+     * Mettre à jour la localisation du prestataire (utilise Prisma)
      */
     static updateLocation(req: Request, res: Response): Promise<void>;
     /**
