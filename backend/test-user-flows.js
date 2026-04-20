@@ -3,10 +3,21 @@
 /**
  * User Flow End-to-End Tests for KaayJob
  * Tests complete user journeys: client, provider, admin workflows
+ * and validates persisted state directly in PostgreSQL via Prisma.
  */
 
+const path = require("path");
 const http = require("http");
+const dotenv = require("dotenv");
+const { PrismaClient } = require("@prisma/client");
+
+dotenv.config({ path: path.join(__dirname, ".env") });
+
 const BASE_URL = "http://127.0.0.1:3001";
+const prisma = new PrismaClient({
+  datasourceUrl: process.env.DATABASE_URL,
+  log: ["error"],
+});
 
 let testsPassed = 0;
 let testsFailed = 0;
@@ -15,6 +26,9 @@ let testsFailed = 0;
 let clientToken = null;
 let providerToken = null;
 let adminToken = null;
+let clientId = null;
+let providerId = null;
+let adminId = null;
 let categoryId = null;
 let serviceId = null;
 let bookingId = null;
@@ -90,6 +104,17 @@ const test = async (
   }
 };
 
+const dbTest = async (name, assertion) => {
+  try {
+    await assertion();
+    console.log(`  ✅ ${name}`);
+    testsPassed++;
+  } catch (error) {
+    console.log(`  ❌ ${name} - Error: ${error.message}`);
+    testsFailed++;
+  }
+};
+
 const runTests = async () => {
   console.log("🧪 KaayJob User Flow End-to-End Tests\n");
 
@@ -113,7 +138,21 @@ const runTests = async () => {
 
   if (clientReg?.body?.data?.token) {
     clientToken = clientReg.body.data.token;
+    clientId = clientReg.body.data.user.id;
     console.log(`  ✓ Client token obtained`);
+  }
+
+  if (clientId) {
+    await dbTest("DB Check Client Registration", async () => {
+      const client = await prisma.user.findUnique({
+        where: { id: clientId },
+        select: { email: true, role: true, firstName: true, lastName: true },
+      });
+
+      if (!client) throw new Error("Client user not found in database");
+      if (client.role !== "CLIENT") throw new Error(`Unexpected role: ${client.role}`);
+      if (client.firstName !== "Jean") throw new Error(`Unexpected firstName: ${client.firstName}`);
+    });
   }
 
   // ===== FLOW 2: PROVIDER REGISTRATION & SETUP =====
@@ -136,7 +175,37 @@ const runTests = async () => {
 
   if (providerReg?.body?.data?.token) {
     providerToken = providerReg.body.data.token;
+    providerId = providerReg.body.data.user.id;
     console.log(`  ✓ Provider token obtained`);
+  }
+
+  if (providerId) {
+    await dbTest("DB Check Provider Registration", async () => {
+      const provider = await prisma.user.findUnique({
+        where: { id: providerId },
+        select: {
+          email: true,
+          role: true,
+          providerProfile: {
+            select: {
+              userId: true,
+              isAvailable: true,
+            },
+          },
+        },
+      });
+
+      if (!provider) throw new Error("Provider user not found in database");
+      if (provider.role !== "PRESTATAIRE") {
+        throw new Error(`Unexpected role: ${provider.role}`);
+      }
+      if (!provider.providerProfile) {
+        throw new Error("Provider profile not created");
+      }
+      if (provider.providerProfile.isAvailable !== true) {
+        throw new Error("Provider profile isAvailable should be true");
+      }
+    });
   }
 
   if (providerToken) {
@@ -154,6 +223,23 @@ const runTests = async () => {
       { Authorization: `Bearer ${providerToken}` },
     );
 
+    if (providerId) {
+      await dbTest("DB Check Provider Profile Update", async () => {
+        const profile = await prisma.providerProfile.findUnique({
+          where: { userId: providerId },
+          select: { bio: true, city: true },
+        });
+
+        if (!profile) throw new Error("Provider profile not found");
+        if (profile.bio !== "Expert en nettoyage professionnel") {
+          throw new Error(`Unexpected bio: ${profile.bio}`);
+        }
+        if (profile.city !== "Dakar") {
+          throw new Error(`Unexpected city after profile update: ${profile.city}`);
+        }
+      });
+    }
+
     await test(
       "Update Provider Location",
       "PUT",
@@ -166,6 +252,26 @@ const runTests = async () => {
       200,
       { Authorization: `Bearer ${providerToken}` },
     );
+
+    if (providerId) {
+      await dbTest("DB Check Provider Location Update", async () => {
+        const profile = await prisma.providerProfile.findUnique({
+          where: { userId: providerId },
+          select: { latitude: true, longitude: true, city: true },
+        });
+
+        if (!profile) throw new Error("Provider profile not found");
+        if (profile.latitude !== 17.8566) {
+          throw new Error(`Unexpected latitude: ${profile.latitude}`);
+        }
+        if (profile.longitude !== 142.3522) {
+          throw new Error(`Unexpected longitude: ${profile.longitude}`);
+        }
+        if (profile.city !== "Paris") {
+          throw new Error(`Unexpected city after location update: ${profile.city}`);
+        }
+      });
+    }
   }
 
   // ===== FLOW 3: CATEGORY & SERVICE CREATION =====
@@ -202,6 +308,33 @@ const runTests = async () => {
     if (serviceRes?.body?.data?.id) {
       serviceId = serviceRes.body.data.id;
       console.log(`  ✓ Service created with ID: ${serviceId}`);
+    }
+
+    if (serviceId && providerId) {
+      await dbTest("DB Check Service Creation", async () => {
+        const service = await prisma.service.findUnique({
+          where: { id: serviceId },
+          select: {
+            providerId: true,
+            categoryId: true,
+            name: true,
+            price: true,
+            isActive: true,
+          },
+        });
+
+        if (!service) throw new Error("Service not found in database");
+        if (service.providerId !== providerId) {
+          throw new Error(`Unexpected providerId: ${service.providerId}`);
+        }
+        if (service.categoryId !== categoryId) {
+          throw new Error(`Unexpected categoryId: ${service.categoryId}`);
+        }
+        if (service.name !== "Nettoyage Complet") {
+          throw new Error(`Unexpected service name: ${service.name}`);
+        }
+        if (!service.isActive) throw new Error("Service should be active");
+      });
     }
   }
 
@@ -248,6 +381,58 @@ const runTests = async () => {
       console.log(`  ✓ Booking created with ID: ${bookingId}`);
     }
 
+    if (bookingId && clientId && providerId) {
+      await dbTest("DB Check Booking Creation", async () => {
+        const booking = await prisma.booking.findUnique({
+          where: { id: bookingId },
+          select: {
+            clientId: true,
+            serviceId: true,
+            status: true,
+            paymentStatus: true,
+            service: {
+              select: {
+                providerId: true,
+              },
+            },
+          },
+        });
+
+        if (!booking) throw new Error("Booking not found in database");
+        if (booking.clientId !== clientId) {
+          throw new Error(`Unexpected clientId: ${booking.clientId}`);
+        }
+        if (booking.serviceId !== serviceId) {
+          throw new Error(`Unexpected serviceId: ${booking.serviceId}`);
+        }
+        if (booking.status !== "PENDING") {
+          throw new Error(`Unexpected booking status: ${booking.status}`);
+        }
+        if (!booking.service || booking.service.providerId !== providerId) {
+          throw new Error("Booking service/provider relation invalid");
+        }
+      });
+
+      await dbTest("DB Check Provider Notification After Booking", async () => {
+        const notif = await prisma.notification.findFirst({
+          where: {
+            userId: providerId,
+            title: "Nouvelle réservation",
+          },
+          orderBy: { createdAt: "desc" },
+          select: {
+            title: true,
+            message: true,
+          },
+        });
+
+        if (!notif) throw new Error("Provider booking notification not found");
+        if (!notif.message.includes("Jean Client")) {
+          throw new Error(`Unexpected booking notification message: ${notif.message}`);
+        }
+      });
+    }
+
     await test("Get Client Bookings", "GET", "/api/bookings/me", null, 200, {
       Authorization: `Bearer ${clientToken}`,
     });
@@ -285,6 +470,18 @@ const runTests = async () => {
       200,
       { Authorization: `Bearer ${clientToken}` },
     );
+
+    if (clientId) {
+      await dbTest("DB Check Client Notifications Query", async () => {
+        const count = await prisma.notification.count({
+          where: { userId: clientId },
+        });
+
+        if (count < 0) {
+          throw new Error("Notification count should never be negative");
+        }
+      });
+    }
   }
 
   // ===== FLOW 8: REVIEWS & RATINGS =====
@@ -301,6 +498,35 @@ const runTests = async () => {
         { Authorization: `Bearer ${providerToken}` },
       );
 
+      await dbTest("DB Check Booking Confirmed", async () => {
+        const booking = await prisma.booking.findUnique({
+          where: { id: bookingId },
+          select: { status: true },
+        });
+        if (!booking) throw new Error("Booking not found after confirm");
+        if (booking.status !== "CONFIRMED") {
+          throw new Error(`Unexpected status after confirm: ${booking.status}`);
+        }
+      });
+
+      if (clientId) {
+        await dbTest("DB Check Client Notification After Confirm", async () => {
+          const notif = await prisma.notification.findFirst({
+            where: {
+              userId: clientId,
+              title: "Statut de réservation mis à jour",
+            },
+            orderBy: { createdAt: "desc" },
+            select: { title: true, message: true },
+          });
+
+          if (!notif) throw new Error("Client confirmation notification not found");
+          if (!notif.message.includes("confirmed")) {
+            throw new Error(`Unexpected confirmation message: ${notif.message}`);
+          }
+        });
+      }
+
       // Then mark as in progress
       await test(
         "Mark Booking as In Progress",
@@ -311,6 +537,17 @@ const runTests = async () => {
         { Authorization: `Bearer ${providerToken}` },
       );
 
+      await dbTest("DB Check Booking In Progress", async () => {
+        const booking = await prisma.booking.findUnique({
+          where: { id: bookingId },
+          select: { status: true },
+        });
+        if (!booking) throw new Error("Booking not found after in progress");
+        if (booking.status !== "IN_PROGRESS") {
+          throw new Error(`Unexpected status after in progress: ${booking.status}`);
+        }
+      });
+
       // Finally mark as completed
       await test(
         "Mark Booking as Completed",
@@ -320,6 +557,17 @@ const runTests = async () => {
         200,
         { Authorization: `Bearer ${providerToken}` },
       );
+
+      await dbTest("DB Check Booking Completed", async () => {
+        const booking = await prisma.booking.findUnique({
+          where: { id: bookingId },
+          select: { status: true },
+        });
+        if (!booking) throw new Error("Booking not found after completion");
+        if (booking.status !== "COMPLETED") {
+          throw new Error(`Unexpected status after completion: ${booking.status}`);
+        }
+      });
     }
 
     await test(
@@ -342,6 +590,23 @@ const runTests = async () => {
       [200, 201],
       { Authorization: `Bearer ${clientToken}` },
     );
+
+    await dbTest("DB Check Review Creation", async () => {
+      const review = await prisma.review.findUnique({
+        where: { bookingId: bookingId },
+        select: {
+          rating: true,
+          comment: true,
+          clientId: true,
+        },
+      });
+
+      if (!review) throw new Error("Review not found in database");
+      if (review.rating !== 5) throw new Error(`Unexpected rating: ${review.rating}`);
+      if (review.clientId !== clientId) {
+        throw new Error(`Unexpected review clientId: ${review.clientId}`);
+      }
+    });
   }
 
   // ===== FLOW 9: USER PROFILE MANAGEMENT =====
@@ -367,6 +632,21 @@ const runTests = async () => {
       200,
       { Authorization: `Bearer ${clientToken}` },
     );
+
+    await dbTest("DB Check User Profile Update", async () => {
+      const user = await prisma.user.findUnique({
+        where: { id: clientId },
+        select: { firstName: true, lastName: true, phone: true },
+      });
+
+      if (!user) throw new Error("Updated client not found in database");
+      if (user.firstName !== "Jean-Paul") {
+        throw new Error(`Unexpected firstName after update: ${user.firstName}`);
+      }
+      if (user.phone !== "+2217654321") {
+        throw new Error(`Unexpected phone after update: ${user.phone}`);
+      }
+    });
   }
 
   // ===== FLOW 10: PAYMENTS TRACKING =====
@@ -413,7 +693,20 @@ const runTests = async () => {
   let adminToken = null;
   if (adminReg?.body?.data?.token) {
     adminToken = adminReg.body.data.token;
+    adminId = adminReg.body.data.user.id;
     console.log(`  ✓ Admin token obtained`);
+  }
+
+  if (adminId) {
+    await dbTest("DB Check Admin Registration", async () => {
+      const admin = await prisma.user.findUnique({
+        where: { id: adminId },
+        select: { email: true, role: true },
+      });
+
+      if (!admin) throw new Error("Admin user not found in database");
+      if (admin.role !== "ADMIN") throw new Error(`Unexpected admin role: ${admin.role}`);
+    });
   }
 
   if (adminToken) {
@@ -443,6 +736,7 @@ const runTests = async () => {
     console.log("⚠️  Some tests failed. Review the output above.");
   }
 
+  await prisma.$disconnect();
   process.exit(testsFailed > 0 ? 1 : 0);
 };
 
@@ -454,6 +748,7 @@ const checkServer = async () => {
     runTests();
   } catch (error) {
     console.error("❌ Server is not running at " + BASE_URL);
+    await prisma.$disconnect();
     process.exit(1);
   }
 };
