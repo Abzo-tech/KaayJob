@@ -213,7 +213,7 @@ class ProviderController {
         }
     }
     /**
-     * Récupérer le profil du prestataire connecté
+     * Récupérer le profil du prestataire connecté (utilise Prisma)
      */
     static async getProfile(req, res) {
         try {
@@ -230,69 +230,31 @@ class ProviderController {
                     .json({ success: false, message: "Accès réservé aux prestataires" });
                 return;
             }
-            const providerResult = await (0, database_1.query)(`
-        SELECT
-          pp.id, pp.user_id as userId, pp.business_name as businessName,
-          pp.specialty, pp.bio, pp.hourly_rate as hourlyRate,
-          pp.years_experience as yearsExperience, pp.location,
-          pp.address, pp.city, pp.region, pp.postal_code as postalCode,
-          pp.latitude, pp.longitude, pp.service_radius as serviceRadius,
-          pp.is_available as isAvailable, pp.availability,
-          pp.rating, pp.total_reviews as totalReviews,
-          pp.total_bookings as totalBookings, pp.is_verified as isVerified,
-          pp.profile_image as profileImage, pp.created_at as createdAt,
-          pp.updated_at as updatedAt,
-          u.first_name as firstName, u.last_name as lastName,
-          u.email, u.phone, u.avatar
-        FROM provider_profiles pp
-        JOIN users u ON pp.user_id = u.id
-        WHERE pp.user_id = $1
-      `, [user.id]);
-            if (providerResult.rows.length === 0) {
+            const profile = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                            phone: true,
+                            avatar: true,
+                        },
+                    },
+                },
+            });
+            if (!profile) {
                 res
                     .status(404)
                     .json({ success: false, message: "Profil prestataire non trouvé" });
                 return;
             }
-            const row = providerResult.rows[0];
-            const profile = {
-                id: row.id,
-                userId: row.userid,
-                businessName: row.businessname,
-                specialty: row.specialty,
-                bio: row.bio,
-                hourlyRate: row.hourlyrate ? parseFloat(row.hourlyrate) : null,
-                yearsExperience: row.yearsexperience,
-                location: row.location,
-                address: row.address,
-                city: row.city,
-                region: row.region,
-                postalCode: row.postalcode,
-                latitude: parseFloat(row.latitude) || null,
-                longitude: parseFloat(row.longitude) || null,
-                serviceRadius: row.serviceradius,
-                isAvailable: row.isavailable,
-                availability: row.availability,
-                rating: parseFloat(row.rating || "0"),
-                totalReviews: row.totalreviews || 0,
-                totalBookings: row.totalbookings || 0,
-                isVerified: row.isverified,
-                profileImage: row.profileimage,
-                createdAt: row.createdat,
-                updatedAt: row.updatedat,
-                user: {
-                    id: row.userid,
-                    firstName: row.firstname,
-                    lastName: row.lastname,
-                    email: row.email,
-                    phone: row.phone,
-                    avatar: row.avatar,
-                },
-            };
             res.json({ success: true, data: profile });
         }
         catch (error) {
-            console.error("❌ Erreur récupération profil prestataire:", error);
+            console.error("❌ Erreur récupération profil:", error);
             res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }

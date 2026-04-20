@@ -17,7 +17,7 @@ export declare class ProviderController {
      */
     static getById(req: Request, res: Response): Promise<void>;
     /**
-     * Récupérer le profil du prestataire connecté
+     * Récupérer le profil du prestataire connecté (utilise Prisma)
      */
     static getProfile(req: Request, res: Response): Promise<void>;
     /**
