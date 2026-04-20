@@ -1,9 +1,10 @@
 /**
  * Contrôleur pour les prestataires
- * Utilise les requêtes SQL directes
+ * Mélange de Prisma et SQL (à migrer progressivement vers Prisma)
  */
 
 import { Request, Response } from "express";
+import { prisma } from "../config/prisma";
 import { query } from "../config/database";
 
 export class ProviderController {
@@ -568,7 +569,7 @@ export class ProviderController {
   }
 
   /**
-   * Mettre à jour la disponibilité du prestataire
+   * Mettre à jour la disponibilité du prestataire (utilise Prisma)
    */
   static async updateAvailability(req: Request, res: Response): Promise<void> {
     try {
@@ -581,7 +582,6 @@ export class ProviderController {
         return;
       }
 
-      // Accepter isAvailable (bool) ou availability (object pour les horaires)
       const { isAvailable, availability } = req.body;
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
@@ -592,61 +592,36 @@ export class ProviderController {
       }
 
       // Vérifier si le profil prestataire existe
-      const checkRes = await query(
-        `SELECT id FROM provider_profiles WHERE user_id = $1`,
-        [user.id],
-      );
+      const existingProfile = await prisma.providerProfile.findUnique({
+        where: { userId: user.id },
+      });
 
-      if (checkRes.rows.length === 0) {
+      if (!existingProfile) {
         // Créer le profil s'il n'existe pas avec des valeurs par défaut
         const availValue = isAvailable !== undefined ? isAvailable : true;
-        const availJson = availability ? JSON.stringify(availability) : null;
-        
-        await query(
-          `
-          INSERT INTO provider_profiles (
-            user_id, is_available, availability, created_at, updated_at
-          ) VALUES ($1, $2, $3, NOW(), NOW())
-        `,
-          [user.id, availValue, availJson],
-        );
+        await prisma.providerProfile.create({
+          data: {
+            userId: user.id,
+            isAvailable: availValue,
+            availability: availability || undefined,
+          },
+        });
       } else {
         // Mettre à jour le profil existant
-        // Si isAvailable n'est pas fourni, garder la valeur actuelle
-        let availValue: boolean;
-        let availJson: string | undefined;
-        
+        const updateData: any = {};
+
         if (isAvailable !== undefined) {
-          availValue = isAvailable;
-        } else {
-          // Récupérer la valeur actuelle
-          const current = await query(
-            `SELECT is_available FROM provider_profiles WHERE user_id = $1`,
-            [user.id]
-          );
-          availValue = current.rows[0]?.is_available ?? true;
+          updateData.isAvailable = isAvailable;
         }
-        
+
         if (availability) {
-          availJson = JSON.stringify(availability);
-          await query(
-            `
-            UPDATE provider_profiles
-            SET is_available = $1, availability = $2, updated_at = NOW()
-            WHERE user_id = $3
-          `,
-            [availValue, availJson, user.id],
-          );
-        } else {
-          await query(
-            `
-            UPDATE provider_profiles
-            SET is_available = $1, updated_at = NOW()
-            WHERE user_id = $2
-          `,
-            [availValue, user.id],
-          );
+          updateData.availability = availability;
         }
+
+        await prisma.providerProfile.update({
+          where: { userId: user.id },
+          data: updateData,
+        });
       }
 
       res.json({

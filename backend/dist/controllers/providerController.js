@@ -1,10 +1,11 @@
 "use strict";
 /**
  * Contrôleur pour les prestataires
- * Utilise les requêtes SQL directes
+ * Mélange de Prisma et SQL (à migrer progressivement vers Prisma)
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ProviderController = void 0;
+const prisma_1 = require("../config/prisma");
 const database_1 = require("../config/database");
 class ProviderController {
     /**
@@ -470,7 +471,7 @@ class ProviderController {
         }
     }
     /**
-     * Mettre à jour la disponibilité du prestataire
+     * Mettre à jour la disponibilité du prestataire (utilise Prisma)
      */
     static async updateAvailability(req, res) {
         try {
@@ -481,7 +482,6 @@ class ProviderController {
                     .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
-            // Accepter isAvailable (bool) ou availability (object pour les horaires)
             const { isAvailable, availability } = req.body;
             if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
                 res
@@ -490,45 +490,33 @@ class ProviderController {
                 return;
             }
             // Vérifier si le profil prestataire existe
-            const checkRes = await (0, database_1.query)(`SELECT id FROM provider_profiles WHERE user_id = $1`, [user.id]);
-            if (checkRes.rows.length === 0) {
+            const existingProfile = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: user.id },
+            });
+            if (!existingProfile) {
                 // Créer le profil s'il n'existe pas avec des valeurs par défaut
                 const availValue = isAvailable !== undefined ? isAvailable : true;
-                const availJson = availability ? JSON.stringify(availability) : null;
-                await (0, database_1.query)(`
-          INSERT INTO provider_profiles (
-            user_id, is_available, availability, created_at, updated_at
-          ) VALUES ($1, $2, $3, NOW(), NOW())
-        `, [user.id, availValue, availJson]);
+                await prisma_1.prisma.providerProfile.create({
+                    data: {
+                        userId: user.id,
+                        isAvailable: availValue,
+                        availability: availability || undefined,
+                    },
+                });
             }
             else {
                 // Mettre à jour le profil existant
-                // Si isAvailable n'est pas fourni, garder la valeur actuelle
-                let availValue;
-                let availJson;
+                const updateData = {};
                 if (isAvailable !== undefined) {
-                    availValue = isAvailable;
-                }
-                else {
-                    // Récupérer la valeur actuelle
-                    const current = await (0, database_1.query)(`SELECT is_available FROM provider_profiles WHERE user_id = $1`, [user.id]);
-                    availValue = current.rows[0]?.is_available ?? true;
+                    updateData.isAvailable = isAvailable;
                 }
                 if (availability) {
-                    availJson = JSON.stringify(availability);
-                    await (0, database_1.query)(`
-            UPDATE provider_profiles
-            SET is_available = $1, availability = $2, updated_at = NOW()
-            WHERE user_id = $3
-          `, [availValue, availJson, user.id]);
+                    updateData.availability = availability;
                 }
-                else {
-                    await (0, database_1.query)(`
-            UPDATE provider_profiles
-            SET is_available = $1, updated_at = NOW()
-            WHERE user_id = $2
-          `, [availValue, user.id]);
-                }
+                await prisma_1.prisma.providerProfile.update({
+                    where: { userId: user.id },
+                    data: updateData,
+                });
             }
             res.json({
                 success: true,

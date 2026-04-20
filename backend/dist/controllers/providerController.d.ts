@@ -1,6 +1,6 @@
 /**
  * Contrôleur pour les prestataires
- * Utilise les requêtes SQL directes
+ * Mélange de Prisma et SQL (à migrer progressivement vers Prisma)
  */
 import { Request, Response } from "express";
 export declare class ProviderController {
@@ -33,7 +33,7 @@ export declare class ProviderController {
      */
     static updateLocation(req: Request, res: Response): Promise<void>;
     /**
-     * Mettre à jour la disponibilité du prestataire
+     * Mettre à jour la disponibilité du prestataire (utilise Prisma)
      */
     static updateAvailability(req: Request, res: Response): Promise<void>;
     /**
