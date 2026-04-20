@@ -6,6 +6,7 @@
 
 import { Router } from "express";
 import { authenticate, requireAdmin, AuthRequest } from "../middleware/auth";
+import { prisma } from "../config/prisma";
 
 // Import des sous-routes
 import usersRouter from "./admin/users";
@@ -47,36 +48,52 @@ router.get("/", (req: AuthRequest, res) => {
 // Route stats globale
 router.get("/stats", async (req: AuthRequest, res) => {
   try {
-    const { query: dbQuery } = await import("../config/database");
-
-    const usersResult = await dbQuery(
-      "SELECT COUNT(*) as total, role FROM users GROUP BY role",
-    );
-    const bookingsResult = await dbQuery(`
-      SELECT COUNT(*) as total,
-             SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending,
-             SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-             SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
-      FROM bookings
-    `);
-    const revenueResult = await dbQuery(`
-      SELECT COALESCE(SUM(total_amount), 0) as total_revenue
-      FROM bookings
-      WHERE status = 'COMPLETED'
-    `);
-    const providersResult = await dbQuery(`
-      SELECT COUNT(*) as total,
-             SUM(CASE WHEN is_verified = true THEN 1 ELSE 0 END) as verified
-      FROM provider_profiles
-    `);
+    const [
+      clientUsers,
+      providerUsers,
+      adminUsers,
+      totalBookings,
+      pendingBookings,
+      completedBookings,
+      cancelledBookings,
+      completedRevenue,
+      totalProviders,
+      verifiedProviders,
+    ] = await Promise.all([
+      prisma.user.count({ where: { role: "CLIENT" } }),
+      prisma.user.count({ where: { role: "PRESTATAIRE" } }),
+      prisma.user.count({ where: { role: "ADMIN" } }),
+      prisma.booking.count(),
+      prisma.booking.count({ where: { status: "PENDING" } }),
+      prisma.booking.count({ where: { status: "COMPLETED" } }),
+      prisma.booking.count({ where: { status: "CANCELLED" } }),
+      prisma.booking.aggregate({
+        where: { status: "COMPLETED" },
+        _sum: { totalAmount: true },
+      }),
+      prisma.providerProfile.count(),
+      prisma.providerProfile.count({ where: { isVerified: true } }),
+    ]);
 
     res.json({
       success: true,
       data: {
-        users: usersResult.rows,
-        bookings: bookingsResult.rows[0],
-        revenue: parseFloat(revenueResult.rows[0].total_revenue),
-        providers: providersResult.rows[0],
+        users: [
+          { role: "CLIENT", total: String(clientUsers) },
+          { role: "PRESTATAIRE", total: String(providerUsers) },
+          { role: "ADMIN", total: String(adminUsers) },
+        ],
+        bookings: {
+          total: String(totalBookings),
+          pending: String(pendingBookings),
+          completed: String(completedBookings),
+          cancelled: String(cancelledBookings),
+        },
+        revenue: Number(completedRevenue._sum.totalAmount?.toString() || 0),
+        providers: {
+          total: String(totalProviders),
+          verified: String(verifiedProviders),
+        },
       },
     });
   } catch (error) {
