@@ -92,6 +92,7 @@ class NotificationController {
             }
             const existing = await prisma_1.prisma.notification.findFirst({
                 where: { id, userId: user.id },
+                select: { id: true },
             });
             if (!existing) {
                 res.status(404).json({ success: false, message: 'Notification non trouvée' });
@@ -160,6 +161,7 @@ class NotificationController {
             }
             const existing = await prisma_1.prisma.notification.findFirst({
                 where: { id, userId: user.id },
+                select: { id: true },
             });
             if (!existing) {
                 res.status(404).json({ success: false, message: 'Notification non trouvée' });

@@ -16,16 +16,31 @@ router.get("/", async (req, res) => {
     let userId;
     try {
         userId = req.user?.id;
+        const requestedLimit = Number(req.query.limit);
+        const limit = Number.isFinite(requestedLimit) && requestedLimit > 0
+            ? Math.min(requestedLimit, 50)
+            : 20;
         console.log("=== GET /notifications for user:", userId);
         console.log("Full user object:", JSON.stringify(req.user));
         if (!userId) {
             return res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
         }
         console.log("Step 1: Before findMany, userId:", userId);
-        // Simplement utiliser findMany sans orderBy complexe
+        // Selection explicite pour rester compatible avec les bases
+        // qui n'ont pas encore toutes les colonnes optionnelles du modele Prisma.
         const notifications = await prisma_1.default.notification.findMany({
             where: { userId: userId },
-            take: 20
+            orderBy: { createdAt: "desc" },
+            take: limit,
+            select: {
+                id: true,
+                title: true,
+                message: true,
+                type: true,
+                read: true,
+                link: true,
+                createdAt: true,
+            },
         });
         console.log("Step 2: After findMany, count:", notifications.length);
         res.json({
@@ -73,7 +88,8 @@ router.put("/:id/read", async (req, res) => {
             return res.status(401).json({ success: false, message: 'Non authentifié' });
         }
         const notification = await prisma_1.default.notification.findFirst({
-            where: { id, userId }
+            where: { id, userId },
+            select: { id: true },
         });
         if (!notification) {
             return res.status(404).json({ success: false, message: "Notification non trouvée" });
