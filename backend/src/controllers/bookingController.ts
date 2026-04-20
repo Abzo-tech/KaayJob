@@ -238,11 +238,15 @@ export class BookingController {
         },
       });
 
+      const clientDisplayName = booking.client
+        ? `${booking.client.firstName} ${booking.client.lastName}`
+        : "Un client";
+
       if (providerProfile) {
         await createNotification(
           providerProfile.userId,
           "Nouvelle réservation",
-          `${user.firstName} ${user.lastName} a réservé "${service.name}"`,
+          `${clientDisplayName} a réservé "${service.name}"`,
           "info",
           "/prestataire/bookings",
           [user.id, providerProfile.userId],
@@ -257,7 +261,7 @@ export class BookingController {
         await createNotification(
           admin.id,
           "Nouvelle réservation créée",
-          `${user.firstName} ${user.lastName} a réservé le service "${service.name}"${providerProfile ? ` auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}` : ''}`,
+          `${clientDisplayName} a réservé le service "${service.name}"${providerProfile ? ` auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}` : ''}`,
           "info",
           "/admin/bookings",
         );
