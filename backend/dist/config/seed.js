@@ -313,7 +313,7 @@ async function seed() {
                     phone: p.phone,
                     role: "PRESTATAIRE",
                     isActive: true,
-                    isVerified: true,
+                    isVerified: false,
                 },
             });
             const profile = await prisma_1.prisma.providerProfile.upsert({
@@ -332,7 +332,7 @@ async function seed() {
                     rating: 4.5,
                     totalReviews: Math.floor(Math.random() * 50) + 10,
                     totalBookings: Math.floor(Math.random() * 100) + 20,
-                    isVerified: true,
+                    isVerified: false,
                 },
             });
             // Stocker userId du prestataire car c'est ce qui est utilisé dans Service.providerId
@@ -758,7 +758,7 @@ async function seed() {
                 features: [
                     "5 services maximum",
                     "Visibilité standard",
-                    "Support par email"
+                    "Support par email",
                 ],
                 isActive: true,
                 displayOrder: 0,
@@ -774,7 +774,7 @@ async function seed() {
                     "Badge VIP",
                     "Visibilité prioritaire",
                     "Support prioritaire",
-                    "Statistiques avancées"
+                    "Statistiques avancées",
                 ],
                 isActive: true,
                 displayOrder: 1,
@@ -790,7 +790,7 @@ async function seed() {
                     "Publication en premier",
                     "Badge Pro",
                     "Formation exclusive",
-                    "Gestion équipe"
+                    "Gestion équipe",
                 ],
                 isActive: true,
                 displayOrder: 2,

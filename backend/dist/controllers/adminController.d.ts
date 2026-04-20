@@ -1,6 +1,6 @@
 /**
  * Contrôleur pour les fonctionnalités administrateur
- * Utilise les requêtes SQL directes pour la stabilité
+ * Utilise Prisma pour les opérations de données
  */
 import { Request, Response } from "express";
 export declare class AdminController {

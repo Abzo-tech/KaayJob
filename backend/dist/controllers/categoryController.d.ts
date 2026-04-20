@@ -1,7 +1,7 @@
 /**
  * Contrôleur pour les catégories
  * Gère les opérations CRUD sur les catégories de services
- * Utilise SQL direct pour éviter les problèmes Prisma en production
+ * Utilise Prisma pour toutes les opérations de données
  */
 import { Request, Response } from "express";
 export declare class CategoryController {

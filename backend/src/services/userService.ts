@@ -4,9 +4,7 @@
  */
 
 import { prisma } from "../config/prisma";
-import { query } from "../config/database";
-import { createNotification, createFormattedNotification } from "./notificationService";
-import { NotificationRecipient, NotificationContext } from "../utils/notificationFormatter";
+import { createFormattedNotification } from "./notificationService";
 
 export interface CreateUserData {
   email: string;
@@ -36,138 +34,102 @@ export interface UserFilters {
 const normalizeUserRow = (row: any) => ({
   id: row.id,
   email: row.email,
-  firstName: row.first_name ?? row.firstName ?? null,
-  lastName: row.last_name ?? row.lastName ?? null,
+  firstName: row.firstName,
+  lastName: row.lastName,
   phone: row.phone ?? null,
   role: row.role,
-  isActive: row.is_active ?? row.isActive ?? undefined,
-  isVerified: row.is_verified ?? row.isVerified ?? false,
-  bookingCount:
-    row.booking_count !== undefined || row.bookingCount !== undefined
-      ? Number(row.booking_count ?? row.bookingCount)
-      : undefined,
-  createdAt: row.created_at ?? row.createdAt ?? null,
-  updatedAt: row.updated_at ?? row.updatedAt ?? undefined,
+  isActive: row.isActive,
+  isVerified: row.providerProfile?.isVerified ?? false,
+  bookingCount: row._count?.clientBookings ?? 0,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
 });
 
-const normalizeProviderProfileRow = (row: any) => ({
-  id: row.id,
-  userId: row.user_id ?? row.userId,
-  businessName: row.business_name ?? row.businessName ?? null,
-  specialty: row.specialty ?? null,
-  bio: row.bio ?? null,
-  hourlyRate: row.hourly_rate ?? row.hourlyRate ?? null,
-  yearsExperience: row.years_experience ?? row.yearsExperience ?? null,
-  location: row.location ?? null,
-  address: row.address ?? null,
-  city: row.city ?? null,
-  region: row.region ?? null,
-  postalCode: row.postal_code ?? row.postalCode ?? null,
-  serviceRadius: row.service_radius ?? row.serviceRadius ?? null,
-  isAvailable: row.is_available ?? row.isAvailable ?? true,
-  rating: row.rating ?? 0,
-  totalReviews: row.total_reviews ?? row.totalReviews ?? 0,
-  totalBookings: row.total_bookings ?? row.totalBookings ?? 0,
-  isVerified: row.is_verified ?? row.isVerified ?? false,
-  profileImage: row.profile_image ?? row.profileImage ?? null,
-  specialties: row.specialties ?? null,
-  availability: row.availability ?? null,
-  createdAt: row.created_at ?? row.createdAt ?? null,
-  updatedAt: row.updated_at ?? row.updatedAt ?? null,
-});
-
-/**
- * Liste des utilisateurs avec pagination et filtres
- */
 export async function listUsers(filters: UserFilters) {
   const { page = 1, limit = 20, role, search } = filters;
-  const offset = (page - 1) * limit;
+  const pageNum = Number(page);
+  const limitNum = Number(limit);
+  const skip = (pageNum - 1) * limitNum;
 
-  let whereClause = "1=1";
-  const params: any[] = [];
-  let paramIndex = 1;
-
+  const where: any = {};
   if (role) {
-    whereClause += ` AND role = $${paramIndex}`;
-    params.push(role);
-    paramIndex++;
+    where.role = role.toUpperCase();
   }
-
   if (search) {
-    whereClause += ` AND (first_name ILIKE $${paramIndex} OR last_name ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`;
-    params.push(`%${search}%`);
-    paramIndex++;
+    where.OR = [
+      { firstName: { contains: search, mode: "insensitive" } },
+      { lastName: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
   }
 
-  const countResult = await query(
-    `SELECT COUNT(*) as count FROM users WHERE ${whereClause}`,
-    params,
-  );
-
-  const result = await query(
-    `SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role, u.created_at,
-            COALESCE(pp.is_verified, false) as is_verified,
-            (SELECT COUNT(*) FROM bookings WHERE client_id = u.id) as booking_count
-     FROM users u
-     LEFT JOIN provider_profiles pp ON u.id = pp.user_id
-     WHERE ${whereClause}
-     ORDER BY u.created_at DESC
-     LIMIT ${limit} OFFSET ${offset}`,
-    params,
-  );
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      skip,
+      take: limitNum,
+      orderBy: { createdAt: "desc" },
+      include: {
+        providerProfile: {
+          select: { isVerified: true },
+        },
+        _count: {
+          select: { clientBookings: true },
+        },
+      },
+    }),
+    prisma.user.count({ where }),
+  ]);
 
   return {
-    data: result.rows.map(normalizeUserRow),
+    data: users.map(normalizeUserRow),
     pagination: {
-      page,
-      limit,
-      total: parseInt(countResult.rows[0].count),
+      page: pageNum,
+      limit: limitNum,
+      total,
     },
   };
 }
 
-/**
- * Créer un nouvel utilisateur
- */
 export async function createUser(data: CreateUserData, adminId?: string) {
   const { email, password, firstName, lastName, phone, role = "CLIENT" } = data;
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
 
-  // Vérifier si l'email existe déjà
-  const existingUser = await query(
-    "SELECT id FROM users WHERE email = $1",
-    [email],
-  );
-  if (existingUser.rows.length > 0) {
+  if (existingUser) {
     throw new Error("Email déjà utilisé");
   }
 
-  const result = await query(
-    `INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_active, is_verified, created_at, updated_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, true, NOW(), NOW()) RETURNING id, email, first_name, last_name, phone, role, created_at`,
-    [email, password, firstName, lastName, phone || null, role],
-  );
+  const user = await prisma.user.create({
+    data: {
+      email,
+      password,
+      firstName,
+      lastName,
+      phone: phone ?? "",
+      role: role.toUpperCase() as any,
+      isActive: true,
+      isVerified: true,
+    },
+  });
 
-  const user = result.rows[0];
-
-  // Créer une notification pour le nouvel utilisateur
   await createFormattedNotification(
-    { id: user.id, role, firstName: user.first_name, lastName: user.last_name },
+    { id: user.id, role: user.role, firstName: user.firstName, lastName: user.lastName },
     "Bienvenue sur KaayJob",
-    `Votre compte a été créé avec succès. Votre rôle: ${role}`,
+    `Votre compte a été créé avec succès. Votre rôle: ${user.role}`,
     "success",
-    role === "PRESTATAIRE" ? "/prestataire/dashboard" : "/client/dashboard",
+    user.role === "PRESTATAIRE" ? "/prestataire/dashboard" : "/client/dashboard",
   );
 
-  // Si c'est un prestataire qui s'inscrit, notifier tous les clients existants
-  if (role === "PRESTATAIRE") {
-    // Récupérer tous les clients actifs
-    const clientsResult = await query(
-      "SELECT id FROM users WHERE role = 'CLIENT' AND is_active = true",
-      []
-    );
+  if (user.role === "PRESTATAIRE") {
+    const clients = await prisma.user.findMany({
+      where: { role: "CLIENT", isActive: true },
+      select: { id: true },
+    });
 
-    // Notifier chaque client du nouveau prestataire
-    for (const client of clientsResult.rows) {
+    for (const client of clients) {
       await createFormattedNotification(
         { id: client.id, role: "CLIENT" },
         "Nouveau prestataire disponible",
@@ -175,12 +137,11 @@ export async function createUser(data: CreateUserData, adminId?: string) {
         "info",
         "/categories",
         undefined,
-        { actor: { firstName, lastName, role: "PRESTATAIRE" } }
+        { actor: { firstName, lastName, role: "PRESTATAIRE" } },
       );
     }
   }
 
-  // Notification pour l'admin
   if (adminId) {
     await createFormattedNotification(
       { id: adminId, role: "ADMIN" },
@@ -189,78 +150,52 @@ export async function createUser(data: CreateUserData, adminId?: string) {
       "success",
       "/admin/users",
       undefined,
-      { target: { firstName, lastName, role } }
+      { target: { firstName, lastName, role: user.role } },
     );
   }
 
   return normalizeUserRow(user);
 }
 
-/**
- * Mettre à jour un utilisateur
- */
-export async function updateUser(userId: string, data: UpdateUserData, adminId?: string) {
-  // Vérifier si l'utilisateur existe
-  const existingUser = await query("SELECT id FROM users WHERE id = $1", [userId]);
-  if (existingUser.rows.length === 0) {
+export async function updateUser(
+  userId: string,
+  data: UpdateUserData,
+  adminId?: string,
+) {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, firstName: true, lastName: true, email: true, role: true },
+  });
+
+  if (!existingUser) {
     throw new Error("Utilisateur non trouvé");
   }
 
-  // Vérifier si le nouvel email est déjà utilisé
   if (data.email) {
-    const emailExists = await query(
-      "SELECT id FROM users WHERE email = $1 AND id != $2",
-      [data.email, userId],
-    );
-    if (emailExists.rows.length > 0) {
+    const emailExists = await prisma.user.findFirst({
+      where: { email: data.email, id: { not: userId } },
+      select: { id: true },
+    });
+    if (emailExists) {
       throw new Error("Email déjà utilisé");
     }
   }
 
-  const updates: string[] = [];
-  const params: any[] = [];
-  let paramIndex = 1;
+  const updateData: any = {};
+  if (data.email !== undefined) updateData.email = data.email;
+  if (data.firstName !== undefined) updateData.firstName = data.firstName;
+  if (data.lastName !== undefined) updateData.lastName = data.lastName;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.role !== undefined) updateData.role = data.role.toUpperCase();
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-  if (data.email) {
-    updates.push(`email = $${paramIndex++}`);
-    params.push(data.email);
-  }
-  if (data.firstName) {
-    updates.push(`first_name = $${paramIndex++}`);
-    params.push(data.firstName);
-  }
-  if (data.lastName) {
-    updates.push(`last_name = $${paramIndex++}`);
-    params.push(data.lastName);
-  }
-  if (data.phone !== undefined) {
-    updates.push(`phone = $${paramIndex++}`);
-    params.push(data.phone);
-  }
-  if (data.role) {
-    updates.push(`role = $${paramIndex++}`);
-    params.push(data.role);
-  }
-  if (data.isActive !== undefined) {
-    updates.push(`is_active = $${paramIndex++}`);
-    params.push(data.isActive);
-  }
+  const result = await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+  });
 
-  if (updates.length === 0) {
-    throw new Error("Aucune donnée à mettre à jour");
-  }
-
-  updates.push(`updated_at = NOW()`);
-  params.push(userId);
-
-  const result = await query(
-    `UPDATE users SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING id, email, first_name, last_name, phone, role, is_active, created_at`,
-    params,
-  );
-
-  // Notification pour l'admin
   if (adminId) {
-    const userName = `${result.rows[0].first_name} ${result.rows[0].last_name}`;
+    const userName = `${result.firstName} ${result.lastName}`;
     await createFormattedNotification(
       { id: adminId, role: "ADMIN" },
       "Utilisateur mis à jour",
@@ -268,111 +203,90 @@ export async function updateUser(userId: string, data: UpdateUserData, adminId?:
       "info",
       "/admin/users",
       undefined,
-      { target: { firstName: result.rows[0].first_name, lastName: result.rows[0].last_name, role: result.rows[0].role } }
+      { target: { firstName: result.firstName, lastName: result.lastName, role: result.role } },
     );
   }
 
-  return normalizeUserRow(result.rows[0]);
+  return normalizeUserRow(result);
 }
 
-/**
- * Vérifier un prestataire
- */
 export async function verifyProvider(providerId: string, adminId: string) {
-  // Vérifier si l'utilisateur est un prestataire
-  const userCheck = await query(
-    "SELECT role, first_name, last_name FROM users WHERE id = $1",
-    [providerId],
-  );
+  const user = await prisma.user.findUnique({
+    where: { id: providerId },
+    select: {
+      id: true,
+      role: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+    },
+  });
 
-  if (userCheck.rows.length === 0) {
+  if (!user) {
     throw new Error("Utilisateur non trouvé");
   }
 
-  if (userCheck.rows[0].role !== "PRESTATAIRE") {
+  if (user.role !== "PRESTATAIRE") {
     throw new Error("Cet utilisateur n'est pas un prestataire");
   }
 
-  // Créer ou mettre à jour le provider_profile
-  const existingProfile = await query(
-    "SELECT id FROM provider_profiles WHERE user_id = $1",
-    [providerId],
-  );
+  const profile = await prisma.providerProfile.upsert({
+    where: { userId: providerId },
+    update: {
+      isVerified: true,
+      updatedAt: new Date(),
+    },
+    create: {
+      userId: providerId,
+      isVerified: true,
+      isAvailable: true,
+    },
+  });
 
-  let result;
-  if (existingProfile.rows.length === 0) {
-    result = await query(
-      "INSERT INTO provider_profiles (id, user_id, is_verified, created_at, updated_at) VALUES (gen_random_uuid(), $1, true, NOW(), NOW()) RETURNING *",
-      [providerId],
-    );
-  } else {
-    result = await query(
-      "UPDATE provider_profiles SET is_verified = true, updated_at = NOW() WHERE user_id = $1 RETURNING *",
-      [providerId],
-    );
-  }
-
-  // Notifications
-  const userName = `${userCheck.rows[0].first_name} ${userCheck.rows[0].last_name}`;
   await createFormattedNotification(
-    { id: providerId, role: "PRESTATAIRE", firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name },
+    user,
     "Compte vérifié",
     "Votre compte prestataire a été vérifié par l'administrateur. Vous pouvez maintenant offrir vos services sur la plateforme.",
     "success",
     "/prestataire/dashboard",
   );
 
-  await createFormattedNotification(
-    { id: adminId, role: "ADMIN" },
-    "Prestataire vérifié",
-    `${userName} a été vérifié avec succès`,
-    "success",
-    "/admin/users",
-    undefined,
-    { target: { firstName: userCheck.rows[0].first_name, lastName: userCheck.rows[0].last_name, role: "PRESTATAIRE" } }
-  );
-
-  return normalizeProviderProfileRow(result.rows[0]);
+  return {
+    id: profile.id,
+    userId: profile.userId,
+    isVerified: profile.isVerified,
+    updatedAt: profile.updatedAt,
+  };
 }
 
-/**
- * Supprimer un utilisateur
- */
 export async function deleteUser(userId: string, adminId?: string) {
-  // Trouver le profil prestataire si existant
-  const profileResult = await query(
-    "SELECT id FROM provider_profiles WHERE user_id = $1",
-    [userId],
-  );
-  const profileId = profileResult.rows[0]?.id;
+  const profile = await prisma.providerProfile.findUnique({
+    where: { userId },
+    select: { id: true },
+  });
 
-  // Supprimer les reviews où ce user est provider
-  if (profileId) {
-    await query("DELETE FROM reviews WHERE provider_id = $1", [profileId]);
+  if (profile) {
+    await prisma.review.deleteMany({ where: { providerId: profile.id } });
   }
 
-  // Supprimer les reviews où ce user est client
-  await query("DELETE FROM reviews WHERE client_id = $1", [userId]);
+  await prisma.review.deleteMany({ where: { clientId: userId } });
+  await prisma.booking.deleteMany({ where: { clientId: userId } });
 
-  // Supprimer les bookings liés aux services de ce provider
-  await query(
-    "DELETE FROM bookings WHERE service_id IN (SELECT id FROM services WHERE provider_id = $1)",
-    [userId],
-  );
+  if (profile) {
+    const services = await prisma.service.findMany({
+      where: { providerId: userId },
+      select: { id: true },
+    });
+    const serviceIds = services.map((service) => service.id);
+    if (serviceIds.length > 0) {
+      await prisma.booking.deleteMany({ where: { serviceId: { in: serviceIds } } });
+      await prisma.service.deleteMany({ where: { id: { in: serviceIds } } });
+    }
+  }
 
-  // Supprimer les bookings où l'utilisateur est client
-  await query("DELETE FROM bookings WHERE client_id = $1", [userId]);
+  await prisma.providerProfile.deleteMany({ where: { userId } });
+  await prisma.user.delete({ where: { id: userId } });
 
-  // Supprimer le profil prestataire
-  await query("DELETE FROM provider_profiles WHERE user_id = $1", [userId]);
-
-  // Supprimer les services
-  await query("DELETE FROM services WHERE provider_id = $1", [userId]);
-
-  // Supprimer l'utilisateur
-  await query("DELETE FROM users WHERE id = $1", [userId]);
-
-  // Notification pour l'admin
   if (adminId) {
     await createFormattedNotification(
       { id: adminId, role: "ADMIN" },
@@ -386,23 +300,18 @@ export async function deleteUser(userId: string, adminId?: string) {
   return { success: true };
 }
 
-/**
- * Obtenir un utilisateur par ID
- */
 export async function getUserById(userId: string) {
-  const result = await query(
-    `SELECT u.id, u.email, u.first_name, u.last_name, u.phone, u.role, u.is_active, u.created_at,
-            COALESCE(pp.is_verified, false) as is_verified,
-            (SELECT COUNT(*) FROM bookings WHERE client_id = u.id) as booking_count
-     FROM users u
-     LEFT JOIN provider_profiles pp ON u.id = pp.user_id
-     WHERE u.id = $1`,
-    [userId],
-  );
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      providerProfile: { select: { isVerified: true } },
+      _count: { select: { clientBookings: true } },
+    },
+  });
 
-  if (result.rows.length === 0) {
+  if (!user) {
     throw new Error("Utilisateur non trouvé");
   }
 
-  return normalizeUserRow(result.rows[0]);
+  return normalizeUserRow(user);
 }

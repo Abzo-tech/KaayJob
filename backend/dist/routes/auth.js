@@ -12,7 +12,6 @@ const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const prisma_1 = require("../config/prisma");
-const database_1 = require("../config/database");
 const authController_1 = __importDefault(require("../controllers/authController"));
 const auth_1 = require("../middleware/auth");
 const validations_1 = require("../validations");
@@ -65,11 +64,14 @@ router.delete("/account", auth_1.authenticate, async (req, res) => {
             return res.status(401).json({ success: false, message: "Non autorisé" });
         }
         // Vérifier le rôle - seul les clients peuvent supprimer leur compte via cette route
-        const userResult = await (0, database_1.query)("SELECT role FROM users WHERE id = $1", [userId]);
-        if (userResult.rows.length === 0) {
+        const user = await prisma_1.prisma.user.findUnique({
+            where: { id: userId },
+            select: { role: true },
+        });
+        if (!user) {
             return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
         }
-        const userRole = userResult.rows[0].role;
+        const userRole = user.role;
         // Si c'est un prestataire, on ne peut pas supprimer le compte via cette route
         // (cela devrait être fait via un autre processus)
         if (userRole === "PRESTATAIRE") {
@@ -79,16 +81,28 @@ router.delete("/account", auth_1.authenticate, async (req, res) => {
             });
         }
         // Supprimer les données liées selon le rôle
-        if (userRole === "CLIENT") {
-            // Supprimer les réservations du client
-            await (0, database_1.query)("DELETE FROM bookings WHERE client_id = $1", [userId]);
-            // Supprimer les avis du client
-            await (0, database_1.query)("DELETE FROM reviews WHERE client_id = $1", [userId]);
-        }
-        // Supprimer le provider profile s'il existe
-        await (0, database_1.query)("DELETE FROM provider_profiles WHERE user_id = $1", [userId]);
-        // Supprimer l'utilisateur
-        await (0, database_1.query)("DELETE FROM users WHERE id = $1", [userId]);
+        await prisma_1.prisma.$transaction(async (tx) => {
+            if (userRole === "CLIENT") {
+                await tx.review.deleteMany({
+                    where: { clientId: userId },
+                });
+                await tx.booking.deleteMany({
+                    where: { clientId: userId },
+                });
+            }
+            await tx.payment.deleteMany({
+                where: { userId },
+            });
+            await tx.notification.deleteMany({
+                where: { userId },
+            });
+            await tx.providerProfile.deleteMany({
+                where: { userId },
+            });
+            await tx.user.delete({
+                where: { id: userId },
+            });
+        });
         res.json({ success: true, message: "Compte supprimé avec succès" });
     }
     catch (error) {
@@ -167,10 +181,21 @@ router.post("/debug-admin", async (req, res) => {
 router.post("/create-admin-temp", async (req, res) => {
     try {
         console.log('🔧 Création temporaire de l\'admin...');
-        const admin = await prisma_1.prisma.user.create({
-            data: {
+        const password = await bcryptjs_1.default.hash('Password123', 10);
+        const admin = await prisma_1.prisma.user.upsert({
+            where: { email: 'admin@kaayjob.com' },
+            update: {
+                password,
+                firstName: 'Admin',
+                lastName: 'KaayJob',
+                phone: '+221000000000',
+                role: 'ADMIN',
+                isVerified: true,
+                isActive: true,
+            },
+            create: {
                 email: 'admin@kaayjob.com',
-                password: await bcryptjs_1.default.hash('Password123', 10),
+                password,
                 firstName: 'Admin',
                 lastName: 'KaayJob',
                 phone: '+221000000000',

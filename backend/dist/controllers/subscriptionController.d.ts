@@ -1,7 +1,6 @@
 /**
- * Contrôleur pour les abonnements
+ * Contrôleur pour les abonnements - VERSION PRISMA COMPLÈTE
  * Gère les abonnements des prestataires aux plans
- * Utilise les requêtes SQL directes
  */
 import { Request, Response } from "express";
 export declare class SubscriptionController {

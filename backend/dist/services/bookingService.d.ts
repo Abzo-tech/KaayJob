@@ -18,25 +18,40 @@ export interface UpdateBookingData {
     city?: string;
     notes?: string;
 }
-/**
- * Liste des réservations avec pagination et filtres
- */
 export declare function listBookings(filters: BookingFilters): Promise<{
-    data: any;
+    data: {
+        id: any;
+        clientId: any;
+        serviceId: any;
+        bookingDate: any;
+        bookingTime: any;
+        duration: any;
+        status: any;
+        address: any;
+        city: any;
+        phone: any;
+        notes: any;
+        totalAmount: number | null;
+        paymentStatus: any;
+        createdAt: any;
+        updatedAt: any;
+        clientFirstName: any;
+        clientLastName: any;
+        serviceName: any;
+        providerFirstName: any;
+        providerLastName: any;
+    }[];
     pagination: {
         page: number;
         limit: number;
         total: number;
+        totalPages: number;
     };
 }>;
-/**
- * Obtenir une réservation par ID
- */
 export declare function getBookingById(bookingId: string): Promise<{
     id: any;
     clientId: any;
     serviceId: any;
-    providerId: any;
     bookingDate: any;
     bookingTime: any;
     duration: any;
@@ -45,7 +60,7 @@ export declare function getBookingById(bookingId: string): Promise<{
     city: any;
     phone: any;
     notes: any;
-    totalAmount: any;
+    totalAmount: number | null;
     paymentStatus: any;
     createdAt: any;
     updatedAt: any;
@@ -55,14 +70,10 @@ export declare function getBookingById(bookingId: string): Promise<{
     providerFirstName: any;
     providerLastName: any;
 }>;
-/**
- * Mettre à jour une réservation
- */
 export declare function updateBooking(bookingId: string, data: UpdateBookingData, adminId?: string): Promise<{
     id: any;
     clientId: any;
     serviceId: any;
-    providerId: any;
     bookingDate: any;
     bookingTime: any;
     duration: any;
@@ -71,7 +82,7 @@ export declare function updateBooking(bookingId: string, data: UpdateBookingData
     city: any;
     phone: any;
     notes: any;
-    totalAmount: any;
+    totalAmount: number | null;
     paymentStatus: any;
     createdAt: any;
     updatedAt: any;
@@ -81,14 +92,13 @@ export declare function updateBooking(bookingId: string, data: UpdateBookingData
     providerFirstName: any;
     providerLastName: any;
 }>;
-/**
- * Supprimer une réservation
- */
 export declare function deleteBooking(bookingId: string): Promise<{
     success: boolean;
 }>;
-/**
- * Obtenir les statistiques des réservations
- */
-export declare function getBookingStats(): Promise<any>;
+export declare function getBookingStats(): Promise<{
+    total: number;
+    pending: number;
+    completed: number;
+    cancelled: number;
+}>;
 //# sourceMappingURL=bookingService.d.ts.map

@@ -12,7 +12,6 @@ exports.AuthController = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_1 = require("../config/prisma");
-const database_1 = require("../config/database");
 const JWT_SECRET = process.env.JWT_SECRET || "kaayjob-secret-key-change-in-production";
 class AuthController {
     /**
@@ -24,8 +23,10 @@ class AuthController {
             const { email, password, firstName, lastName, phone, role } = req.body;
             console.log("📝 Inscription pour:", email);
             // Vérifier si l'email existe déjà
-            const existingUser = await (0, database_1.query)("SELECT id FROM users WHERE email = $1", [email]);
-            if (existingUser.rows.length > 0) {
+            const existingUser = await prisma_1.prisma.user.findUnique({
+                where: { email },
+            });
+            if (existingUser) {
                 res.status(400).json({
                     success: false,
                     message: "Cet email est déjà utilisé",
@@ -43,18 +44,33 @@ class AuthController {
                 dbRole = "ADMIN";
             }
             // Créer l'utilisateur
-            const userResult = await (0, database_1.query)(`
-        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
-        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, NOW(), NOW())
-        RETURNING id, email, first_name, last_name, phone, role
-      `, [email, hashedPassword, firstName, lastName, phone, dbRole]);
-            const user = userResult.rows[0];
+            const user = await prisma_1.prisma.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    firstName,
+                    lastName,
+                    phone,
+                    role: dbRole,
+                    isVerified: true,
+                },
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    phone: true,
+                    role: true,
+                },
+            });
             // Créer le profil prestataire si nécessaire
             if (role === "prestataire") {
-                await (0, database_1.query)(`
-          INSERT INTO provider_profiles (id, user_id, is_available, created_at, updated_at)
-          VALUES (gen_random_uuid(), $1, true, NOW(), NOW())
-        `, [user.id]);
+                await prisma_1.prisma.providerProfile.create({
+                    data: {
+                        userId: user.id,
+                        isAvailable: true,
+                    },
+                });
                 console.log("👷 Profil prestataire créé avec is_available = true");
             }
             // Générer le token JWT
@@ -67,8 +83,8 @@ class AuthController {
                     user: {
                         id: user.id,
                         email: user.email,
-                        firstName: user.first_name,
-                        lastName: user.last_name,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
                         phone: user.phone,
                         role: user.role.toLowerCase(),
                     },
@@ -93,8 +109,19 @@ class AuthController {
             const { email, password } = req.body;
             console.log("🔐 Connexion pour:", email);
             // Rechercher l'utilisateur
-            const userResult = await (0, database_1.query)("SELECT id, email, password, first_name, last_name, phone, role, avatar FROM users WHERE email = $1", [email]);
-            const user = userResult.rows[0];
+            const user = await prisma_1.prisma.user.findUnique({
+                where: { email },
+                select: {
+                    id: true,
+                    email: true,
+                    password: true,
+                    firstName: true,
+                    lastName: true,
+                    phone: true,
+                    role: true,
+                    avatar: true,
+                },
+            });
             if (!user) {
                 res.status(401).json({
                     success: false,
@@ -121,8 +148,8 @@ class AuthController {
                     user: {
                         id: user.id,
                         email: user.email,
-                        firstName: user.first_name,
-                        lastName: user.last_name,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
                         phone: user.phone,
                         role: user.role.toLowerCase(),
                         avatar: user.avatar,
