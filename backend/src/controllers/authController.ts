@@ -8,7 +8,6 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../config/prisma";
-import { query } from "../config/database";
 import { Role } from "@prisma/client";
 import { IUserCreate, IUserUpdate } from "../interfaces";
 
@@ -28,11 +27,10 @@ export class AuthController {
       console.log("📝 Inscription pour:", email);
 
       // Vérifier si l'email existe déjà
-      const existingUser = await query(
-        "SELECT id FROM users WHERE email = $1",
-        [email],
-      );
-      if (existingUser.rows.length > 0) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
+      });
+      if (existingUser) {
         res.status(400).json({
           success: false,
           message: "Cet email est déjà utilisé",
@@ -52,26 +50,34 @@ export class AuthController {
       }
 
       // Créer l'utilisateur
-      const userResult = await query(
-        `
-        INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
-        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, true, NOW(), NOW())
-        RETURNING id, email, first_name, last_name, phone, role
-      `,
-        [email, hashedPassword, firstName, lastName, phone, dbRole],
-      );
-
-      const user = userResult.rows[0];
+      const user = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          phone,
+          role: dbRole as any,
+          isVerified: true,
+        },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          role: true,
+        },
+      });
 
       // Créer le profil prestataire si nécessaire
       if (role === "prestataire") {
-        await query(
-          `
-          INSERT INTO provider_profiles (id, user_id, is_available, created_at, updated_at)
-          VALUES (gen_random_uuid(), $1, true, NOW(), NOW())
-        `,
-          [user.id],
-        );
+        await prisma.providerProfile.create({
+          data: {
+            userId: user.id,
+            isAvailable: true,
+          },
+        });
         console.log("👷 Profil prestataire créé avec is_available = true");
       }
 
@@ -91,8 +97,8 @@ export class AuthController {
           user: {
             id: user.id,
             email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             phone: user.phone,
             role: user.role.toLowerCase(),
           },
@@ -119,12 +125,19 @@ export class AuthController {
       console.log("🔐 Connexion pour:", email);
 
       // Rechercher l'utilisateur
-      const userResult = await query(
-        "SELECT id, email, password, first_name, last_name, phone, role, avatar FROM users WHERE email = $1",
-        [email],
-      );
-
-      const user = userResult.rows[0];
+      const user = await prisma.user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          role: true,
+          avatar: true,
+        },
+      });
       if (!user) {
         res.status(401).json({
           success: false,
@@ -159,8 +172,8 @@ export class AuthController {
           user: {
             id: user.id,
             email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             phone: user.phone,
             role: user.role.toLowerCase(),
             avatar: user.avatar,

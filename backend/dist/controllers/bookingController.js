@@ -1,19 +1,17 @@
 "use strict";
 /**
  * Contrôleur pour les réservations
- * Gère les opérations CRUD sur les réservations
- * Utilise Prisma pour les queries
+ * Gère les opérations CRUD sur les réservations via Prisma
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BookingController = void 0;
 const prisma_1 = require("../config/prisma");
-const database_1 = require("../config/database");
+const client_1 = require("@prisma/client");
 const notificationService_1 = require("../services/notificationService");
 const normalizeBookingPayload = (booking) => ({
     id: booking.id,
     clientId: booking.clientId ?? booking.client_id ?? null,
     serviceId: booking.serviceId ?? booking.service_id ?? null,
-    providerId: booking.providerId ?? booking.provider_id ?? null,
     bookingDate: booking.bookingDate ?? booking.booking_date ?? null,
     bookingTime: booking.bookingTime ?? booking.booking_time ?? null,
     duration: booking.duration ?? null,
@@ -32,113 +30,67 @@ const normalizeBookingPayload = (booking) => ({
     payments: booking.payments,
 });
 class BookingController {
-    /**
-     * Mes réservations (alias de getAll pour client)
-     */
     static async getMyBookings(req, res) {
         await BookingController.getAll(req, res);
     }
-    /**
-     * Liste des réservations (selon le rôle)
-     */
     static async getAll(req, res) {
         try {
             const user = req.user;
             const { status, page = 1, limit = 20 } = req.query;
-            let sqlQuery = `
-        SELECT
-          b.id,
-          b.booking_date as "bookingDate",
-          b.booking_time as "bookingTime",
-          b.status,
-          b.total_amount as "totalAmount",
-          b.address,
-          b.city,
-          b.phone,
-          b.notes,
-          b.created_at,
-          u.first_name as client_first_name,
-          u.last_name as client_last_name,
-          u.email as client_email,
-          json_build_object(
-            'id', s.id,
-            'name', s.name,
-            'price', s.price,
-            'provider', json_build_object(
-              'user', json_build_object(
-                'firstName', p.first_name,
-                'lastName', p.last_name
-              )
-            )
-          ) as service
-        FROM bookings b
-        JOIN users u ON b.client_id = u.id
-        JOIN services s ON b.service_id = s.id
-        LEFT JOIN provider_profiles pp ON s.provider_id = pp.user_id
-        LEFT JOIN users p ON pp.user_id = p.id
-      `;
-            const params = [];
-            // Filter by role
-            if (user.role === "CLIENT" || user.role === "client") {
-                sqlQuery += " WHERE b.client_id = $1";
-                params.push(user.id);
+            const parsedPage = Number(page) || 1;
+            const parsedLimit = limit === 'all' ? undefined : Number(limit);
+            const skip = parsedLimit ? (parsedPage - 1) * parsedLimit : 0;
+            const where = {};
+            if (user.role?.toUpperCase() === 'CLIENT') {
+                where.clientId = user.id;
             }
-            else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
-                sqlQuery += " WHERE s.provider_id IN (SELECT id FROM provider_profiles WHERE user_id = $1)";
-                params.push(user.id);
-            }
-            // Admin sees all (no WHERE clause needed)
-            // Filter by status
-            if (status) {
-                if (params.length > 0) {
-                    sqlQuery += " AND ";
-                }
-                else {
-                    sqlQuery += " WHERE ";
-                }
-                sqlQuery += " b.status = $" + (params.length + 1);
-                params.push(status.toUpperCase());
-            }
-            sqlQuery += " ORDER BY b.created_at DESC";
-            // Add pagination
-            if (limit && limit !== 'all') {
-                sqlQuery += ` LIMIT $${params.length + 1}`;
-                params.push(Number(limit));
-            }
-            // Get total count for pagination
-            let countQuery = "SELECT COUNT(*) as total FROM bookings b JOIN services s ON b.service_id = s.id";
-            const countParams = [];
-            if (user.role === "CLIENT" || user.role === "client") {
-                countQuery += " WHERE b.client_id = $1";
-                countParams.push(user.id);
-            }
-            else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
-                countQuery += " WHERE s.provider_id IN (SELECT id FROM provider_profiles WHERE user_id = $1)";
-                countParams.push(user.id);
+            else if (user.role?.toUpperCase() === 'PRESTATAIRE') {
+                where.service = { providerId: user.id };
             }
             if (status) {
-                if (countParams.length > 0) {
-                    countQuery += " AND ";
-                }
-                else {
-                    countQuery += " WHERE ";
-                }
-                countQuery += " b.status = $" + (countParams.length + 1);
-                countParams.push(status.toUpperCase());
+                where.status = status.toUpperCase();
             }
-            const [bookingsResult, countResult] = await Promise.all([
-                (0, database_1.query)(sqlQuery, params),
-                (0, database_1.query)(countQuery, countParams)
+            const [total, bookings] = await Promise.all([
+                prisma_1.prisma.booking.count({ where }),
+                prisma_1.prisma.booking.findMany({
+                    where,
+                    orderBy: { createdAt: 'desc' },
+                    skip: parsedLimit ? skip : undefined,
+                    take: parsedLimit,
+                    include: {
+                        client: {
+                            select: {
+                                firstName: true,
+                                lastName: true,
+                                email: true,
+                                phone: true,
+                            },
+                        },
+                        service: {
+                            include: {
+                                provider: {
+                                    include: {
+                                        user: {
+                                            select: {
+                                                firstName: true,
+                                                lastName: true,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                }),
             ]);
-            const total = parseInt(countResult.rows[0].total, 10);
             res.json({
                 success: true,
-                data: bookingsResult.rows,
+                data: bookings.map(normalizeBookingPayload),
                 pagination: {
-                    page: Number(page),
-                    limit: Number(limit),
+                    page: parsedPage,
+                    limit: parsedLimit ?? total,
                     total,
-                    totalPages: Math.ceil(total / Number(limit)),
+                    totalPages: parsedLimit ? Math.ceil(total / parsedLimit) : 1,
                 },
             });
         }
@@ -147,9 +99,6 @@ class BookingController {
             res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
-    /**
-     * Obtenir une réservation par ID
-     */
     static async getById(req, res) {
         try {
             const { id } = req.params;
@@ -184,147 +133,114 @@ class BookingController {
                 },
             });
             if (!booking) {
-                res
-                    .status(404)
-                    .json({ success: false, message: "Réservation non trouvée" });
+                res.status(404).json({ success: false, message: "Réservation non trouvée" });
                 return;
             }
-            // Check access rights
-            if (user.role === "CLIENT" || user.role === "client") {
-                if (booking.clientId !== user.id) {
-                    res.status(403).json({ success: false, message: "Accès refusé" });
-                    return;
-                }
+            if (user.role?.toUpperCase() === 'CLIENT' && booking.clientId !== user.id) {
+                res.status(403).json({ success: false, message: "Accès refusé" });
+                return;
             }
-            else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
-                // Service.providerId references ProviderProfile.userId, so we need to compare with user.id
-                const service = await prisma_1.prisma.service.findUnique({
-                    where: { id: booking.serviceId },
-                });
+            if (user.role?.toUpperCase() === 'PRESTATAIRE') {
+                const service = await prisma_1.prisma.service.findUnique({ where: { id: booking.serviceId } });
                 if (service?.providerId !== user.id) {
                     res.status(403).json({ success: false, message: "Accès refusé" });
                     return;
                 }
             }
-            res.json({ success: true, data: booking });
+            res.json({ success: true, data: normalizeBookingPayload(booking) });
         }
         catch (error) {
             console.error("Erreur récupération réservation:", error);
             res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
-    /**
-     * Créer une nouvelle réservation
-     */
     static async create(req, res) {
         try {
             const user = req.user;
             const { serviceId, date, time, address, city, phone, notes } = req.body;
-            console.log("📅 Création réservation - données reçues:", { serviceId, date, time, address, city, phone });
-            // Validate date format
             if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                res.status(400).json({
-                    success: false,
-                    message: "Format de date invalide. Utilisez YYYY-MM-DD",
-                });
+                res.status(400).json({ success: false, message: "Format de date invalide. Utilisez YYYY-MM-DD" });
                 return;
             }
-            // Validate that date is not in the past
             const bookingDate = new Date(date + 'T00:00:00.000Z');
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             if (bookingDate < today) {
-                res.status(400).json({
-                    success: false,
-                    message: "La date de réservation ne peut pas être dans le passé",
-                });
+                res.status(400).json({ success: false, message: "La date de réservation ne peut pas être dans le passé" });
                 return;
             }
-            // Check if service exists and is active
             const service = await prisma_1.prisma.service.findUnique({
                 where: { id: serviceId },
+                include: {
+                    provider: true,
+                },
             });
             if (!service) {
                 res.status(404).json({ success: false, message: "Service non trouvé" });
                 return;
             }
             if (!service.isActive) {
-                res.status(400).json({
-                    success: false,
-                    message: "Ce service n'est plus disponible",
-                });
+                res.status(400).json({ success: false, message: "Ce service n'est plus disponible" });
                 return;
             }
-            // Check that user is not booking their own service
-            if (service.providerId) {
-                const provider = await prisma_1.prisma.providerProfile.findUnique({
-                    where: { id: service.providerId },
-                });
-                if (provider?.userId === user.id) {
-                    res.status(400).json({
-                        success: false,
-                        message: "Vous ne pouvez pas réserver votre propre service",
-                    });
-                    return;
-                }
-            }
-            // Vérifier que le providerId existe dans la table provider_profiles
-            let validProviderId = null;
-            if (service.providerId) {
-                const providerExists = await prisma_1.prisma.providerProfile.findUnique({
-                    where: { id: service.providerId },
-                });
-                if (providerExists) {
-                    validProviderId = service.providerId;
-                }
-            }
-            // Ensure price is a number
-            const price = typeof service.price === 'string' ? parseFloat(service.price) : Number(service.price);
-            // Utiliser raw SQL pour insérer la réservation avec provider_id (si valide)
-            const result = validProviderId
-                ? await (0, database_1.query)(`INSERT INTO bookings (id, client_id, service_id, provider_id, booking_date, booking_time, address, city, phone, notes, status, total_amount, created_at, updated_at)
-             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'PENDING', $10::numeric, NOW(), NOW())
-             RETURNING *`, [user.id, serviceId, validProviderId, new Date(date), time, address, city, phone, notes || null, price])
-                : await (0, database_1.query)(`INSERT INTO bookings (id, client_id, service_id, booking_date, booking_time, address, city, phone, notes, status, total_amount, created_at, updated_at)
-             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, 'PENDING', $9::numeric, NOW(), NOW())
-             RETURNING *`, [user.id, serviceId, new Date(date), time, address, city, phone, notes || null, price]);
-            const booking = result.rows[0];
-            // Notifier le prestataire de la nouvelle réservation (uniquement si provider valide)
-            if (validProviderId) {
-                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
-                    where: { id: validProviderId },
-                    include: { user: true },
-                });
-                if (providerProfile) {
-                    // Notification privée entre client et prestataire
-                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Nouvelle réservation", `${user.firstName} ${user.lastName} a réservé "${service.name}"`, "info", "/prestataire/bookings", [user.id, providerProfile.userId]);
-                    // Notifier l'admin de la nouvelle réservation (message adapté)
-                    const admins = await (0, database_1.query)("SELECT id FROM users WHERE role = 'ADMIN'", []);
-                    for (const admin of admins.rows) {
-                        await (0, notificationService_1.createNotification)(admin.id, "Nouvelle réservation créée", `${user.firstName} ${user.lastName} a réservé le service "${service.name}" auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}`, "info", "/admin/bookings");
-                    }
-                }
-            }
-            res.status(201).json({
-                success: true,
-                message: "Réservation créée",
-                data: normalizeBookingPayload(booking),
+            const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
+                where: { userId: service.providerId },
+                include: { user: true },
             });
+            if (providerProfile?.userId === user.id) {
+                res.status(400).json({ success: false, message: "Vous ne pouvez pas réserver votre propre service" });
+                return;
+            }
+            const price = Number(service.price.toString());
+            const booking = await prisma_1.prisma.booking.create({
+                data: {
+                    clientId: user.id,
+                    serviceId,
+                    bookingDate,
+                    bookingTime: time,
+                    address,
+                    city,
+                    phone,
+                    notes,
+                    status: client_1.BookingStatus.PENDING,
+                    totalAmount: price,
+                    paymentStatus: "PENDING",
+                },
+                include: {
+                    client: {
+                        select: { firstName: true, lastName: true, email: true, phone: true },
+                    },
+                    service: {
+                        include: {
+                            provider: {
+                                include: { user: true },
+                            },
+                        },
+                    },
+                },
+            });
+            if (providerProfile) {
+                await (0, notificationService_1.createNotification)(providerProfile.userId, "Nouvelle réservation", `${user.firstName} ${user.lastName} a réservé "${service.name}"`, "info", "/prestataire/bookings", [user.id, providerProfile.userId]);
+            }
+            const admins = await prisma_1.prisma.user.findMany({
+                where: { role: 'ADMIN' },
+                select: { id: true },
+            });
+            for (const admin of admins) {
+                await (0, notificationService_1.createNotification)(admin.id, "Nouvelle réservation créée", `${user.firstName} ${user.lastName} a réservé le service "${service.name}"${providerProfile ? ` auprès de ${providerProfile.user.firstName} ${providerProfile.user.lastName}` : ''}`, "info", "/admin/bookings");
+            }
+            res.status(201).json({ success: true, message: "Réservation créée", data: normalizeBookingPayload(booking) });
         }
         catch (error) {
             console.error("Erreur création réservation:", error);
             res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
-    /**
-     * Mettre à jour le statut d'une réservation
-     */
     static async updateStatus(req, res) {
         try {
             const { id } = req.params;
             const user = req.user;
             const { status } = req.body;
-            // Find booking
             const booking = await prisma_1.prisma.booking.findUnique({
                 where: { id },
                 include: {
@@ -332,29 +248,20 @@ class BookingController {
                 },
             });
             if (!booking) {
-                res
-                    .status(404)
-                    .json({ success: false, message: "Réservation non trouvée" });
+                res.status(404).json({ success: false, message: "Réservation non trouvée" });
                 return;
             }
-            // Check access
-            if (user.role === "CLIENT" || user.role === "client") {
-                if (booking.clientId !== user.id) {
-                    res.status(403).json({ success: false, message: "Accès refusé" });
-                    return;
-                }
+            if (user.role?.toUpperCase() === 'CLIENT' && booking.clientId !== user.id) {
+                res.status(403).json({ success: false, message: "Accès refusé" });
+                return;
             }
-            else if (user.role === "PRESTATAIRE" || user.role === "prestataire") {
-                // Service.providerId references ProviderProfile.userId
-                const service = await prisma_1.prisma.service.findUnique({
-                    where: { id: booking.serviceId },
-                });
+            if (user.role?.toUpperCase() === 'PRESTATAIRE') {
+                const service = await prisma_1.prisma.service.findUnique({ where: { id: booking.serviceId } });
                 if (service?.providerId !== user.id) {
                     res.status(403).json({ success: false, message: "Accès refusé" });
                     return;
                 }
             }
-            // Valid status transitions
             const validTransitions = {
                 PENDING: ["CONFIRMED", "CANCELLED", "REJECTED"],
                 CONFIRMED: ["IN_PROGRESS", "CANCELLED", "COMPLETED"],
@@ -365,127 +272,79 @@ class BookingController {
             };
             const upperStatus = status.toUpperCase();
             if (!validTransitions[booking.status]?.includes(upperStatus)) {
-                res.status(400).json({
-                    success: false,
-                    message: `Transition de statut invalide: ${booking.status} -> ${upperStatus}`,
-                });
+                res.status(400).json({ success: false, message: `Transition de statut invalide: ${booking.status} -> ${upperStatus}` });
                 return;
             }
             const updated = await prisma_1.prisma.booking.update({
                 where: { id },
-                data: {
-                    status: upperStatus,
-                },
+                data: { status: upperStatus },
             });
-            // Trouver les utilisateurs concernés pour les notifications privées
-            let privateRecipients = [booking.clientId];
+            const privateRecipients = [booking.clientId];
             if (booking.service.providerId) {
                 const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
-                    where: { id: booking.service.providerId },
+                    where: { userId: booking.service.providerId },
                 });
                 if (providerProfile) {
                     privateRecipients.push(providerProfile.userId);
                 }
             }
-            // Notifier le client du changement de statut
-            await (0, notificationService_1.createNotification)(booking.clientId, "Statut de réservation mis à jour", `Votre réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
-                ? "error"
-                : "success", "/client/bookings", privateRecipients);
-            // Notifier le prestataire du changement de statut
+            await (0, notificationService_1.createNotification)(booking.clientId, "Statut de réservation mis à jour", `Votre réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED" ? "error" : "success", "/client/bookings", privateRecipients);
             if (booking.service.providerId) {
                 const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
-                    where: { id: booking.service.providerId },
+                    where: { userId: booking.service.providerId },
                 });
                 if (providerProfile) {
-                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Réservation mise à jour", `La réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
-                        ? "error"
-                        : "success", "/prestataire/bookings", privateRecipients);
+                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Réservation mise à jour", `La réservation pour "${booking.service.name}" est maintenant ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED" ? "error" : "success", "/prestataire/bookings", privateRecipients);
                 }
             }
-            // Notifier l'admin avec un message adapté (pas de restriction de confidentialité)
             const clientInfo = await prisma_1.prisma.user.findUnique({
                 where: { id: booking.clientId },
                 select: { firstName: true, lastName: true },
             });
             if (clientInfo) {
-                // Trouver tous les admins pour les notifier
-                const admins = await (0, database_1.query)("SELECT id FROM users WHERE role = 'ADMIN'", []);
-                for (const admin of admins.rows) {
-                    await (0, notificationService_1.createNotification)(admin.id, "Nouvelle activité de réservation", `${clientInfo.firstName} ${clientInfo.lastName} a mis à jour sa réservation pour "${booking.service.name}" - Statut: ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED"
-                        ? "warning"
-                        : "info", "/admin/bookings");
+                const admins = await prisma_1.prisma.user.findMany({
+                    where: { role: 'ADMIN' },
+                    select: { id: true },
+                });
+                for (const admin of admins) {
+                    await (0, notificationService_1.createNotification)(admin.id, "Nouvelle activité de réservation", `${clientInfo.firstName} ${clientInfo.lastName} a mis à jour sa réservation pour "${booking.service.name}" - Statut: ${upperStatus.toLowerCase()}`, upperStatus === "CANCELLED" || upperStatus === "REJECTED" ? "warning" : "info", "/admin/bookings");
                 }
             }
-            res.json({
-                success: true,
-                message: "Statut mis à jour",
-                data: normalizeBookingPayload(updated),
-            });
+            res.json({ success: true, message: "Statut mis à jour", data: normalizeBookingPayload(updated) });
         }
         catch (error) {
             console.error("Erreur mise à jour statut:", error);
             res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
-    /**
-     * Annuler une réservation
-     */
     static async cancel(req, res) {
         try {
             const { id } = req.params;
             const user = req.user;
-            const booking = await prisma_1.prisma.booking.findUnique({
-                where: { id },
-            });
+            const booking = await prisma_1.prisma.booking.findUnique({ where: { id } });
             if (!booking) {
-                res
-                    .status(404)
-                    .json({ success: false, message: "Réservation non trouvée" });
+                res.status(404).json({ success: false, message: "Réservation non trouvée" });
                 return;
             }
-            // Check access
-            if (user.role === "CLIENT" && booking.clientId !== user.id) {
+            if (user.role?.toUpperCase() === 'CLIENT' && booking.clientId !== user.id) {
                 res.status(403).json({ success: false, message: "Accès refusé" });
                 return;
             }
-            // Cannot cancel completed bookings
             if (["COMPLETED", "CANCELLED"].includes(booking.status)) {
-                res.status(400).json({
-                    success: false,
-                    message: "Cette réservation ne peut pas être annulée",
-                });
+                res.status(400).json({ success: false, message: "Cette réservation ne peut pas être annulée" });
                 return;
             }
-            await prisma_1.prisma.booking.update({
-                where: { id },
-                data: {
-                    status: "CANCELLED",
-                },
-            });
-            // Trouver les utilisateurs concernés pour les notifications privées
-            let privateRecipients = [booking.clientId];
-            const service = await prisma_1.prisma.service.findUnique({
-                where: { id: booking.serviceId },
-            });
+            await prisma_1.prisma.booking.update({ where: { id }, data: { status: "CANCELLED" } });
+            const privateRecipients = [booking.clientId];
+            const service = await prisma_1.prisma.service.findUnique({ where: { id: booking.serviceId } });
             if (service?.providerId) {
-                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
-                    where: { id: service.providerId },
-                });
+                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({ where: { userId: service.providerId } });
                 if (providerProfile) {
                     privateRecipients.push(providerProfile.userId);
+                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Réservation annulée", "Une réservation a été annulée", "warning", "/prestataire/bookings", privateRecipients);
                 }
             }
-            // Notifier le client de l'annulation
             await (0, notificationService_1.createNotification)(booking.clientId, "Réservation annulée", "Votre réservation a été annulée", "warning", "/client/bookings", privateRecipients);
-            // Notifier le prestataire de l'annulation
-            if (service?.providerId) {
-                const providerProfile = await prisma_1.prisma.providerProfile.findUnique({
-                    where: { id: service.providerId },
-                });
-                if (providerProfile) {
-                    await (0, notificationService_1.createNotification)(providerProfile.userId, "Réservation annulée", `Une réservation a été annulée`, "warning", "/prestataire/bookings", privateRecipients);
-                }
-            }
             res.json({ success: true, message: "Réservation annulée" });
         }
         catch (error) {

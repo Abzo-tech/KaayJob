@@ -5,92 +5,80 @@
 
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
-import { query } from "../config/database";
 
 export class ProviderController {
   /**
-   * Lister tous les prestataires avec filtrage par catégorie
+   * Lister tous les prestataires avec filtrage par catégorie - Version PRISMA
    */
   static async getAll(req: Request, res: Response): Promise<void> {
     try {
-      const { limit, category } = req.query as any;
-      const params: any[] = [];
-      let paramIndex = 1;
+      const { limit = 50, category } = req.query as any;
 
-      let sqlQuery;
+      // Récupérer les prestataires vérifiés avec leurs services si une catégorie est spécifiée
+      const providers = await prisma.providerProfile.findMany({
+        where: {
+          isVerified: true,
+          user: {
+            role: "PRESTATAIRE",
+            isVerified: true,
+          },
+          specialty: { not: null },
+          bio: { not: null },
+          hourlyRate: { not: null },
+          location: { not: null },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatar: true,
+            },
+          },
+          services: category
+            ? {
+                where: {
+                  isActive: true,
+                  category: {
+                    slug: category,
+                  },
+                },
+              }
+            : false,
+        },
+        take: Number(limit),
+        orderBy: { createdAt: "desc" },
+      });
 
+      // Si catégorie filtrée, retourner uniquement les prestataires avec services dans cette catégorie
+      let filteredProviders = providers;
       if (category) {
-        // Filtrer par catégorie (retourner prestataires vérifiés même sans services dans cette catégorie)
-        sqlQuery = `
-          SELECT DISTINCT
-            pp.id, pp.user_id as userId, pp.specialty, pp.bio,
-            pp.hourly_rate as hourlyRate, pp.years_experience as yearsExperience,
-            pp.location, pp.is_available as isAvailable, pp.rating,
-            pp.total_reviews as totalReviews, pp.total_bookings as totalBookings,
-            pp.is_verified as isVerified, pp.created_at, p.first_name, p.last_name, p.avatar
-          FROM provider_profiles pp
-          JOIN users p ON pp.user_id = p.id
-          LEFT JOIN services s ON pp.user_id = s.provider_id AND s.is_active = true
-          LEFT JOIN categories c ON s.category_id = c.id
-          WHERE p.role = 'PRESTATAIRE'
-            AND p.is_verified = true
-            AND pp.is_verified = true
-            AND pp.specialty IS NOT NULL
-            AND pp.bio IS NOT NULL
-            AND pp.hourly_rate IS NOT NULL
-            AND pp.location IS NOT NULL
-            AND (c.slug = $${paramIndex} OR c.id = $${paramIndex} OR $${paramIndex} IS NULL)
-        `;
-        params.push(category);
-        paramIndex++;
-      } else {
-        // Tous les prestataires vérifiés (ne pas exiger de services)
-        sqlQuery = `
-          SELECT DISTINCT
-            pp.id, pp.user_id as userId, pp.specialty, pp.bio,
-            pp.hourly_rate as hourlyRate, pp.years_experience as yearsExperience,
-            pp.location, pp.is_available as isAvailable, pp.rating,
-            pp.total_reviews as totalReviews, pp.total_bookings as totalBookings,
-            pp.is_verified as isVerified, pp.created_at, p.first_name, p.last_name, p.avatar
-          FROM provider_profiles pp
-          JOIN users p ON pp.user_id = p.id
-          WHERE p.role = 'PRESTATAIRE'
-            AND p.is_verified = true
-            AND pp.is_verified = true
-            AND pp.specialty IS NOT NULL
-            AND pp.bio IS NOT NULL
-            AND pp.hourly_rate IS NOT NULL
-            AND pp.location IS NOT NULL
-        `;
+        filteredProviders = providers.filter(
+          (p: any) => p.services && p.services.length > 0,
+        );
       }
 
-      sqlQuery += ` ORDER BY pp.created_at DESC`;
-
-      if (limit) {
-        sqlQuery += ` LIMIT $${paramIndex}`;
-        params.push(Number(limit));
-      }
-
-      const providersResult = await query(sqlQuery, params);
-
-      const transformedProviders = providersResult.rows.map((row: any) => ({
-        id: row.id,
-        userId: row.userid,
-        specialty: row.specialty,
-        bio: row.bio,
-        hourlyRate: row.hourlyrate ? parseFloat(row.hourlyrate) : null,
-        yearsExperience: row.yearsexperience,
-        location: row.location,
-        isAvailable: row.isavailable,
-        rating: parseFloat(row.rating || "0"),
-        totalReviews: row.totalreviews || 0,
-        totalBookings: row.totalbookings || 0,
-        isVerified: row.isverified,
+      const transformedProviders = filteredProviders.map((provider: any) => ({
+        id: provider.id,
+        userId: provider.userId,
+        specialty: provider.specialty,
+        bio: provider.bio,
+        hourlyRate: provider.hourlyRate
+          ? parseFloat(provider.hourlyRate.toString())
+          : null,
+        yearsExperience: provider.yearsExperience,
+        location: provider.location,
+        isAvailable: provider.isAvailable,
+        rating: parseFloat(provider.rating.toString() || "0"),
+        totalReviews: provider.totalReviews || 0,
+        totalBookings: provider.totalBookings || 0,
+        isVerified: provider.isVerified,
         user: {
-          id: row.userid,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          avatar: row.avatar,
+          id: provider.user.id,
+          firstName: provider.user.firstName,
+          lastName: provider.user.lastName,
+          avatar: provider.user.avatar,
         },
       }));
 
@@ -99,9 +87,19 @@ export class ProviderController {
         data: transformedProviders,
       });
     } catch (error) {
-      console.error("❌ Erreur liste prestataires:", error);
+      console.error("Erreur getAll providers:", error);
       res.status(500).json({ success: false, message: "Erreur serveur" });
     }
+  }
+
+  /**
+   * ANCIENNE VERSION SQL - À SUPPRIMER - voir getAll() au-dessus
+   */
+  static async _getAll_OLD(req: Request, res: Response): Promise<void> {
+    res.status(410).json({
+      success: false,
+      message: "Ancienne méthode obsolète. Utilisez getAll() avec Prisma.",
+    });
   }
 
   /**
@@ -109,34 +107,38 @@ export class ProviderController {
    */
   static async getProvidersForMap(req: Request, res: Response): Promise<void> {
     try {
-      const providersResult = await query(
-        `
-        SELECT DISTINCT
-          pp.id, pp.user_id as userId, pp.latitude, pp.longitude,
-          u.first_name, u.last_name
-        FROM provider_profiles pp
-        JOIN users u ON pp.user_id = u.id
-        WHERE u.role = 'PRESTATAIRE'
-          AND u.is_verified = true
-          AND pp.is_verified = true
-          AND pp.latitude IS NOT NULL
-          AND pp.longitude IS NOT NULL
-          AND pp.specialty IS NOT NULL
-          AND pp.bio IS NOT NULL
-          AND pp.hourly_rate IS NOT NULL
-          AND pp.location IS NOT NULL
-      `,
-        [],
-      );
+      const providers = await prisma.providerProfile.findMany({
+        where: {
+          isVerified: true,
+          latitude: { not: null },
+          longitude: { not: null },
+          specialty: { not: null },
+          bio: { not: null },
+          hourlyRate: { not: null },
+          location: { not: null },
+          user: {
+            role: "PRESTATAIRE",
+            isVerified: true,
+          },
+        },
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      });
 
-      const transformedProviders = providersResult.rows.map((row: any) => ({
-        id: row.id,
-        userId: row.userid,
-        latitude: parseFloat(row.latitude),
-        longitude: parseFloat(row.longitude),
+      const transformedProviders = providers.map((provider: any) => ({
+        id: provider.id,
+        userId: provider.userId,
+        latitude: provider.latitude as number,
+        longitude: provider.longitude as number,
         user: {
-          firstName: row.first_name,
-          lastName: row.last_name,
+          firstName: provider.user?.firstName,
+          lastName: provider.user?.lastName,
         },
       }));
 
@@ -157,77 +159,79 @@ export class ProviderController {
     try {
       const { id } = req.params;
 
-      const providerResult = await query(
-        `
-        SELECT
-          pp.id, pp.user_id as userId, pp.specialty, pp.bio,
-          pp.hourly_rate as hourlyRate, pp.years_experience as yearsExperience,
-          pp.location, pp.latitude, pp.longitude, pp.is_available as isAvailable,
-          pp.rating, pp.total_reviews as totalReviews, pp.is_verified as isVerified,
-          u.first_name, u.last_name, u.email, u.phone, u.avatar
-        FROM provider_profiles pp
-        JOIN users u ON pp.user_id = u.id
-        WHERE pp.id = $1 AND u.role = 'PRESTATAIRE' AND u.is_verified = true
-      `,
-        [id],
-      );
+      const provider = await prisma.providerProfile.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              avatar: true,
+              role: true,
+              isVerified: true,
+            },
+          },
+          services: {
+            where: { isActive: true },
+            orderBy: { name: "asc" },
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              price: true,
+              priceType: true,
+              duration: true,
+              isActive: true,
+            },
+          },
+        },
+      });
 
-      if (providerResult.rows.length === 0) {
-        res
-          .status(404)
-          .json({ success: false, message: "Prestataire non trouvé" });
+      if (!provider || provider.user?.role !== "PRESTATAIRE" || !provider.user?.isVerified) {
+        res.status(404).json({ success: false, message: "Prestataire non trouvé" });
         return;
       }
 
-      const row = providerResult.rows[0];
-      const provider: any = {
-        id: row.id,
-        userId: row.userid,
-        specialty: row.specialty,
-        bio: row.bio,
-        hourlyRate: row.hourlyrate ? parseFloat(row.hourlyrate) : null,
-        yearsExperience: row.yearsexperience,
-        location: row.location,
-        latitude: parseFloat(row.latitude),
-        longitude: parseFloat(row.longitude),
-        isAvailable: row.isavailable,
-        rating: parseFloat(row.rating || "0"),
-        totalReviews: row.totalreviews || 0,
-        isVerified: row.isverified,
+      const response = {
+        id: provider.id,
+        userId: provider.userId,
+        specialty: provider.specialty,
+        bio: provider.bio,
+        hourlyRate: provider.hourlyRate !== null ? parseFloat(provider.hourlyRate.toString()) : null,
+        yearsExperience: provider.yearsExperience,
+        location: provider.location,
+        latitude: provider.latitude,
+        longitude: provider.longitude,
+        isAvailable: provider.isAvailable,
+        rating: parseFloat(provider.rating.toString() || "0"),
+        totalReviews: provider.totalReviews,
+        totalBookings: provider.totalBookings,
+        isVerified: provider.isVerified,
         user: {
-          id: row.userid,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          email: row.email,
-          phone: row.phone,
-          avatar: row.avatar,
+          id: provider.user.id,
+          firstName: provider.user.firstName,
+          lastName: provider.user.lastName,
+          email: provider.user.email,
+          phone: provider.user.phone,
+          avatar: provider.user.avatar,
         },
+        services: provider.services.map((service: any) => ({
+          id: service.id,
+          name: service.name,
+          description: service.description,
+          price: parseFloat(service.price.toString()),
+          priceType: service.priceType,
+          duration: service.duration,
+          isActive: service.isActive,
+        })),
       };
-
-      // Récupérer les services actifs du prestataire
-      const servicesResult = await query(
-        `
-        SELECT s.id, s.name, s.description, s.price, s.price_type as priceType, s.duration, s.is_active as isActive
-        FROM services s
-        WHERE s.provider_id = $1 AND s.is_active = true
-        ORDER BY s.name ASC
-      `,
-        [row.userid],
-      );
-
-      provider.services = servicesResult.rows.map((serviceRow: any) => ({
-        id: serviceRow.id,
-        name: serviceRow.name,
-        description: serviceRow.description,
-        price: parseFloat(serviceRow.price),
-        priceType: serviceRow.pricetype,
-        duration: serviceRow.duration,
-        isActive: serviceRow.isactive,
-      }));
 
       res.json({
         success: true,
-        data: provider,
+        data: response,
       });
     } catch (error) {
       console.error("❌ Erreur prestataire par ID:", error);
@@ -343,13 +347,15 @@ export class ProviderController {
       if (specialty !== undefined) profileData.specialty = specialty;
       if (bio !== undefined) profileData.bio = bio;
       if (hourlyRate !== undefined) profileData.hourlyRate = hourlyRate;
-      if (yearsExperience !== undefined) profileData.yearsExperience = yearsExperience;
+      if (yearsExperience !== undefined)
+        profileData.yearsExperience = yearsExperience;
       if (location !== undefined) profileData.location = location;
       if (address !== undefined) profileData.address = address;
       if (city !== undefined) profileData.city = city;
       if (region !== undefined) profileData.region = region;
       if (postalCode !== undefined) profileData.postalCode = postalCode;
-      if (serviceRadius !== undefined) profileData.serviceRadius = serviceRadius;
+      if (serviceRadius !== undefined)
+        profileData.serviceRadius = serviceRadius;
       if (profileImage !== undefined) profileData.profileImage = profileImage;
       if (isAvailable !== undefined) profileData.isAvailable = isAvailable;
 
@@ -401,17 +407,29 @@ export class ProviderController {
       const { documents } = req.body;
 
       // Créer une demande de vérification
-      await query(
-        `
-        INSERT INTO verification_requests (user_id, documents, status, created_at)
-        VALUES ($1, $2, 'pending', NOW())
-        ON CONFLICT (user_id) DO UPDATE SET
-          documents = EXCLUDED.documents,
-          status = 'pending',
-          updated_at = NOW()
-      `,
-        [user.id, JSON.stringify(documents || {})],
-      );
+      const existingRequest = await prisma.verificationRequest.findFirst({
+        where: { userId: user.id },
+      });
+
+      if (existingRequest) {
+        await prisma.verificationRequest.update({
+          where: { id: existingRequest.id },
+          data: {
+            documents: documents || existingRequest.documents,
+            status: "pending",
+            reviewedBy: null,
+            reviewedAt: null,
+          },
+        });
+      } else {
+        await prisma.verificationRequest.create({
+          data: {
+            userId: user.id,
+            documents: documents || {},
+            status: "pending",
+          },
+        });
+      }
 
       res.json({ success: true, message: "Demande de vérification envoyée" });
     } catch (error) {

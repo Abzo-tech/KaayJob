@@ -3,6 +3,7 @@
  */
 
 import { Router } from "express";
+import { authenticate, requireAdmin } from "../../middleware/auth";
 import usersRoutes from "./users";
 import servicesRoutes from "./services";
 import bookingsRoutes from "./bookings";
@@ -13,6 +14,8 @@ import subscriptionsRoutes from "./subscriptions";
 import notificationsRoutes from "./notifications";
 
 const router = Router();
+
+router.use(authenticate, requireAdmin);
 
 // Monter toutes les routes admin
 router.use("/users", usersRoutes);

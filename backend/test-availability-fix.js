@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const http = require("http");
-const BASE_URL = "http://localhost:3001";
+const BASE_URL = "http://127.0.0.1:3001";
 
 const makeRequest = (method, path, body = null, headers = {}) => {
   return new Promise((resolve, reject) => {
