@@ -5,9 +5,13 @@
 import { Request, Response } from "express";
 export declare class ProviderController {
     /**
-     * Lister tous les prestataires avec filtrage par catégorie
+     * Lister tous les prestataires avec filtrage par catégorie - Version PRISMA
      */
     static getAll(req: Request, res: Response): Promise<void>;
+    /**
+     * ANCIENNE VERSION SQL - À SUPPRIMER - voir getAll() au-dessus
+     */
+    static _getAll_OLD(req: Request, res: Response): Promise<void>;
     /**
      * Obtenir les prestataires pour la carte
      */
@@ -17,7 +21,7 @@ export declare class ProviderController {
      */
     static getById(req: Request, res: Response): Promise<void>;
     /**
-     * Récupérer le profil du prestataire connecté
+     * Récupérer le profil du prestataire connecté (utilise Prisma)
      */
     static getProfile(req: Request, res: Response): Promise<void>;
     /**

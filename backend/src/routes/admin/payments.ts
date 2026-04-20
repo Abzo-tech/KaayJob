@@ -3,28 +3,76 @@
  */
 
 import { Router, Response } from "express";
-import { query } from "../../config/database";
+import { prisma } from "../../config/prisma";
 import { AuthRequest } from "../../middleware/auth";
 
 const router = Router();
+
+const serializePayment = (payment: any) => ({
+  id: payment.id,
+  booking_id: payment.bookingId,
+  user_id: payment.userId,
+  amount: Number(payment.amount.toString()),
+  payment_method: payment.paymentMethod,
+  status: payment.status,
+  transaction_id: payment.transactionId,
+  created_at: payment.createdAt,
+  first_name: payment.user?.firstName ?? null,
+  last_name: payment.user?.lastName ?? null,
+  email: payment.user?.email ?? null,
+  booking_amount: payment.booking?.totalAmount
+    ? Number(payment.booking.totalAmount.toString())
+    : null,
+  booking_status: payment.booking?.status ?? null,
+});
 
 // GET /api/admin/payments - Historique des paiements
 router.get("/", async (req: AuthRequest, res: Response) => {
   try {
     const { page = 1, limit = 20, status } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
+    const parsedPage = Number(page) || 1;
+    const parsedLimit = Number(limit) || 20;
+    const skip = (parsedPage - 1) * parsedLimit;
+    const normalizedStatus = status
+      ? String(status).toUpperCase()
+      : undefined;
 
-    const result = await query(
-      `SELECT p.*, u.first_name, u.last_name, b.total_amount as booking_amount
-       FROM payments p
-       JOIN users u ON p.user_id = u.id
-       LEFT JOIN bookings b ON p.booking_id = b.id
-       ORDER BY p.created_at DESC
-       LIMIT $1 OFFSET $2`,
-      [Number(limit), offset],
-    );
+    const where = normalizedStatus ? { status: normalizedStatus as any } : {};
 
-    res.json({ success: true, data: result.rows });
+    const [payments, total] = await Promise.all([
+      prisma.payment.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          booking: {
+            select: {
+              totalAmount: true,
+              status: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: parsedLimit,
+        skip,
+      }),
+      prisma.payment.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: payments.map(serializePayment),
+      pagination: {
+        page: parsedPage,
+        limit: parsedLimit,
+        total,
+      },
+    });
   } catch (error) {
     console.error("Erreur liste paiements:", error);
     res.status(500).json({ success: false, message: "Erreur serveur" });
@@ -36,22 +84,32 @@ router.get("/:id", async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
 
-    const result = await query(
-      `SELECT p.*, u.first_name, u.last_name, u.email, b.total_amount as booking_amount, b.status as booking_status
-       FROM payments p
-       JOIN users u ON p.user_id = u.id
-       LEFT JOIN bookings b ON p.booking_id = b.id
-       WHERE p.id = $1`,
-      [id],
-    );
+    const payment = await prisma.payment.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+        booking: {
+          select: {
+            totalAmount: true,
+            status: true,
+          },
+        },
+      },
+    });
 
-    if (result.rows.length === 0) {
+    if (!payment) {
       return res
         .status(404)
         .json({ success: false, message: "Paiement non trouvé" });
     }
 
-    res.json({ success: true, data: result.rows[0] });
+    res.json({ success: true, data: serializePayment(payment) });
   } catch (error) {
     console.error("Erreur obtenir paiement:", error);
     res.status(500).json({ success: false, message: "Erreur serveur" });

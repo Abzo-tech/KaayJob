@@ -9,68 +9,46 @@ exports.getServiceById = getServiceById;
 exports.updateService = updateService;
 exports.deleteService = deleteService;
 const prisma_1 = require("../config/prisma");
-const database_1 = require("../config/database");
 const notificationService_1 = require("./notificationService");
 const normalizePriceType = (priceType) => priceType ? priceType.toLowerCase() : priceType;
-/**
- * Liste des services avec pagination et filtres
- */
 async function listServices(filters) {
     const { page = 1, limit = 20, category } = filters;
     const pageNum = Number(page);
     const limitNum = Number(limit);
-    const offset = (pageNum - 1) * limitNum;
-    // Construction du where clause pour Prisma
+    const skip = (pageNum - 1) * limitNum;
     const where = {};
     if (category) {
         where.categoryId = category;
     }
-    // Requête avec Prisma
-    let services = [];
-    let total = 0;
-    try {
-        [services, total] = await Promise.all([
-            prisma_1.prisma.service.findMany({
-                where,
-                skip: offset,
-                take: limitNum,
-                orderBy: { createdAt: "desc" },
-                include: {
-                    category: true,
-                    provider: {
-                        include: {
-                            user: {
-                                select: {
-                                    id: true,
-                                    firstName: true,
-                                    lastName: true,
-                                    email: true,
-                                },
+    const [services, total] = await Promise.all([
+        prisma_1.prisma.service.findMany({
+            where,
+            skip,
+            take: limitNum,
+            orderBy: { createdAt: "desc" },
+            include: {
+                category: true,
+                provider: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                email: true,
                             },
                         },
                     },
                 },
-            }),
-            prisma_1.prisma.service.count({ where }),
-        ]);
-    }
-    catch (prismaError) {
-        console.error("[AdminServices] Erreur Prisma:", prismaError);
-        // Retry sans include
-        services = await prisma_1.prisma.service.findMany({
-            where,
-            skip: offset,
-            take: limitNum,
-            orderBy: { createdAt: "desc" },
-        });
-        total = await prisma_1.prisma.service.count({ where });
-    }
-    // Transformation des données
+            },
+        }),
+        prisma_1.prisma.service.count({ where }),
+    ]);
     const transformedServices = services.map((s) => ({
         id: s.id,
         name: s.name,
         description: s.description,
-        price: s.price,
+        price: Number(s.price.toString()),
         priceType: normalizePriceType(s.priceType),
         duration: s.duration,
         isActive: s.isActive,
@@ -92,9 +70,6 @@ async function listServices(filters) {
         },
     };
 }
-/**
- * Obtenir un service par ID
- */
 async function getServiceById(serviceId) {
     const service = await prisma_1.prisma.service.findUnique({
         where: { id: serviceId },
@@ -121,7 +96,7 @@ async function getServiceById(serviceId) {
         id: service.id,
         name: service.name,
         description: service.description,
-        price: service.price,
+        price: Number(service.price.toString()),
         priceType: normalizePriceType(service.priceType),
         duration: service.duration,
         isActive: service.isActive,
@@ -135,11 +110,7 @@ async function getServiceById(serviceId) {
         updated_at: service.updatedAt,
     };
 }
-/**
- * Mettre à jour un service
- */
 async function updateService(serviceId, data, adminId) {
-    // Vérifier si le service existe
     const existing = await prisma_1.prisma.service.findUnique({
         where: { id: serviceId },
         include: { provider: true },
@@ -147,16 +118,15 @@ async function updateService(serviceId, data, adminId) {
     if (!existing) {
         throw new Error("Service non trouvé");
     }
-    // Préparer les données de mise à jour
     const updateData = {};
-    if (data.name)
+    if (data.name !== undefined)
         updateData.name = data.name;
     if (data.description !== undefined)
         updateData.description = data.description;
     if (data.price !== undefined)
-        updateData.price = parseFloat(String(data.price));
+        updateData.price = Number(data.price);
     if (data.duration !== undefined)
-        updateData.duration = parseInt(String(data.duration));
+        updateData.duration = Number(data.duration);
     if (data.isActive !== undefined)
         updateData.isActive = data.isActive;
     if (data.priceType !== undefined)
@@ -164,16 +134,13 @@ async function updateService(serviceId, data, adminId) {
     if (Object.keys(updateData).length === 0) {
         throw new Error("Aucune donnée à mettre à jour");
     }
-    // Mise à jour avec Prisma
     const result = await prisma_1.prisma.service.update({
         where: { id: serviceId },
         data: updateData,
     });
-    // Notifier le prestataire
     if (existing.providerId) {
         await (0, notificationService_1.createNotification)(existing.providerId, "Service mis à jour", `Votre service "${existing.name}" a été mis à jour par l'administrateur`, "info", "/prestataire/services");
     }
-    // Notification pour l'admin
     if (adminId) {
         await (0, notificationService_1.createNotification)(adminId, "Service mis à jour", "Le service a été mis à jour avec succès", "info", "/admin/services");
     }
@@ -182,28 +149,28 @@ async function updateService(serviceId, data, adminId) {
         priceType: normalizePriceType(result.priceType),
     };
 }
-/**
- * Supprimer un service
- */
 async function deleteService(serviceId, adminId) {
-    // Vérifier si le service existe
-    const existing = await (0, database_1.query)("SELECT id, name, provider_id FROM services WHERE id = $1", [serviceId]);
-    if (existing.rows.length === 0) {
+    const existing = await prisma_1.prisma.service.findUnique({
+        where: { id: serviceId },
+        select: { id: true, name: true, providerId: true },
+    });
+    if (!existing) {
         throw new Error("Service non trouvé");
     }
-    // Vérifier si des réservations utilisent ce service
-    const bookingsCount = await (0, database_1.query)("SELECT COUNT(*) as count FROM bookings WHERE service_id = $1", [serviceId]);
-    if (parseInt(bookingsCount.rows[0].count) > 0) {
+    const bookingsCount = await prisma_1.prisma.booking.count({
+        where: { serviceId },
+    });
+    if (bookingsCount > 0) {
         throw new Error("Impossible de supprimer ce service car il est utilisé par des réservations");
     }
-    await (0, database_1.query)("DELETE FROM services WHERE id = $1", [serviceId]);
-    // Notifier le prestataire
-    if (existing.rows[0].provider_id) {
-        await (0, notificationService_1.createNotification)(existing.rows[0].provider_id, "Service supprimé", `Votre service "${existing.rows[0].name}" a été supprimé par l'administrateur`, "warning", "/prestataire/services");
+    await prisma_1.prisma.service.delete({
+        where: { id: serviceId },
+    });
+    if (existing.providerId) {
+        await (0, notificationService_1.createNotification)(existing.providerId, "Service supprimé", `Votre service "${existing.name}" a été supprimé par l'administrateur`, "warning", "/prestataire/services");
     }
-    // Notification pour l'admin
     if (adminId) {
-        await (0, notificationService_1.createNotification)(adminId, "Service supprimé", `Le service "${existing.rows[0].name}" a été supprimé avec succès`, "warning", "/admin/services");
+        await (0, notificationService_1.createNotification)(adminId, "Service supprimé", `Le service "${existing.name}" a été supprimé avec succès`, "warning", "/admin/services");
     }
     return { success: true };
 }

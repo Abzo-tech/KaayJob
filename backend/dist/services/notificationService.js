@@ -8,32 +8,29 @@ exports.ensureNotificationSchema = ensureNotificationSchema;
 exports.createNotification = createNotification;
 exports.createFormattedNotification = createFormattedNotification;
 exports.createStandardNotification = createStandardNotification;
-const database_1 = require("../config/database");
+const prisma_1 = require("../config/prisma");
 const notificationFormatter_1 = require("../utils/notificationFormatter");
 let notificationSchemaReady = null;
 async function ensureNotificationSchema() {
-    if (!notificationSchemaReady) {
-        notificationSchemaReady = (async () => {
-            await (0, database_1.query)(`
-        ALTER TABLE notifications
-        ADD COLUMN IF NOT EXISTS private_recipients JSONB
-      `);
-        })().catch((error) => {
-            notificationSchemaReady = null;
-            throw error;
-        });
-    }
-    await notificationSchemaReady;
+    // Le modèle Prisma gère désormais le champ privateRecipients.
 }
 /**
  * Créer une notification pour un utilisateur
  */
 async function createNotification(userId, title, message, type = "info", link, privateRecipients) {
     try {
-        await ensureNotificationSchema();
+        // await ensureNotificationSchema(); // Commented out as it's no longer needed
         console.log("Creating notification for user:", userId, "title:", title, "message:", message, "privateRecipients:", privateRecipients);
-        const privateRecipientsJson = privateRecipients ? JSON.stringify(privateRecipients) : null;
-        await (0, database_1.query)("INSERT INTO notifications (id, user_id, title, message, type, link, private_recipients, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())", [userId, title, message, type, link || null, privateRecipientsJson]);
+        await prisma_1.prisma.notification.create({
+            data: {
+                userId,
+                title,
+                message,
+                type,
+                link: link || null,
+                privateRecipients: privateRecipients ?? undefined,
+            },
+        });
         console.log("Notification created successfully for user:", userId);
     }
     catch (error) {

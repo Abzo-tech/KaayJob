@@ -5,10 +5,9 @@
  */
 
 import { Router, Request, Response } from "express";
-import { body, validationResult } from "express-validator";
+import { validationResult } from "express-validator";
 import bcrypt from "bcryptjs";
 import { prisma } from "../config/prisma";
-import { query } from "../config/database";
 import AuthController from "../controllers/authController";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import {
@@ -89,16 +88,16 @@ router.delete("/account", authenticate, async (req: Request, res: Response) => {
     }
 
     // Vérifier le rôle - seul les clients peuvent supprimer leur compte via cette route
-    const userResult = await query(
-      "SELECT role FROM users WHERE id = $1",
-      [userId],
-    );
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
 
-    if (userResult.rows.length === 0) {
+    if (!user) {
       return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
     }
 
-    const userRole = userResult.rows[0].role;
+    const userRole = user.role;
 
     // Si c'est un prestataire, on ne peut pas supprimer le compte via cette route
     // (cela devrait être fait via un autre processus)
@@ -110,18 +109,29 @@ router.delete("/account", authenticate, async (req: Request, res: Response) => {
     }
 
     // Supprimer les données liées selon le rôle
-    if (userRole === "CLIENT") {
-      // Supprimer les réservations du client
-      await query("DELETE FROM bookings WHERE client_id = $1", [userId]);
-      // Supprimer les avis du client
-      await query("DELETE FROM reviews WHERE client_id = $1", [userId]);
-    }
+    await prisma.$transaction(async (tx) => {
+      if (userRole === "CLIENT") {
+        await tx.review.deleteMany({
+          where: { clientId: userId },
+        });
+        await tx.booking.deleteMany({
+          where: { clientId: userId },
+        });
+      }
 
-    // Supprimer le provider profile s'il existe
-    await query("DELETE FROM provider_profiles WHERE user_id = $1", [userId]);
-
-    // Supprimer l'utilisateur
-    await query("DELETE FROM users WHERE id = $1", [userId]);
+      await tx.payment.deleteMany({
+        where: { userId },
+      });
+      await tx.notification.deleteMany({
+        where: { userId },
+      });
+      await tx.providerProfile.deleteMany({
+        where: { userId },
+      });
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
 
     res.json({ success: true, message: "Compte supprimé avec succès" });
   } catch (error) {
@@ -212,10 +222,21 @@ router.post("/create-admin-temp", async (req: Request, res: Response) => {
   try {
     console.log('🔧 Création temporaire de l\'admin...');
 
-    const admin = await prisma.user.create({
-      data: {
+    const password = await bcrypt.hash('Password123', 10);
+    const admin = await prisma.user.upsert({
+      where: { email: 'admin@kaayjob.com' },
+      update: {
+        password,
+        firstName: 'Admin',
+        lastName: 'KaayJob',
+        phone: '+221000000000',
+        role: 'ADMIN',
+        isVerified: true,
+        isActive: true,
+      },
+      create: {
         email: 'admin@kaayjob.com',
-        password: await bcrypt.hash('Password123', 10),
+        password,
         firstName: 'Admin',
         lastName: 'KaayJob',
         phone: '+221000000000',

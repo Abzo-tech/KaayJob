@@ -510,6 +510,10 @@ export const updateProviderProfileValidation = [
   isYearsExperience("experienceYears", false),
   isArray("specialties", false),
   isObject("availability", false),
+  body("isAvailable")
+    .optional()
+    .isBoolean()
+    .withMessage("isAvailable doit être un boolean"),
 ];
 
 // Création d'avis

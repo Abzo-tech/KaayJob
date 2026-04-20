@@ -4,7 +4,7 @@
 
 import { Router, Response } from "express";
 import { body, validationResult } from "express-validator";
-import { query } from "../../config/database";
+import { prisma } from "../../config/prisma";
 import { AuthRequest } from "../../middleware/auth";
 
 const router = Router();
@@ -48,22 +48,32 @@ router.post(
         });
       }
 
-      const userExists = await query(
-        "SELECT id FROM users WHERE id = ANY($1::uuid[])",
-        [recipientIds],
-      );
-      if (userExists.rows.length !== recipientIds.length) {
+      const users = await prisma.user.findMany({
+        where: {
+          id: {
+            in: recipientIds,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (users.length !== recipientIds.length) {
         return res
           .status(404)
           .json({ success: false, message: "Un ou plusieurs utilisateurs sont introuvables" });
       }
 
-      for (const recipientId of recipientIds) {
-        await query(
-          "INSERT INTO notifications (id, user_id, title, message, type, link, created_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())",
-          [recipientId, title, message, type || "info", link || null],
-        );
-      }
+      await prisma.notification.createMany({
+        data: recipientIds.map((recipientId: string) => ({
+          userId: recipientId,
+          title,
+          message,
+          type: type || "info",
+          link: link || null,
+        })),
+      });
 
       res.status(201).json({
         success: true,

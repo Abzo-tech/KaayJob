@@ -15,15 +15,12 @@ export interface UpdateServiceData {
     duration?: number;
     isActive?: boolean;
 }
-/**
- * Liste des services avec pagination et filtres
- */
 export declare function listServices(filters: ServiceFilters): Promise<{
     data: {
         id: any;
         name: any;
         description: any;
-        price: any;
+        price: number;
         priceType: string | null | undefined;
         duration: any;
         isActive: any;
@@ -42,29 +39,23 @@ export declare function listServices(filters: ServiceFilters): Promise<{
         total: number;
     };
 }>;
-/**
- * Obtenir un service par ID
- */
 export declare function getServiceById(serviceId: string): Promise<{
     id: string;
     name: string;
     description: string | null;
-    price: import("@prisma/client/runtime/library").Decimal;
+    price: number;
     priceType: string | null | undefined;
     duration: number | null;
     isActive: boolean;
     provider_id: string;
     category_id: string | null;
-    category_name: any;
-    first_name: any;
-    last_name: any;
-    provider_email: any;
+    category_name: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    provider_email: string | null;
     created_at: Date;
     updated_at: Date;
 }>;
-/**
- * Mettre à jour un service
- */
 export declare function updateService(serviceId: string, data: UpdateServiceData, adminId?: string): Promise<{
     priceType: string | null | undefined;
     id: string;
@@ -78,9 +69,6 @@ export declare function updateService(serviceId: string, data: UpdateServiceData
     duration: number | null;
     providerId: string;
 }>;
-/**
- * Supprimer un service
- */
 export declare function deleteService(serviceId: string, adminId?: string): Promise<{
     success: boolean;
 }>;

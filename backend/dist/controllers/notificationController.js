@@ -1,12 +1,11 @@
 "use strict";
 /**
  * Contrôleur pour les notifications
- * Utilise les requêtes SQL directes pour la stabilité
+ * Utilise Prisma pour les opérations de données
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationController = void 0;
-const database_1 = require("../config/database");
-// Validation des données de création
+const prisma_1 = require("../config/prisma");
 function validateCreateNotification(data) {
     if (!data.userId || typeof data.userId !== 'string') {
         throw new Error('userId est requis et doit être une chaîne');
@@ -26,15 +25,12 @@ function validateCreateNotification(data) {
     return {
         userId: data.userId,
         title: data.title,
-        message: data.message,
+        message: data.message ?? '',
         type: data.type || 'info',
-        link: data.link
+        link: data.link,
     };
 }
 class NotificationController {
-    /**
-      * Récupérer les notifications de l'utilisateur
-      */
     static async getNotifications(req, res) {
         try {
             const user = req.user;
@@ -42,62 +38,43 @@ class NotificationController {
                 res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
                 return;
             }
-            const userId = user.id;
             const { limit = 20, offset = 0, unreadOnly } = req.query;
             const parsedLimit = Number(limit);
             const parsedOffset = Number(offset);
-            const params = [userId];
-            // Créer la table notifications si elle n'existe pas
-            await (0, database_1.query)(`
-        CREATE TABLE IF NOT EXISTS notifications (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id UUID NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          message TEXT,
-          type VARCHAR(50) DEFAULT 'info',
-          read BOOLEAN DEFAULT false,
-          link VARCHAR(500),
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-            let whereClause = "user_id = $1";
-            // Filtrer par statut de lecture
-            if (unreadOnly === "true") {
-                whereClause += " AND read = false";
+            const where = { userId: user.id };
+            if (unreadOnly === 'true') {
+                where.read = false;
             }
-            // Obtenir le nombre de non lus
-            const unreadCountQuery = `
-        SELECT COUNT(*) as count
-        FROM notifications
-        WHERE user_id = $1 AND read = false
-      `;
-            const unreadCountResult = await (0, database_1.query)(unreadCountQuery, [userId]);
-            // Obtenir le nombre total
-            const totalQuery = `SELECT COUNT(*) as count FROM notifications WHERE ${whereClause}`;
-            const totalResult = await (0, database_1.query)(totalQuery, params);
-            // Obtenir les notifications - version simplifiée
-            const simpleQuery = `
-        SELECT id, title, message, type, read, link, created_at
-        FROM notifications
-        WHERE user_id = $1
-        ORDER BY created_at DESC
-        LIMIT 20
-      `;
-            const result = await (0, database_1.query)(simpleQuery, [userId]);
-            const total = parseInt(totalResult.rows[0].count, 10);
-            const totalPages = Math.ceil(total / parsedLimit);
-            console.log('🔔 Récupération des notifications:', result.rows.length, 'trouvées');
+            const [total, unreadCount, notifications] = await Promise.all([
+                prisma_1.prisma.notification.count({ where }),
+                prisma_1.prisma.notification.count({ where: { userId: user.id, read: false } }),
+                prisma_1.prisma.notification.findMany({
+                    where,
+                    orderBy: { createdAt: 'desc' },
+                    take: parsedLimit,
+                    skip: parsedOffset,
+                    select: {
+                        id: true,
+                        title: true,
+                        message: true,
+                        type: true,
+                        read: true,
+                        link: true,
+                        createdAt: true,
+                    },
+                }),
+            ]);
+            const totalPages = parsedLimit > 0 ? Math.ceil(total / parsedLimit) : 1;
             res.json({
                 success: true,
-                data: result.rows,
+                data: notifications,
                 pagination: {
                     total,
                     page: Math.floor(parsedOffset / parsedLimit) + 1,
                     limit: parsedLimit,
-                    totalPages
+                    totalPages,
                 },
-                unreadCount: parseInt(unreadCountResult.rows[0].count, 10)
+                unreadCount,
             });
         }
         catch (error) {
@@ -105,9 +82,6 @@ class NotificationController {
             res.status(500).json({ success: false, message: 'Erreur serveur' });
         }
     }
-    /**
-      * Marquer une notification comme lue
-      */
     static async markAsRead(req, res) {
         try {
             const { id } = req.params;
@@ -116,15 +90,17 @@ class NotificationController {
                 res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
                 return;
             }
-            // Vérifier que la notification appartient à l'utilisateur
-            const existing = await (0, database_1.query)("SELECT id FROM notifications WHERE id = $1 AND user_id = $2", [id, user.id]);
-            if (existing.rows.length === 0) {
+            const existing = await prisma_1.prisma.notification.findFirst({
+                where: { id, userId: user.id },
+            });
+            if (!existing) {
                 res.status(404).json({ success: false, message: 'Notification non trouvée' });
                 return;
             }
-            // Marquer comme lue
-            await (0, database_1.query)("UPDATE notifications SET read = true, updated_at = NOW() WHERE id = $1", [id]);
-            console.log('✅ Notification marquée comme lue:', id);
+            await prisma_1.prisma.notification.update({
+                where: { id },
+                data: { read: true },
+            });
             res.json({ success: true, message: 'Notification marquée comme lue' });
         }
         catch (error) {
@@ -132,38 +108,19 @@ class NotificationController {
             res.status(500).json({ success: false, message: 'Erreur serveur' });
         }
     }
-    /**
-      * Créer une notification
-      */
     static async createNotification(req, res) {
         try {
             const notificationData = validateCreateNotification(req.body);
-            // Créer la table si elle n'existe pas
-            await (0, database_1.query)(`
-        CREATE TABLE IF NOT EXISTS notifications (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id UUID NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          message TEXT,
-          type VARCHAR(50) DEFAULT 'info',
-          read BOOLEAN DEFAULT false,
-          link VARCHAR(500),
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-            // Insérer la notification
-            const result = await (0, database_1.query)(`
-        INSERT INTO notifications (id, user_id, title, message, type, link, created_at)
-        VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())
-        RETURNING id, title, message, type, read, link, created_at
-      `, [notificationData.userId, notificationData.title, notificationData.message, notificationData.type, notificationData.link]);
-            console.log('📝 Notification créée pour:', notificationData.userId);
-            res.status(201).json({
-                success: true,
-                message: 'Notification créée',
-                data: result.rows[0]
+            const notification = await prisma_1.prisma.notification.create({
+                data: {
+                    userId: notificationData.userId,
+                    title: notificationData.title,
+                    message: notificationData.message ?? '',
+                    type: notificationData.type,
+                    link: notificationData.link,
+                },
             });
+            res.status(201).json({ success: true, message: 'Notification créée', data: notification });
         }
         catch (error) {
             console.error('❌ Erreur création notification:', error);
@@ -175,9 +132,6 @@ class NotificationController {
             }
         }
     }
-    /**
-      * Marquer toutes les notifications comme lues
-      */
     static async markAllAsRead(req, res) {
         try {
             const user = req.user;
@@ -185,8 +139,10 @@ class NotificationController {
                 res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
                 return;
             }
-            await (0, database_1.query)("UPDATE notifications SET read = true, updated_at = NOW() WHERE user_id = $1 AND read = false", [user.id]);
-            console.log('✅ Toutes les notifications marquées comme lues pour:', user.id);
+            await prisma_1.prisma.notification.updateMany({
+                where: { userId: user.id, read: false },
+                data: { read: true },
+            });
             res.json({ success: true, message: 'Toutes les notifications marquées comme lues' });
         }
         catch (error) {
@@ -194,9 +150,6 @@ class NotificationController {
             res.status(500).json({ success: false, message: 'Erreur serveur' });
         }
     }
-    /**
-      * Supprimer une notification
-      */
     static async deleteNotification(req, res) {
         try {
             const { id } = req.params;
@@ -205,15 +158,14 @@ class NotificationController {
                 res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
                 return;
             }
-            // Vérifier que la notification appartient à l'utilisateur
-            const existing = await (0, database_1.query)("SELECT id FROM notifications WHERE id = $1 AND user_id = $2", [id, user.id]);
-            if (existing.rows.length === 0) {
+            const existing = await prisma_1.prisma.notification.findFirst({
+                where: { id, userId: user.id },
+            });
+            if (!existing) {
                 res.status(404).json({ success: false, message: 'Notification non trouvée' });
                 return;
             }
-            // Supprimer la notification
-            await (0, database_1.query)("DELETE FROM notifications WHERE id = $1", [id]);
-            console.log('🗑️ Notification supprimée:', id);
+            await prisma_1.prisma.notification.delete({ where: { id } });
             res.json({ success: true, message: 'Notification supprimée' });
         }
         catch (error) {
@@ -221,9 +173,6 @@ class NotificationController {
             res.status(500).json({ success: false, message: 'Erreur serveur' });
         }
     }
-    /**
-      * Supprimer toutes les notifications lues
-      */
     static async deleteReadNotifications(req, res) {
         try {
             const user = req.user;
@@ -231,8 +180,9 @@ class NotificationController {
                 res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
                 return;
             }
-            await (0, database_1.query)("DELETE FROM notifications WHERE user_id = $1 AND read = true", [user.id]);
-            console.log('🗑️ Notifications lues supprimées pour:', user.id);
+            await prisma_1.prisma.notification.deleteMany({
+                where: { userId: user.id, read: true },
+            });
             res.json({ success: true, message: 'Notifications lues supprimées' });
         }
         catch (error) {
@@ -240,9 +190,6 @@ class NotificationController {
             res.status(500).json({ success: false, message: 'Erreur serveur' });
         }
     }
-    /**
-     * Marquer toutes les notifications comme lues
-     */
     static async readAll(req, res) {
         try {
             const user = req.user;
@@ -250,8 +197,10 @@ class NotificationController {
                 res.status(401).json({ success: false, message: 'Utilisateur non authentifié' });
                 return;
             }
-            await (0, database_1.query)("UPDATE notifications SET read = true, read_at = NOW() WHERE user_id = $1 AND read = false", [user.id]);
-            console.log('✅ Toutes les notifications marquées comme lues pour:', user.id);
+            await prisma_1.prisma.notification.updateMany({
+                where: { userId: user.id, read: false },
+                data: { read: true },
+            });
             res.json({ success: true, message: 'Toutes les notifications marquées comme lues' });
         }
         catch (error) {

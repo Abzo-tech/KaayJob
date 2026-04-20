@@ -11,6 +11,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import path from "path";
 import rateLimit from "express-rate-limit";
+import { PrismaClient } from "@prisma/client";
 
 import authRoutes from "./routes/auth";
 import bookingsRoutes from "./routes/bookings";
@@ -26,7 +27,7 @@ import subscriptionsRoutes from "./routes/subscriptions";
 import { authenticate } from "./middleware/auth";
 import ProviderController from "./controllers/providerController";
 
-import { testConnection, query } from "./config/database";
+import { testConnection } from "./config/database";
 import { swaggerUi, specs } from "./config/swagger";
 import { prisma } from "./config/prisma";
 import { seedDatabase } from "./scripts/seed";
@@ -182,14 +183,14 @@ app.put("/api/profile", authenticate, async (req, res) => {
       // Pour les clients, mise à jour des informations de base
       const { firstName, lastName, phone } = req.body;
 
-      await query(
-        `
-        UPDATE users SET
-          first_name = $1, last_name = $2, phone = $3, updated_at = NOW()
-        WHERE id = $4
-      `,
-        [firstName, lastName, phone, user.id],
-      );
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          ...(firstName !== undefined ? { firstName } : {}),
+          ...(lastName !== undefined ? { lastName } : {}),
+          ...(phone !== undefined ? { phone } : {}),
+        },
+      });
 
       res.json({ success: true, message: "Profil mis à jour avec succès" });
     } else {
@@ -431,7 +432,7 @@ app.post("/api/create-test-data", async (req, res) => {
         categories: categories.length,
         users: providers.length + 1, // + admin
         credentials: {
-          admin: { email: "admin@kaayjob.com", password: "admin123" },
+          admin: { email: "admin@kaayjob.com", password: "Password123" },
           providers: providers.map((p) => ({
             email: p.email,
             password: "test123",
@@ -463,10 +464,11 @@ app.post("/api/setup-admin", async (req, res) => {
     }
 
     // Vérifier si l'admin existe déjà
-    const existingAdmin = await query("SELECT id FROM users WHERE email = $1", [
-      email,
-    ]);
-    if (existingAdmin.rows.length > 0) {
+    const existingAdmin = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (existingAdmin) {
       return res.status(400).json({
         success: false,
         message: "Un utilisateur avec cet email existe déjà",
@@ -476,13 +478,17 @@ app.post("/api/setup-admin", async (req, res) => {
     // Créer l'admin
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await query(
-      `
-      INSERT INTO users (id, email, password, first_name, last_name, phone, role, is_verified, created_at, updated_at)
-      VALUES (gen_random_uuid(), $1, $2, $3, $4, '+221000000000', 'ADMIN', true, NOW(), NOW())
-    `,
-      [email, hashedPassword, firstName, lastName],
-    );
+    await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        phone: "+221000000000",
+        role: "ADMIN",
+        isVerified: true,
+      },
+    });
 
     res.json({
       success: true,
@@ -504,6 +510,8 @@ app.post("/api/setup-admin", async (req, res) => {
 
 // Endpoint de migration des données depuis la base locale
 app.post("/api/migrate-from-local", async (req, res) => {
+  let localPrisma: PrismaClient | null = null;
+
   try {
     console.log("🚀 Démarrage de la migration depuis la base locale...");
 
@@ -516,51 +524,68 @@ app.post("/api/migrate-from-local", async (req, res) => {
       password: "postgres",
     };
 
+    localPrisma = new PrismaClient({
+      datasources: {
+        db: {
+          url: `postgresql://${localDb.user}:${localDb.password}@${localDb.host}:${localDb.port}/${localDb.database}`,
+        },
+      },
+    });
+
     // 1. Récupérer les données de la base locale
     console.log("📦 Récupération des données locales...");
 
-    const localUsers = await query("SELECT * FROM users");
-    const localCategories = await query("SELECT * FROM categories");
-    const localProfiles = await query("SELECT * FROM provider_profiles");
-    const localServices = await query("SELECT * FROM services");
-    const localBookings = await query("SELECT * FROM bookings");
-    const localReviews = await query("SELECT * FROM reviews");
+    const [
+      localUsers,
+      localCategories,
+      localProfiles,
+      localServices,
+      localBookings,
+      localReviews,
+    ] = await Promise.all([
+      localPrisma.user.findMany(),
+      localPrisma.category.findMany(),
+      localPrisma.providerProfile.findMany(),
+      localPrisma.service.findMany(),
+      localPrisma.booking.findMany(),
+      localPrisma.review.findMany(),
+    ]);
 
-    console.log(`   Utilisateurs: ${localUsers.rows.length}`);
-    console.log(`   Catégories: ${localCategories.rows.length}`);
-    console.log(`   Profils: ${localProfiles.rows.length}`);
-    console.log(`   Services: ${localServices.rows.length}`);
-    console.log(`   Réservations: ${localBookings.rows.length}`);
-    console.log(`   Avis: ${localReviews.rows.length}`);
+    console.log(`   Utilisateurs: ${localUsers.length}`);
+    console.log(`   Catégories: ${localCategories.length}`);
+    console.log(`   Profils: ${localProfiles.length}`);
+    console.log(`   Services: ${localServices.length}`);
+    console.log(`   Réservations: ${localBookings.length}`);
+    console.log(`   Avis: ${localReviews.length}`);
 
     // 2. Insérer dans Prisma Cloud (en gérant les conflits)
     console.log("☁️ Migration vers Prisma Cloud...");
 
     // Utilisateurs
-    for (const user of localUsers.rows) {
+    for (const user of localUsers) {
       try {
         await prisma.user.upsert({
           where: { email: user.email },
           update: {
-            firstName: user.first_name,
-            lastName: user.last_name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             phone: user.phone,
             role: user.role,
             avatar: user.avatar,
-            isVerified: user.is_verified,
-            isActive: user.is_active,
+            isVerified: user.isVerified,
+            isActive: user.isActive,
             password: user.password,
           },
           create: {
             email: user.email,
             password: user.password,
-            firstName: user.first_name,
-            lastName: user.last_name,
+            firstName: user.firstName,
+            lastName: user.lastName,
             phone: user.phone,
             role: user.role,
             avatar: user.avatar,
-            isVerified: user.is_verified,
-            isActive: user.is_active,
+            isVerified: user.isVerified,
+            isActive: user.isActive,
           },
         });
       } catch (err: any) {
@@ -569,7 +594,7 @@ app.post("/api/migrate-from-local", async (req, res) => {
     }
 
     // Catégories
-    for (const cat of localCategories.rows) {
+    for (const cat of localCategories) {
       try {
         await prisma.category.upsert({
           where: { slug: cat.slug },
@@ -578,9 +603,9 @@ app.post("/api/migrate-from-local", async (req, res) => {
             description: cat.description,
             icon: cat.icon,
             image: cat.image,
-            isActive: cat.is_active,
-            displayOrder: cat.display_order,
-            parentId: cat.parent_id,
+            isActive: cat.isActive,
+            displayOrder: cat.displayOrder,
+            parentId: cat.parentId,
           },
           create: {
             name: cat.name,
@@ -588,9 +613,9 @@ app.post("/api/migrate-from-local", async (req, res) => {
             description: cat.description,
             icon: cat.icon,
             image: cat.image,
-            isActive: cat.is_active,
-            displayOrder: cat.display_order,
-            parentId: cat.parent_id,
+            isActive: cat.isActive,
+            displayOrder: cat.displayOrder,
+            parentId: cat.parentId,
           },
         });
       } catch (err: any) {
@@ -599,52 +624,52 @@ app.post("/api/migrate-from-local", async (req, res) => {
     }
 
     // Profils prestataires
-    for (const profile of localProfiles.rows) {
+    for (const profile of localProfiles) {
       try {
         await prisma.providerProfile.upsert({
-          where: { userId: profile.user_id },
+          where: { userId: profile.userId },
           update: {
-            businessName: profile.business_name,
+            businessName: profile.businessName,
             specialty: profile.specialty,
             bio: profile.bio,
-            hourlyRate: profile.hourly_rate,
-            yearsExperience: profile.years_experience,
+            hourlyRate: profile.hourlyRate,
+            yearsExperience: profile.yearsExperience,
             location: profile.location,
             address: profile.address,
             city: profile.city,
             region: profile.region,
-            postalCode: profile.postal_code,
-            serviceRadius: profile.service_radius,
-            isAvailable: profile.is_available,
+            postalCode: profile.postalCode,
+            serviceRadius: profile.serviceRadius,
+            isAvailable: profile.isAvailable,
             rating: profile.rating,
-            totalReviews: profile.total_reviews,
-            totalBookings: profile.total_bookings,
-            isVerified: profile.is_verified,
-            profileImage: profile.profile_image,
+            totalReviews: profile.totalReviews,
+            totalBookings: profile.totalBookings,
+            isVerified: profile.isVerified,
+            profileImage: profile.profileImage,
           },
           create: {
-            userId: profile.user_id,
-            businessName: profile.business_name,
+            userId: profile.userId,
+            businessName: profile.businessName,
             specialty: profile.specialty,
             bio: profile.bio,
-            hourlyRate: profile.hourly_rate,
-            yearsExperience: profile.years_experience,
+            hourlyRate: profile.hourlyRate,
+            yearsExperience: profile.yearsExperience,
             location: profile.location,
             address: profile.address,
             city: profile.city,
             region: profile.region,
-            postalCode: profile.postal_code,
-            serviceRadius: profile.service_radius,
-            isAvailable: profile.is_available,
+            postalCode: profile.postalCode,
+            serviceRadius: profile.serviceRadius,
+            isAvailable: profile.isAvailable,
             rating: profile.rating,
-            totalReviews: profile.total_reviews,
-            totalBookings: profile.total_bookings,
-            isVerified: profile.is_verified,
-            profileImage: profile.profile_image,
+            totalReviews: profile.totalReviews,
+            totalBookings: profile.totalBookings,
+            isVerified: profile.isVerified,
+            profileImage: profile.profileImage,
           },
         });
       } catch (err: any) {
-        console.log(`⚠️ Erreur profil ${profile.user_id}:`, err.message);
+        console.log(`⚠️ Erreur profil ${profile.userId}:`, err.message);
       }
     }
 
@@ -662,12 +687,12 @@ app.post("/api/migrate-from-local", async (req, res) => {
       success: true,
       message: "Migration terminée avec succès",
       stats: {
-        users: localUsers.rows.length,
-        categories: localCategories.rows.length,
-        profiles: localProfiles.rows.length,
-        services: localServices.rows.length,
-        bookings: localBookings.rows.length,
-        reviews: localReviews.rows.length,
+        users: localUsers.length,
+        categories: localCategories.length,
+        profiles: localProfiles.length,
+        services: localServices.length,
+        bookings: localBookings.length,
+        reviews: localReviews.length,
       },
     });
   } catch (error: any) {
@@ -677,6 +702,8 @@ app.post("/api/migrate-from-local", async (req, res) => {
       message: "Erreur lors de la migration",
       error: error.message,
     });
+  } finally {
+    await localPrisma?.$disconnect();
   }
 });
 

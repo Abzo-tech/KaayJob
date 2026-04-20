@@ -10,105 +10,131 @@ exports.updateBooking = updateBooking;
 exports.deleteBooking = deleteBooking;
 exports.getBookingStats = getBookingStats;
 const prisma_1 = require("../config/prisma");
-const database_1 = require("../config/database");
+const client_1 = require("@prisma/client");
 const notificationService_1 = require("./notificationService");
-const normalizeBookingRow = (row) => ({
-    id: row.id,
-    clientId: row.client_id ?? row.clientId,
-    serviceId: row.service_id ?? row.serviceId,
-    providerId: row.provider_id ?? row.providerId ?? null,
-    bookingDate: row.booking_date ?? row.bookingDate,
-    bookingTime: row.booking_time ?? row.bookingTime,
-    duration: row.duration ?? null,
-    status: row.status,
-    address: row.address,
-    city: row.city,
-    phone: row.phone ?? null,
-    notes: row.notes ?? null,
-    totalAmount: row.total_amount ?? row.totalAmount ?? null,
-    paymentStatus: row.payment_status ?? row.paymentStatus ?? null,
-    createdAt: row.created_at ?? row.createdAt ?? null,
-    updatedAt: row.updated_at ?? row.updatedAt ?? null,
-    clientFirstName: row.client_first_name ?? row.clientFirstName ?? null,
-    clientLastName: row.client_last_name ?? row.clientLastName ?? null,
-    serviceName: row.service_name ?? row.serviceName ?? null,
-    providerFirstName: row.provider_first_name ?? row.providerFirstName ?? null,
-    providerLastName: row.provider_last_name ?? row.providerLastName ?? null,
+const normalizeBookingRecord = (booking) => ({
+    id: booking.id,
+    clientId: booking.clientId,
+    serviceId: booking.serviceId,
+    bookingDate: booking.bookingDate,
+    bookingTime: booking.bookingTime,
+    duration: booking.duration,
+    status: booking.status,
+    address: booking.address,
+    city: booking.city,
+    phone: booking.phone,
+    notes: booking.notes,
+    totalAmount: booking.totalAmount ? Number(booking.totalAmount.toString()) : null,
+    paymentStatus: booking.paymentStatus,
+    createdAt: booking.createdAt,
+    updatedAt: booking.updatedAt,
+    clientFirstName: booking.client?.firstName ?? null,
+    clientLastName: booking.client?.lastName ?? null,
+    serviceName: booking.service?.name ?? null,
+    providerFirstName: booking.service?.provider?.user?.firstName ?? null,
+    providerLastName: booking.service?.provider?.user?.lastName ?? null,
 });
-/**
- * Liste des réservations avec pagination et filtres
- */
 async function listBookings(filters) {
     const { page = 1, limit = 20, status, providerId, clientId } = filters;
-    const offset = (page - 1) * limit;
-    let whereClause = "1=1";
-    const params = [];
-    let paramIndex = 1;
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
+    const where = {};
     if (status) {
-        whereClause += ` AND b.status = $${paramIndex}`;
-        params.push(status);
-        paramIndex++;
-    }
-    if (providerId) {
-        whereClause += ` AND s.provider_id = $${paramIndex}`;
-        params.push(providerId);
-        paramIndex++;
+        where.status = status.toUpperCase();
     }
     if (clientId) {
-        whereClause += ` AND b.client_id = $${paramIndex}`;
-        params.push(clientId);
-        paramIndex++;
+        where.clientId = clientId;
     }
-    const countResult = await (0, database_1.query)(`SELECT COUNT(*) as count
-     FROM bookings b
-     JOIN services s ON b.service_id = s.id
-     WHERE ${whereClause}`, params);
-    const limitParamIndex = paramIndex;
-    const offsetParamIndex = paramIndex + 1;
-    const result = await (0, database_1.query)(`SELECT b.*, u.first_name as client_first_name, u.last_name as client_last_name,
-            s.name as service_name, p.first_name as provider_first_name, p.last_name as provider_last_name
-     FROM bookings b
-     JOIN users u ON b.client_id = u.id
-     JOIN services s ON b.service_id = s.id
-     JOIN users p ON s.provider_id = p.id
-     WHERE ${whereClause}
-     ORDER BY b.created_at DESC
-     LIMIT $${limitParamIndex} OFFSET $${offsetParamIndex}`, [...params, limit, offset]);
+    if (providerId) {
+        where.service = {
+            providerId: providerId,
+        };
+    }
+    const [total, bookings] = await Promise.all([
+        prisma_1.prisma.booking.count({ where }),
+        prisma_1.prisma.booking.findMany({
+            where,
+            orderBy: { createdAt: "desc" },
+            skip,
+            take: limitNum,
+            include: {
+                client: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                    },
+                },
+                service: {
+                    select: {
+                        name: true,
+                        provider: {
+                            select: {
+                                user: {
+                                    select: {
+                                        firstName: true,
+                                        lastName: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        }),
+    ]);
     return {
-        data: result.rows.map(normalizeBookingRow),
+        data: bookings.map(normalizeBookingRecord),
         pagination: {
-            page,
-            limit,
-            total: parseInt(countResult.rows[0].count),
+            page: pageNum,
+            limit: limitNum,
+            total,
+            totalPages: Math.ceil(total / limitNum),
         },
     };
 }
-/**
- * Obtenir une réservation par ID
- */
 async function getBookingById(bookingId) {
-    const result = await (0, database_1.query)(`SELECT b.*, u.first_name as client_first_name, u.last_name as client_last_name,
-            s.name as service_name, p.first_name as provider_first_name, p.last_name as provider_last_name
-     FROM bookings b
-     JOIN users u ON b.client_id = u.id
-     JOIN services s ON b.service_id = s.id
-     JOIN users p ON s.provider_id = p.id
-     WHERE b.id = $1`, [bookingId]);
-    if (result.rows.length === 0) {
+    const booking = await prisma_1.prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+            client: {
+                select: {
+                    firstName: true,
+                    lastName: true,
+                },
+            },
+            service: {
+                select: {
+                    name: true,
+                    provider: {
+                        select: {
+                            user: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    });
+    if (!booking) {
         throw new Error("Réservation non trouvée");
     }
-    return normalizeBookingRow(result.rows[0]);
+    return normalizeBookingRecord(booking);
 }
-/**
- * Mettre à jour une réservation
- */
 async function updateBooking(bookingId, data, adminId) {
-    // Vérifier si la réservation existe
     const existing = await prisma_1.prisma.booking.findUnique({
         where: { id: bookingId },
         include: {
             service: {
-                include: { provider: true },
+                include: {
+                    provider: {
+                        include: { user: true },
+                    },
+                },
             },
             client: true,
         },
@@ -116,15 +142,14 @@ async function updateBooking(bookingId, data, adminId) {
     if (!existing) {
         throw new Error("Réservation non trouvée");
     }
-    // Préparer les données de mise à jour
     const updateData = {};
     if (data.status)
-        updateData.status = data.status;
+        updateData.status = data.status.toUpperCase();
     if (data.paymentStatus)
-        updateData.paymentStatus = data.paymentStatus;
+        updateData.paymentStatus = data.paymentStatus.toUpperCase();
     if (data.bookingDate)
         updateData.bookingDate = new Date(data.bookingDate);
-    if (data.bookingTime)
+    if (data.bookingTime !== undefined)
         updateData.bookingTime = data.bookingTime;
     if (data.address !== undefined)
         updateData.address = data.address;
@@ -135,65 +160,75 @@ async function updateBooking(bookingId, data, adminId) {
     if (Object.keys(updateData).length === 0) {
         throw new Error("Aucune donnée à mettre à jour");
     }
-    // Mise à jour avec Prisma
-    const result = await prisma_1.prisma.booking.update({
+    const updated = await prisma_1.prisma.booking.update({
         where: { id: bookingId },
         data: updateData,
+        include: {
+            client: { select: { firstName: true, lastName: true } },
+            service: {
+                select: {
+                    name: true,
+                    provider: {
+                        select: {
+                            user: { select: { firstName: true, lastName: true } },
+                        },
+                    },
+                },
+            },
+        },
     });
-    // Créer des notifications si le statut a changé
     if (data.status) {
         const statusMessages = {
             CONFIRMED: "confirmée",
             COMPLETED: "terminée",
             CANCELLED: "annulée",
             PENDING: "en attente",
+            REJECTED: "rejetée",
+            IN_PROGRESS: "en cours",
         };
-        // Notifier le client
-        if (existing.clientId) {
-            await (0, notificationService_1.createNotification)(existing.clientId, "Statut de réservation mis à jour", `Votre réservation pour "${existing.service?.name || "un service"}" a été ${statusMessages[data.status] || "mise à jour"} par l'administrateur`, data.status === "CANCELLED" ? "error" : "success", "/client/bookings");
+        const statusLabel = statusMessages[data.status.toUpperCase()] || data.status.toLowerCase();
+        const serviceName = existing.service?.name ?? "un service";
+        await (0, notificationService_1.createNotification)(existing.clientId, "Statut de réservation mis à jour", `Votre réservation pour "${serviceName}" a été ${statusLabel}`, data.status.toUpperCase() === "CANCELLED" || data.status.toUpperCase() === "REJECTED" ? "error" : "success", "/client/bookings");
+        if (existing.service?.provider?.user) {
+            await (0, notificationService_1.createNotification)(existing.service.provider.userId, "Réservation mise à jour", `La réservation pour "${serviceName}" a été ${statusLabel}`, data.status.toUpperCase() === "CANCELLED" || data.status.toUpperCase() === "REJECTED" ? "error" : "success", "/prestataire/bookings");
         }
-        // Notifier le prestataire
-        if (existing.service?.providerId) {
-            await (0, notificationService_1.createNotification)(existing.service.providerId, "Réservation mise à jour", `La réservation pour "${existing.service?.name || "un service"}" a été ${statusMessages[data.status] || "mise à jour"} par l'administrateur`, data.status === "CANCELLED" ? "error" : "success", "/prestataire/bookings");
-        }
-        // Notifier l'admin
         if (adminId) {
-            await (0, notificationService_1.createNotification)(adminId, "Réservation mise à jour", `La réservation #${bookingId.slice(0, 8)} a été ${statusMessages[data.status] || "mise à jour"}`, data.status === "CANCELLED" ? "error" : "success", "/admin/bookings");
+            await (0, notificationService_1.createNotification)(adminId, "Réservation mise à jour", `La réservation #${bookingId.slice(0, 8)} a été ${statusLabel}`, "info", "/admin/bookings");
         }
     }
-    return normalizeBookingRow(result);
+    return normalizeBookingRecord(updated);
 }
-/**
- * Supprimer une réservation
- */
 async function deleteBooking(bookingId) {
-    // Vérifier si la réservation existe
-    const existing = await (0, database_1.query)("SELECT id, status FROM bookings WHERE id = $1", [
-        bookingId,
-    ]);
-    if (existing.rows.length === 0) {
+    const existing = await prisma_1.prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: {
+            service: true,
+        },
+    });
+    if (!existing) {
         throw new Error("Réservation non trouvée");
     }
-    // Vérifier si la réservation est terminée
-    if (existing.rows[0].status === "COMPLETED") {
+    if (existing.status === client_1.BookingStatus.COMPLETED) {
         throw new Error("Impossible de supprimer une réservation terminée");
     }
-    // Supprimer les avis liés
-    await (0, database_1.query)("DELETE FROM reviews WHERE booking_id = $1", [bookingId]);
-    await (0, database_1.query)("DELETE FROM bookings WHERE id = $1", [bookingId]);
+    await prisma_1.prisma.review.deleteMany({
+        where: { bookingId },
+    });
+    await prisma_1.prisma.booking.delete({
+        where: { id: bookingId },
+    });
     return { success: true };
 }
-/**
- * Obtenir les statistiques des réservations
- */
 async function getBookingStats() {
-    const result = await (0, database_1.query)(`
-    SELECT COUNT(*) as total,
-           SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) as pending,
-           SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) as completed,
-           SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelled
-    FROM bookings
-  `);
-    return result.rows[0];
+    const stats = await prisma_1.prisma.booking.aggregate({
+        _count: { id: true },
+        _sum: {},
+        where: {},
+    });
+    const total = stats._count.id;
+    const pending = await prisma_1.prisma.booking.count({ where: { status: "PENDING" } });
+    const completed = await prisma_1.prisma.booking.count({ where: { status: "COMPLETED" } });
+    const cancelled = await prisma_1.prisma.booking.count({ where: { status: "CANCELLED" } });
+    return { total, pending, completed, cancelled };
 }
 //# sourceMappingURL=bookingService.js.map

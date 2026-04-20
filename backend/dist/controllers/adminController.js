@@ -1,45 +1,50 @@
 "use strict";
 /**
  * Contrôleur pour les fonctionnalités administrateur
- * Utilise les requêtes SQL directes pour la stabilité
+ * Utilise Prisma pour les opérations de données
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminController = void 0;
-const database_1 = require("../config/database");
+const prisma_1 = require("../config/prisma");
 class AdminController {
     /**
      * Statistiques générales du tableau de bord
      */
     static async getStats(req, res) {
         try {
-            console.log('📊 Récupération des statistiques admin');
-            // Statistiques de base
-            const [usersResult, categoriesResult, servicesResult, bookingsResult] = await Promise.all([
-                (0, database_1.query)('SELECT COUNT(*) as count FROM users'),
-                (0, database_1.query)('SELECT COUNT(*) as count FROM categories'),
-                (0, database_1.query)('SELECT COUNT(*) as count FROM services'),
-                (0, database_1.query)('SELECT COUNT(*) as count FROM bookings')
+            const [usersCount, clientsCount, providersCount, categoriesCount, categoriesActiveCount, servicesCount, servicesActiveCount, bookingsTotal, bookingsPending, bookingsConfirmed, bookingsCompleted] = await Promise.all([
+                prisma_1.prisma.user.count(),
+                prisma_1.prisma.user.count({ where: { role: "CLIENT" } }),
+                prisma_1.prisma.user.count({ where: { role: "PRESTATAIRE" } }),
+                prisma_1.prisma.category.count(),
+                prisma_1.prisma.category.count({ where: { isActive: true } }),
+                prisma_1.prisma.service.count(),
+                prisma_1.prisma.service.count({ where: { isActive: true } }),
+                prisma_1.prisma.booking.count(),
+                prisma_1.prisma.booking.count({ where: { status: "PENDING" } }),
+                prisma_1.prisma.booking.count({ where: { status: "CONFIRMED" } }),
+                prisma_1.prisma.booking.count({ where: { status: "COMPLETED" } }),
             ]);
             const stats = {
                 users: {
-                    total: parseInt(usersResult.rows[0].count),
-                    clients: 0, // TODO: calculer
-                    providers: 0, // TODO: calculer
+                    total: usersCount,
+                    clients: clientsCount,
+                    providers: providersCount,
                 },
                 categories: {
-                    total: parseInt(categoriesResult.rows[0].count),
-                    active: parseInt(categoriesResult.rows[0].count), // TODO: filtrer actives
+                    total: categoriesCount,
+                    active: categoriesActiveCount,
                 },
                 services: {
-                    total: parseInt(servicesResult.rows[0].count),
-                    active: parseInt(servicesResult.rows[0].count), // TODO: filtrer actifs
+                    total: servicesCount,
+                    active: servicesActiveCount,
                 },
                 bookings: {
-                    total: parseInt(bookingsResult.rows[0].count),
-                    pending: 0, // TODO: calculer
-                    confirmed: 0, // TODO: calculer
-                    completed: 0, // TODO: calculer
-                }
+                    total: bookingsTotal,
+                    pending: bookingsPending,
+                    confirmed: bookingsConfirmed,
+                    completed: bookingsCompleted,
+                },
             };
             res.json({ success: true, data: stats });
         }
@@ -54,14 +59,22 @@ class AdminController {
     static async getUsers(req, res) {
         try {
             const { limit = 100, offset = 0 } = req.query;
-            console.log('👥 Récupération des utilisateurs admin');
-            const users = await (0, database_1.query)(`
-        SELECT id, email, first_name, last_name, phone, role, is_verified, created_at
-        FROM users
-        ORDER BY created_at DESC
-        LIMIT $1 OFFSET $2
-      `, [limit, offset]);
-            res.json({ success: true, data: users.rows });
+            const users = await prisma_1.prisma.user.findMany({
+                select: {
+                    id: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    phone: true,
+                    role: true,
+                    isVerified: true,
+                    createdAt: true,
+                },
+                orderBy: { createdAt: "desc" },
+                take: Number(limit),
+                skip: Number(offset),
+            });
+            res.json({ success: true, data: users });
         }
         catch (error) {
             console.error('❌ Erreur utilisateurs:', error);
@@ -74,18 +87,45 @@ class AdminController {
     static async getServices(req, res) {
         try {
             const { limit = 100, offset = 0 } = req.query;
-            console.log('🔧 Récupération des services admin');
-            const services = await (0, database_1.query)(`
-        SELECT s.id, s.name, s.price, s.duration, s.is_active,
-               c.name as category_name, p.first_name, p.last_name
-        FROM services s
-        JOIN categories c ON s.category_id = c.id
-        JOIN provider_profiles pp ON s.provider_id = pp.user_id
-        JOIN users p ON pp.user_id = p.id
-        ORDER BY s.created_at DESC
-        LIMIT $1 OFFSET $2
-      `, [limit, offset]);
-            res.json({ success: true, data: services.rows });
+            const services = await prisma_1.prisma.service.findMany({
+                where: {},
+                orderBy: { createdAt: "desc" },
+                take: Number(limit),
+                skip: Number(offset),
+                select: {
+                    id: true,
+                    name: true,
+                    price: true,
+                    duration: true,
+                    isActive: true,
+                    category: {
+                        select: { name: true },
+                    },
+                    provider: {
+                        select: {
+                            user: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            res.json({
+                success: true,
+                data: services.map((service) => ({
+                    id: service.id,
+                    name: service.name,
+                    price: parseFloat(service.price.toString()),
+                    duration: service.duration,
+                    isActive: service.isActive,
+                    categoryName: service.category?.name,
+                    providerFirstName: service.provider?.user?.firstName,
+                    providerLastName: service.provider?.user?.lastName,
+                })),
+            });
         }
         catch (error) {
             console.error('❌ Erreur services:', error);
@@ -98,21 +138,52 @@ class AdminController {
     static async getBookings(req, res) {
         try {
             const { limit = 100, offset = 0 } = req.query;
-            console.log('📅 Récupération des réservations admin');
-            const bookings = await (0, database_1.query)(`
-        SELECT b.id, b.booking_date as date, b.booking_time as time, b.status, b.total_amount as total_price, b.created_at,
-               u.first_name as client_first_name, u.last_name as client_last_name, u.email as client_email,
-               s.name as service_name,
-               p.first_name as provider_first_name, p.last_name as provider_last_name
-        FROM bookings b
-        JOIN users u ON b.client_id = u.id
-        JOIN services s ON b.service_id = s.id
-        LEFT JOIN provider_profiles pp ON s.provider_id = pp.user_id
-        LEFT JOIN users p ON pp.user_id = p.id
-        ORDER BY b.created_at DESC
-        LIMIT $1 OFFSET $2
-      `, [limit, offset]);
-            res.json({ success: true, data: bookings.rows });
+            const bookings = await prisma_1.prisma.booking.findMany({
+                orderBy: { createdAt: "desc" },
+                take: Number(limit),
+                skip: Number(offset),
+                include: {
+                    client: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                            email: true,
+                        },
+                    },
+                    service: {
+                        select: {
+                            name: true,
+                            provider: {
+                                select: {
+                                    user: {
+                                        select: {
+                                            firstName: true,
+                                            lastName: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            res.json({
+                success: true,
+                data: bookings.map((booking) => ({
+                    id: booking.id,
+                    date: booking.bookingDate,
+                    time: booking.bookingTime,
+                    status: booking.status,
+                    totalPrice: booking.totalAmount ? parseFloat(booking.totalAmount.toString()) : null,
+                    createdAt: booking.createdAt,
+                    clientFirstName: booking.client?.firstName,
+                    clientLastName: booking.client?.lastName,
+                    clientEmail: booking.client?.email,
+                    serviceName: booking.service?.name,
+                    providerFirstName: booking.service?.provider?.user?.firstName,
+                    providerLastName: booking.service?.provider?.user?.lastName,
+                })),
+            });
         }
         catch (error) {
             console.error('❌ Erreur réservations:', error);

@@ -1,41 +1,34 @@
 "use strict";
 /**
- * Contrôleur pour les abonnements
+ * Contrôleur pour les abonnements - VERSION PRISMA COMPLÈTE
  * Gère les abonnements des prestataires aux plans
- * Utilise les requêtes SQL directes
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubscriptionController = void 0;
-const database_1 = require("../config/database");
+const prisma_1 = require("../config/prisma");
 class SubscriptionController {
     /**
      * Obtenir tous les plans d'abonnement disponibles
      */
     static async getPlans(req, res) {
         try {
-            const plansQuery = `
-        SELECT
-          id, name, slug, description, price, duration,
-          features, is_active as "isActive", display_order as "displayOrder"
-        FROM subscription_plans
-        WHERE is_active = true
-        ORDER BY display_order ASC, created_at DESC
-      `;
-            const plansResult = await (0, database_1.query)(plansQuery, []);
-            const plans = plansResult.rows.map((row) => ({
-                id: row.id,
-                name: row.name,
-                slug: row.slug,
-                description: row.description,
-                price: parseFloat(row.price),
-                duration: row.duration,
-                features: row.features,
-                isActive: row.isActive,
-                displayOrder: row.displayOrder,
-            }));
+            const plans = await prisma_1.prisma.subscriptionPlan.findMany({
+                where: { isActive: true },
+                orderBy: { price: "asc" },
+            });
             res.json({
                 success: true,
-                data: plans,
+                data: plans.map((plan) => ({
+                    id: plan.id,
+                    name: plan.name,
+                    slug: plan.slug,
+                    description: plan.description,
+                    price: parseFloat(plan.price.toString()),
+                    duration: plan.duration,
+                    features: plan.features,
+                    isActive: plan.isActive,
+                    displayOrder: plan.displayOrder,
+                })),
             });
         }
         catch (error) {
@@ -49,33 +42,26 @@ class SubscriptionController {
     static async getPlanById(req, res) {
         try {
             const { id } = req.params;
-            const planQuery = `
-        SELECT
-          id, name, slug, description, price, duration,
-          features, is_active as "isActive", display_order as "displayOrder"
-        FROM subscription_plans
-        WHERE id = $1 AND is_active = true
-      `;
-            const planResult = await (0, database_1.query)(planQuery, [id]);
-            if (planResult.rows.length === 0) {
+            const plan = await prisma_1.prisma.subscriptionPlan.findUnique({
+                where: { id },
+            });
+            if (!plan || !plan.isActive) {
                 res.status(404).json({ success: false, message: "Plan non trouvé" });
                 return;
             }
-            const row = planResult.rows[0];
-            const plan = {
-                id: row.id,
-                name: row.name,
-                slug: row.slug,
-                description: row.description,
-                price: parseFloat(row.price),
-                duration: row.duration,
-                features: row.features,
-                isActive: row.isActive,
-                displayOrder: row.displayOrder,
-            };
             res.json({
                 success: true,
-                data: plan,
+                data: {
+                    id: plan.id,
+                    name: plan.name,
+                    slug: plan.slug,
+                    description: plan.description,
+                    price: parseFloat(plan.price.toString()),
+                    duration: plan.duration,
+                    features: plan.features,
+                    isActive: plan.isActive,
+                    displayOrder: plan.displayOrder,
+                },
             });
         }
         catch (error) {
@@ -87,55 +73,55 @@ class SubscriptionController {
      * Obtenir les abonnements de l'utilisateur connecté
      */
     static async getMySubscriptions(req, res) {
-        const user = req.user;
         try {
+            const user = req.user;
             if (!user?.id) {
                 res
                     .status(401)
                     .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
-            const subscriptionsQuery = `
-        SELECT
-          s.id, s.plan, s.status, s.start_date as "startDate", s.end_date as "endDate",
-          s.created_at as "createdAt",
-          sp.id as "planId", sp.name as "planName", sp.price as "planPrice",
-          sp.duration as "planDuration", sp.features as "planFeatures"
-        FROM subscriptions s
-        LEFT JOIN subscription_plans sp ON s.subscription_plan_id = sp.id
-        WHERE s.user_id = $1
-        ORDER BY s.created_at DESC
-      `;
-            const subscriptionsResult = await (0, database_1.query)(subscriptionsQuery, [user.id]);
-            const subscriptions = subscriptionsResult.rows.map((row) => ({
-                id: row.id,
-                plan: row.plan,
-                status: row.status,
-                startDate: row.startDate,
-                endDate: row.endDate,
-                createdAt: row.createdAt,
-                subscriptionPlan: row.planId
-                    ? {
-                        id: row.planId,
-                        name: row.planName,
-                        price: parseFloat(row.planPrice),
-                        duration: row.planDuration,
-                        features: row.planFeatures,
-                    }
-                    : null,
-            }));
+            const subscriptions = await prisma_1.prisma.subscription.findMany({
+                where: { userId: user.id },
+                include: {
+                    subscriptionPlan: {
+                        select: {
+                            id: true,
+                            name: true,
+                            price: true,
+                            duration: true,
+                            features: true,
+                            isActive: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: "desc" },
+            });
             res.json({
                 success: true,
-                data: subscriptions,
+                data: subscriptions.map((sub) => ({
+                    id: sub.id,
+                    plan: sub.plan,
+                    status: sub.status,
+                    startDate: sub.startDate,
+                    endDate: sub.endDate,
+                    createdAt: sub.createdAt,
+                    subscriptionPlan: sub.subscriptionPlan
+                        ? {
+                            id: sub.subscriptionPlan.id,
+                            name: sub.subscriptionPlan.name,
+                            price: parseFloat(sub.subscriptionPlan.price.toString()),
+                            duration: sub.subscriptionPlan.duration,
+                            features: sub.subscriptionPlan.features,
+                            isActive: sub.subscriptionPlan.isActive,
+                        }
+                        : null,
+                })),
             });
         }
         catch (error) {
-            console.error("Erreur récupération abonnements pour user", user?.id, ":", error.message || error, error.stack);
-            res.status(500).json({
-                success: false,
-                message: "Erreur serveur",
-                detail: error.message,
-            });
+            console.error("Erreur récupération abonnements utilisateur:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
     /**
@@ -150,63 +136,57 @@ class SubscriptionController {
                     .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
-            const subscriptionQuery = `
-        SELECT
-          s.id, s.plan, s.status, s.start_date as "startDate", s.end_date as "endDate",
-          s.created_at as "createdAt",
-          null as "planId", 
-          s.plan as "planName", 
-          0 as "planPrice",
-          30 as "planDuration", 
-          '[]'::jsonb as "planFeatures"
-        FROM subscriptions s
-        WHERE s.user_id = $1 AND s.status = 'active' AND s.end_date > NOW()
-        ORDER BY s.created_at DESC
-        LIMIT 1
-      `;
-            // Debug: vérifier les colonnes de la table subscriptions
-            // const debugQuery = `SELECT column_name FROM information_schema.columns WHERE table_name = 'subscriptions'`;
-            // const debugResult = await query(debugQuery, []);
-            // console.log('Colonnes de subscriptions:', debugResult.rows.map((r: any) => r.column_name));
-            const subscriptionResult = await (0, database_1.query)(subscriptionQuery, [user.id]);
-            if (subscriptionResult.rows.length === 0) {
-                res.json({
-                    success: true,
-                    data: null,
-                    message: "Aucun abonnement actif",
-                });
+            const subscription = await prisma_1.prisma.subscription.findFirst({
+                where: {
+                    userId: user.id,
+                    status: "active",
+                    endDate: { gt: new Date() },
+                },
+                orderBy: { createdAt: "desc" },
+                include: {
+                    subscriptionPlan: {
+                        select: {
+                            id: true,
+                            name: true,
+                            price: true,
+                            duration: true,
+                            features: true,
+                            isActive: true,
+                        },
+                    },
+                },
+            });
+            if (!subscription) {
+                res
+                    .status(404)
+                    .json({ success: false, message: "Aucun abonnement actif" });
                 return;
             }
-            const row = subscriptionResult.rows[0];
-            const subscription = {
-                id: row.id,
-                plan: row.plan,
-                status: row.status,
-                startDate: row.startDate,
-                endDate: row.endDate,
-                createdAt: row.createdAt,
-                subscriptionPlan: {
-                    id: row.planId || null,
-                    name: row.planName,
-                    price: parseFloat(row.planPrice),
-                    duration: row.planDuration,
-                    features: row.planFeatures,
-                },
-            };
             res.json({
                 success: true,
-                data: subscription,
+                data: {
+                    id: subscription.id,
+                    plan: subscription.plan,
+                    status: subscription.status,
+                    startDate: subscription.startDate,
+                    endDate: subscription.endDate,
+                    createdAt: subscription.createdAt,
+                    subscriptionPlan: subscription.subscriptionPlan
+                        ? {
+                            id: subscription.subscriptionPlan.id,
+                            name: subscription.subscriptionPlan.name,
+                            price: parseFloat(subscription.subscriptionPlan.price.toString()),
+                            duration: subscription.subscriptionPlan.duration,
+                            features: subscription.subscriptionPlan.features,
+                            isActive: subscription.subscriptionPlan.isActive,
+                        }
+                        : null,
+                },
             });
         }
         catch (error) {
-            console.error("Erreur récupération abonnement actif pour user " +
-                (req.user?.id || "unknown") +
-                ":", error.message || error, error.stack);
-            res.status(500).json({
-                success: false,
-                message: "Erreur serveur",
-                detail: error.message,
-            });
+            console.error("Erreur récupération abonnement actif:", error);
+            res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
     /**
@@ -222,79 +202,59 @@ class SubscriptionController {
                     .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
-            // Vérifier que le plan existe
-            const planQuery = `SELECT * FROM subscription_plans WHERE id = $1 AND is_active = true`;
-            const planResult = await (0, database_1.query)(planQuery, [planId]);
-            if (planResult.rows.length === 0) {
-                res
-                    .status(404)
-                    .json({ success: false, message: "Plan d'abonnement non trouvé" });
+            if (!planId) {
+                res.status(400).json({ success: false, message: "planId requis" });
                 return;
             }
-            const plan = planResult.rows[0];
-            // Vérifier s'il y a déjà un abonnement actif
-            const existingSubscriptionQuery = `
-        SELECT id FROM subscriptions
-        WHERE user_id = $1 AND status = 'active' AND end_date > NOW()
-      `;
-            const existingResult = await (0, database_1.query)(existingSubscriptionQuery, [user.id]);
-            if (existingResult.rows.length > 0) {
+            const plan = await prisma_1.prisma.subscriptionPlan.findUnique({
+                where: { id: planId },
+            });
+            if (!plan || !plan.isActive) {
+                res.status(404).json({ success: false, message: "Plan non trouvé" });
+                return;
+            }
+            const existingActiveSubscription = await prisma_1.prisma.subscription.findFirst({
+                where: {
+                    userId: user.id,
+                    status: "active",
+                    endDate: { gt: new Date() },
+                },
+            });
+            if (existingActiveSubscription) {
                 res.status(400).json({
                     success: false,
-                    message: "Vous avez déjà un abonnement actif",
+                    message: "Abonnement actif existant. Annulez-le d'abord.",
                 });
                 return;
             }
-            // Calculer les dates
             const startDate = new Date();
             const endDate = new Date();
             endDate.setDate(endDate.getDate() + plan.duration);
-            // Créer l'abonnement
-            const subscribeQuery = `
-        INSERT INTO subscriptions (
-          id, user_id, subscription_plan_id, plan, status, start_date, end_date, created_at
-        )
-        VALUES (
-          gen_random_uuid(), $1, $2, $3, 'active', $4, $5, NOW()
-        )
-        RETURNING id, plan, status, start_date as "startDate", end_date as "endDate", created_at as "createdAt"
-      `;
-            const subscribeResult = await (0, database_1.query)(subscribeQuery, [
-                user.id,
-                planId,
-                plan.name,
-                startDate,
-                endDate,
-            ]);
-            const newSubscription = subscribeResult.rows[0];
-            // Note: Le paiement est géré en dehors de la plateforme pour cette version
-            // Les prestataires paient directement via d'autres moyens
+            const subscription = await prisma_1.prisma.subscription.create({
+                data: {
+                    userId: user.id,
+                    subscriptionPlanId: plan.id,
+                    plan: plan.name,
+                    status: "active",
+                    startDate,
+                    endDate,
+                },
+            });
             res.status(201).json({
                 success: true,
                 message: "Abonnement créé avec succès",
                 data: {
-                    ...newSubscription,
-                    subscriptionPlan: {
-                        id: plan.id,
-                        name: plan.name,
-                        price: parseFloat(plan.price),
-                        duration: plan.duration,
-                        features: plan.features,
-                    },
+                    id: subscription.id,
+                    plan: subscription.plan,
+                    status: subscription.status,
+                    startDate: subscription.startDate,
+                    endDate: subscription.endDate,
                 },
             });
         }
         catch (error) {
             console.error("Erreur création abonnement:", error);
-            if (error.code === "23505") {
-                res.status(400).json({
-                    success: false,
-                    message: "Vous avez déjà un abonnement à ce plan",
-                });
-            }
-            else {
-                res.status(500).json({ success: false, message: "Erreur serveur" });
-            }
+            res.status(500).json({ success: false, message: "Erreur serveur" });
         }
     }
     /**
@@ -310,31 +270,26 @@ class SubscriptionController {
                     .json({ success: false, message: "Utilisateur non authentifié" });
                 return;
             }
-            // Vérifier que l'abonnement appartient à l'utilisateur
-            const subscriptionQuery = `
-        SELECT id FROM subscriptions
-        WHERE id = $1 AND user_id = $2 AND status = 'active'
-      `;
-            const subscriptionResult = await (0, database_1.query)(subscriptionQuery, [id, user.id]);
-            if (subscriptionResult.rows.length === 0) {
+            const subscription = await prisma_1.prisma.subscription.findUnique({
+                where: { id },
+            });
+            if (!subscription || subscription.userId !== user.id) {
                 res
                     .status(404)
                     .json({ success: false, message: "Abonnement non trouvé" });
                 return;
             }
-            // Annuler l'abonnement
-            const cancelQuery = `
-        UPDATE subscriptions
-        SET status = 'cancelled', end_date = NOW()
-        WHERE id = $1
-        RETURNING id, status, end_date as "endDate"
-      `;
-            const cancelResult = await (0, database_1.query)(cancelQuery, [id]);
-            const cancelledSubscription = cancelResult.rows[0];
+            const updatedSubscription = await prisma_1.prisma.subscription.update({
+                where: { id },
+                data: { status: "cancelled" },
+            });
             res.json({
                 success: true,
-                message: "Abonnement annulé avec succès",
-                data: cancelledSubscription,
+                message: "Abonnement annulé",
+                data: {
+                    id: updatedSubscription.id,
+                    status: updatedSubscription.status,
+                },
             });
         }
         catch (error) {
