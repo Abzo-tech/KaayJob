@@ -95,7 +95,7 @@ export function ImageUpload({
     <div className="flex flex-col items-center gap-3">
       <div
         onClick={handleClick}
-        onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+        onKeyDown={(e) => e.key === "Enter" && handleClick()}
         role="button"
         tabIndex={0}
         className={`relative cursor-pointer group ${sizeClasses[size]} ${roundedClasses[rounded]} overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors`}
@@ -113,6 +113,7 @@ export function ImageUpload({
             </div>
             {/* Remove button */}
             <button
+              title="-"
               type="button"
               onClick={handleRemove}
               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
@@ -133,8 +134,9 @@ export function ImageUpload({
           </div>
         )}
       </div>
-      
+
       <input
+        title="-"
         ref={fileInputRef}
         type="file"
         accept="image/*"
@@ -246,6 +248,7 @@ export function ServiceImageUpload({
               className="w-full h-full object-cover pointer-events-none"
             />
             <button
+              title="-"
               type="button"
               onClick={() => handleRemove(index)}
               className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
@@ -259,7 +262,7 @@ export function ServiceImageUpload({
         {images.length < maxImages && (
           <div
             onClick={handleClick}
-            onKeyDown={(e) => e.key === 'Enter' && handleClick()}
+            onKeyDown={(e) => e.key === "Enter" && handleClick()}
             role="button"
             tabIndex={0}
             className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 flex flex-col items-center justify-center cursor-pointer transition-colors"
@@ -279,6 +282,7 @@ export function ServiceImageUpload({
       </div>
 
       <input
+        title="-"
         ref={fileInputRef}
         type="file"
         accept="image/*"

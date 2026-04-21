@@ -216,29 +216,29 @@ export function PrestataireSettings() {
 
         <Tabs defaultValue="account" className="space-y-6">
           <TabsList className="bg-white border border-gray-200 p-1 rounded-lg grid grid-cols-4 w-full max-w-2xl">
-            <TabsTrigger 
-              value="account" 
+            <TabsTrigger
+              value="account"
               className="rounded data-[state=active]:bg-gray-800 data-[state=active]:text-white flex items-center gap-2"
             >
               <User size={16} />
               <span className="hidden sm:inline">Compte</span>e
             </TabsTrigger>
-            <TabsTrigger 
-              value="notifications" 
+            <TabsTrigger
+              value="notifications"
               className="rounded data-[state=active]:bg-gray-800 data-[state=active]:text-white flex items-center gap-2"
             >
               <Bell size={16} />
               <span className="hidden sm:inline">Notifications</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="security" 
+            <TabsTrigger
+              value="security"
               className="rounded data-[state=active]:bg-gray-800 data-[state=active]:text-white flex items-center gap-2"
             >
               <Shield size={16} />
               <span className="hidden sm:inline">Sécurité</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="preferences" 
+            <TabsTrigger
+              value="preferences"
               className="rounded data-[state=active]:bg-gray-800 data-[state=active]:text-white flex items-center gap-2"
             >
               <Globe size={16} />
@@ -265,77 +265,107 @@ export function PrestataireSettings() {
                     <Avatar className="w-20 h-20 border-2 border-gray-200">
                       <AvatarImage src="" />
                       <AvatarFallback className="bg-gray-700 text-white text-xl">
-                        {profileData.firstName?.[0] || "P"}{profileData.lastName?.[0] || ""}
+                        {profileData.firstName?.[0] || "P"}
+                        {profileData.lastName?.[0] || ""}
                       </AvatarFallback>
                     </Avatar>
                     <div>
                       <Button variant="outline" size="sm" className="mb-2">
                         Changer la photo
                       </Button>
-                      <p className="text-xs text-gray-500">
-                        JPG, PNG. Max 2MB
-                      </p>
+                      <p className="text-xs text-gray-500">JPG, PNG. Max 2MB</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName" className="text-sm font-medium">Prénom</Label>
+                      <Label
+                        htmlFor="firstName"
+                        className="text-sm font-medium"
+                      >
+                        Prénom
+                      </Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="firstName"
                           value={profileData.firstName}
-                          onChange={(e) => setProfileData({...profileData, firstName: e.target.value})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              firstName: e.target.value,
+                            })
+                          }
                           className="pl-10"
                           placeholder="Votre prénom"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName" className="text-sm font-medium">Nom</Label>
+                      <Label htmlFor="lastName" className="text-sm font-medium">
+                        Nom
+                      </Label>
                       <div className="relative">
                         <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="lastName"
                           value={profileData.lastName}
-                          onChange={(e) => setProfileData({...profileData, lastName: e.target.value})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              lastName: e.target.value,
+                            })
+                          }
                           className="pl-10"
                           placeholder="Votre nom"
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                      <Label htmlFor="email" className="text-sm font-medium">
+                        Email
+                      </Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="email"
                           type="email"
                           value={profileData.email}
-                          onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              email: e.target.value,
+                            })
+                          }
                           className="pl-10 bg-gray-50"
                           disabled
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone" className="text-sm font-medium">Téléphone</Label>
+                      <Label htmlFor="phone" className="text-sm font-medium">
+                        Téléphone
+                      </Label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
                           id="phone"
                           value={profileData.phone}
-                          onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              phone: e.target.value,
+                            })
+                          }
                           className="pl-10"
                           placeholder="+221 77 XXX XX XX"
                         />
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-6 flex justify-end">
-                    <Button 
+                    <Button
                       onClick={handleProfileUpdate}
                       disabled={isLoadingProfile}
                       className="bg-gray-800 hover:bg-gray-900"
@@ -376,8 +406,12 @@ export function PrestataireSettings() {
                   <div className="mt-4 p-4 bg-gray-50 rounded-lg flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-gray-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Rayon de service</p>
-                      <p className="text-sm text-gray-500">20km autour de votre zone</p>
+                      <p className="text-sm font-medium text-gray-700">
+                        Rayon de service
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        20km autour de votre zone
+                      </p>
                     </div>
                   </div>
                   <div className="mt-6 flex justify-end">
@@ -413,14 +447,20 @@ export function PrestataireSettings() {
                           <Mail className="w-5 h-5 text-gray-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Notifications par email</p>
-                          <p className="text-sm text-gray-500">Recevez les mises à jour par email</p>
+                          <p className="font-medium text-gray-900">
+                            Notifications par email
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Recevez les mises à jour par email
+                          </p>
                         </div>
                       </div>
-                        <Switch
-                          checked={notifications.email}
-                          onCheckedChange={(checked) => setNotifications({...notifications, email: checked})}
-                        />
+                      <Switch
+                        checked={notifications.email}
+                        onCheckedChange={(checked) =>
+                          setNotifications({ ...notifications, email: checked })
+                        }
+                      />
                     </div>
                   </div>
 
@@ -432,13 +472,19 @@ export function PrestataireSettings() {
                           <Smartphone className="w-5 h-5 text-gray-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Notifications SMS</p>
-                          <p className="text-sm text-gray-500">Recevez des alertes par SMS</p>
+                          <p className="font-medium text-gray-900">
+                            Notifications SMS
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Recevez des alertes par SMS
+                          </p>
                         </div>
                       </div>
                       <Switch
                         checked={notifications.sms}
-                        onCheckedChange={(checked) => setNotifications({...notifications, sms: checked})}
+                        onCheckedChange={(checked) =>
+                          setNotifications({ ...notifications, sms: checked })
+                        }
                       />
                     </div>
                   </div>
@@ -451,13 +497,22 @@ export function PrestataireSettings() {
                           <Clock className="w-5 h-5 text-gray-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Nouvelle réservation</p>
-                          <p className="text-sm text-gray-500">Alerte lors d'une nouvelle réservation</p>
+                          <p className="font-medium text-gray-900">
+                            Nouvelle réservation
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Alerte lors d'une nouvelle réservation
+                          </p>
                         </div>
                       </div>
                       <Switch
                         checked={notifications.newBooking}
-                        onCheckedChange={(checked) => setNotifications({...notifications, newBooking: checked})}
+                        onCheckedChange={(checked) =>
+                          setNotifications({
+                            ...notifications,
+                            newBooking: checked,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -470,20 +525,29 @@ export function PrestataireSettings() {
                           <Bell className="w-5 h-5 text-gray-600" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Promotions et offres</p>
-                          <p className="text-sm text-gray-500">Recevez les dernières offres</p>
+                          <p className="font-medium text-gray-900">
+                            Promotions et offres
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Recevez les dernières offres
+                          </p>
                         </div>
                       </div>
                       <Switch
                         checked={notifications.promotions}
-                        onCheckedChange={(checked) => setNotifications({...notifications, promotions: checked})}
+                        onCheckedChange={(checked) =>
+                          setNotifications({
+                            ...notifications,
+                            promotions: checked,
+                          })
+                        }
                       />
                     </div>
                   </div>
                 </div>
 
                 <div className="mt-6 flex justify-end">
-                  <Button 
+                  <Button
                     onClick={handleNotificationsSave}
                     className="bg-gray-800 hover:bg-gray-900"
                   >
@@ -511,32 +575,62 @@ export function PrestataireSettings() {
                 </CardHeader>
                 <CardContent className="p-6 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="currentPassword" className="text-sm font-medium">Mot de passe actuel</Label>
+                    <Label
+                      htmlFor="currentPassword"
+                      className="text-sm font-medium"
+                    >
+                      Mot de passe actuel
+                    </Label>
                     <Input
                       id="currentPassword"
                       type="password"
                       value={passwords.currentPassword}
-                      onChange={(e) => setPasswords({...passwords, currentPassword: e.target.value})}
+                      onChange={(e) =>
+                        setPasswords({
+                          ...passwords,
+                          currentPassword: e.target.value,
+                        })
+                      }
                       placeholder="••••••••"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="newPassword" className="text-sm font-medium">Nouveau mot de passe</Label>
+                    <Label
+                      htmlFor="newPassword"
+                      className="text-sm font-medium"
+                    >
+                      Nouveau mot de passe
+                    </Label>
                     <Input
                       id="newPassword"
                       type="password"
                       value={passwords.newPassword}
-                      onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})}
+                      onChange={(e) =>
+                        setPasswords({
+                          ...passwords,
+                          newPassword: e.target.value,
+                        })
+                      }
                       placeholder="••••••••"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirmer le mot de passe</Label>
+                    <Label
+                      htmlFor="confirmPassword"
+                      className="text-sm font-medium"
+                    >
+                      Confirmer le mot de passe
+                    </Label>
                     <Input
                       id="confirmPassword"
                       type="password"
                       value={passwords.confirmPassword}
-                      onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})}
+                      onChange={(e) =>
+                        setPasswords({
+                          ...passwords,
+                          confirmPassword: e.target.value,
+                        })
+                      }
                       placeholder="••••••••"
                     />
                   </div>
@@ -579,8 +673,12 @@ export function PrestataireSettings() {
                         <Shield className="w-5 h-5 text-gray-600" />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">2FA désactivé</p>
-                        <p className="text-sm text-gray-500">Protégez votre compte avec la vérification en 2 étapes</p>
+                        <p className="font-medium text-gray-900">
+                          2FA désactivé
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Protégez votre compte avec la vérification en 2 étapes
+                        </p>
                       </div>
                     </div>
                     <Button variant="outline">
@@ -608,12 +706,20 @@ export function PrestataireSettings() {
               <CardContent className="p-6 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="language" className="text-sm font-medium">Langue</Label>
-                    <select 
+                    <Label htmlFor="language" className="text-sm font-medium">
+                      Langue
+                    </Label>
+                    <select
+                      title="-"
                       id="language"
                       className="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white"
                       value={preferences.language}
-                      onChange={(e) => setPreferences({...preferences, language: e.target.value})}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          language: e.target.value,
+                        })
+                      }
                     >
                       <option>Français</option>
                       <option>English</option>
@@ -621,24 +727,40 @@ export function PrestataireSettings() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="timezone" className="text-sm font-medium">Fuseau horaire</Label>
-                    <select 
+                    <Label htmlFor="timezone" className="text-sm font-medium">
+                      Fuseau horaire
+                    </Label>
+                    <select
+                      title="-"
                       id="timezone"
                       className="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white"
                       value={preferences.timezone}
-                      onChange={(e) => setPreferences({...preferences, timezone: e.target.value})}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          timezone: e.target.value,
+                        })
+                      }
                     >
                       <option>Africa/Dakar (UTC+0)</option>
                       <option>Europe/Paris (UTC+1)</option>
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="currency" className="text-sm font-medium">Devise</Label>
-                    <select 
+                    <Label htmlFor="currency" className="text-sm font-medium">
+                      Devise
+                    </Label>
+                    <select
+                      title="-"
                       id="currency"
                       className="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white"
                       value={preferences.currency}
-                      onChange={(e) => setPreferences({...preferences, currency: e.target.value})}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          currency: e.target.value,
+                        })
+                      }
                     >
                       <option>FCFA (XOF) - Franc CFA</option>
                       <option>EUR - Euro</option>
@@ -646,12 +768,20 @@ export function PrestataireSettings() {
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="dateFormat" className="text-sm font-medium">Format de date</Label>
-                    <select 
+                    <Label htmlFor="dateFormat" className="text-sm font-medium">
+                      Format de date
+                    </Label>
+                    <select
+                      title="-"
                       id="dateFormat"
                       className="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white"
                       value={preferences.dateFormat}
-                      onChange={(e) => setPreferences({...preferences, dateFormat: e.target.value})}
+                      onChange={(e) =>
+                        setPreferences({
+                          ...preferences,
+                          dateFormat: e.target.value,
+                        })
+                      }
                     >
                       <option>DD/MM/YYYY</option>
                       <option>MM/DD/YYYY</option>
@@ -661,13 +791,15 @@ export function PrestataireSettings() {
                 </div>
 
                 <div className="flex justify-end">
-                  <Button 
+                  <Button
                     className="bg-gray-800 hover:bg-gray-900"
                     onClick={handlePreferencesSave}
                     disabled={isSavingPrefs}
                   >
                     <Save className="mr-2 h-4 w-4" />
-                    {isSavingPrefs ? "Enregistrement..." : "Enregistrer les préférences"}
+                    {isSavingPrefs
+                      ? "Enregistrement..."
+                      : "Enregistrer les préférences"}
                   </Button>
                 </div>
               </CardContent>
