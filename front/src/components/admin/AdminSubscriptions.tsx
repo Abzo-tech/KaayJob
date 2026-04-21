@@ -109,7 +109,7 @@ export function AdminSubscriptions() {
 
   const filteredSubscriptions = subscriptions.filter((sub: any) => {
     const providerName =
-      `${sub.first_name || ""} ${sub.last_name || ""}`.toLowerCase();
+      `${sub.firstName || sub.first_name || ""} ${sub.lastName || sub.last_name || ""}`.toLowerCase();
     const matchesSearch =
       providerName.includes(searchTerm.toLowerCase()) ||
       (sub.email || "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -499,20 +499,20 @@ export function AdminSubscriptions() {
                   <TableRow key={sub.id}>
                     <TableCell>
                       <p className="font-medium">
-                        {sub.first_name} {sub.last_name}
+                        {sub.firstName || sub.first_name} {sub.lastName || sub.last_name}
                       </p>
                       <p className="text-sm text-gray-500">{sub.email}</p>
                     </TableCell>
                     <TableCell>{getPlanBadge(sub.plan)}</TableCell>
                     <TableCell>{getStatusBadge(sub.status)}</TableCell>
                     <TableCell>
-                      {sub.start_date
-                        ? new Date(sub.start_date).toLocaleDateString()
+                      {sub.startDate || sub.start_date
+                        ? new Date(sub.startDate || sub.start_date).toLocaleDateString()
                         : "-"}
                     </TableCell>
                     <TableCell>
-                      {sub.end_date
-                        ? new Date(sub.end_date).toLocaleDateString()
+                      {sub.endDate || sub.end_date
+                        ? new Date(sub.endDate || sub.end_date).toLocaleDateString()
                         : "Illimitée"}
                     </TableCell>
                     <TableCell className="text-right">

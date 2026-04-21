@@ -230,18 +230,26 @@ export async function verifyProvider(providerId: string, adminId: string) {
     throw new Error("Cet utilisateur n'est pas un prestataire");
   }
 
-  const profile = await prisma.providerProfile.upsert({
-    where: { userId: providerId },
-    update: {
-      isVerified: true,
-      updatedAt: new Date(),
-    },
-    create: {
-      userId: providerId,
-      isVerified: true,
-      isAvailable: true,
-    },
-  });
+  const [, profile] = await prisma.$transaction([
+    prisma.user.update({
+      where: { id: providerId },
+      data: {
+        isVerified: true,
+      },
+    }),
+    prisma.providerProfile.upsert({
+      where: { userId: providerId },
+      update: {
+        isVerified: true,
+        updatedAt: new Date(),
+      },
+      create: {
+        userId: providerId,
+        isVerified: true,
+        isAvailable: true,
+      },
+    }),
+  ]);
 
   await createFormattedNotification(
     user,

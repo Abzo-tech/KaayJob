@@ -3,7 +3,7 @@
  * Inscription prestataire + vérification admin
  */
 
-import { testConnection, query } from '../../config/database';
+import { pool, testConnection, query } from '../../config/database';
 import bcrypt from 'bcryptjs';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'kaayjob-secret-key-change-in-production';
@@ -92,6 +92,7 @@ describe('Flux Prestataire - End-to-End', () => {
     if (adminUser) {
       await cleanupTestUser(adminUser.email);
     }
+    await pool.end().catch(() => {});
     console.log('\n========================================');
     console.log('🧹 Nettoyage terminé');
     console.log('========================================\n');

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "./components/Header";
 import { HomePage } from "./components/client/HomePage";
 import { LoginPage } from "./components/client/LoginPage";
@@ -48,11 +48,43 @@ import { PrestataireSettings } from "./components/prestataire/PrestataireSetting
 import { SubscriptionManagement } from "./components/prestataire/SubscriptionManagement";
 
 export default function App() {
+  const getPageFromLocation = () => {
+    const path = window.location.pathname.replace(/^\/+/, "");
+    const search = window.location.search || "";
+
+    if (!path) {
+      return "home";
+    }
+
+    return `${path}${search}`;
+  };
+
   // Initialiser currentPage basé sur le rôle de l'utilisateur au chargement
   const getInitialPage = () => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
     const savedPage = localStorage.getItem("currentPage");
+    const pageFromLocation = getPageFromLocation();
+
+    if (pageFromLocation !== "home") {
+      if (!pageFromLocation.startsWith("admin-") && !pageFromLocation.startsWith("prestataire-")) {
+        return pageFromLocation;
+      }
+
+      if (token && userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user.role === "admin" && pageFromLocation.startsWith("admin-")) {
+            return pageFromLocation;
+          }
+          if (user.role === "prestataire" && pageFromLocation.startsWith("prestataire-")) {
+            return pageFromLocation;
+          }
+        } catch {
+          return "home";
+        }
+      }
+    }
 
     if (token && userData) {
       try {
@@ -100,6 +132,17 @@ export default function App() {
     }
     return null;
   });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPage(getPageFromLocation());
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   const handleLogin = (authData: AuthResponse) => {
     // Save token and user data

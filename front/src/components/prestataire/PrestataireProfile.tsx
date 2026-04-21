@@ -66,6 +66,7 @@ export function PrestataireProfile() {
     specialization: "",
     address: "",
     zone: "",
+    hourlyRate: "",
     latitude: null as number | null,
     longitude: null as number | null,
   });
@@ -96,6 +97,7 @@ export function PrestataireProfile() {
           specialization: parsedUser.specialization || "",
           address: parsedUser.address || "",
           zone: parsedUser.zone || "",
+          hourlyRate: parsedUser.hourlyRate || "",
           latitude: parsedUser.latitude || null,
           longitude: parsedUser.longitude || null,
         });
@@ -391,12 +393,13 @@ export function PrestataireProfile() {
 
       await api.put("/auth/profile", userFields);
 
-      // 2. Mettre à jour les infos prestataire (specialty, bio, address, zone)
+      // 2. Mettre à jour les infos prestataire (specialty, bio, address, zone, hourlyRate)
       const providerFields = {
         specialty: profileData.specialization,
         bio: profileData.bio,
         address: profileData.address,
         location: profileData.zone,
+        hourlyRate: profileData.hourlyRate ? parseInt(profileData.hourlyRate) : null,
         latitude: profileData.latitude,
         longitude: profileData.longitude,
       };
@@ -497,6 +500,10 @@ export function PrestataireProfile() {
                   <div>
                     <Label htmlFor="specialization">Spécialisation</Label>
                     <Input id="specialization" value={profileData.specialization} onChange={(e) => setProfileData({...profileData, specialization: e.target.value})} className="mt-2" placeholder="Ex: Plombier, Électricien..." />
+                  </div>
+                  <div>
+                    <Label htmlFor="hourlyRate">Tarif horaire (CFA)</Label>
+                    <Input id="hourlyRate" type="number" value={profileData.hourlyRate} onChange={(e) => setProfileData({...profileData, hourlyRate: e.target.value})} className="mt-2" placeholder="5000" />
                   </div>
                   <div>
                     <Label htmlFor="bio">Biographie</Label>

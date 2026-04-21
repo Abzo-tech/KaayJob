@@ -62,7 +62,7 @@ export function ServiceProvidersListPage({
           console.log("📋 Requête sans filtre catégorie:", query);
         }
 
-        const response = await api.get(query);
+        const response = await api.get(query, false);
         if (response.success && response.data) {
           console.log("✅ Prestataires chargés:", response.data.length);
           setProviders(response.data);

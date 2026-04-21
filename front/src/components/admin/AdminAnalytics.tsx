@@ -71,7 +71,7 @@ export function AdminAnalytics() {
   const topProviders =
     analytics?.topProviders?.length > 0
       ? analytics.topProviders.map((p: any) => ({
-          name: `${p.first_name} ${p.last_name}`,
+          name: `${p.firstName || p.first_name || ""} ${p.lastName || p.last_name || ""}`,
           bookings: parseInt(p.bookings) || 0,
           revenue: parseFloat(p.revenue) || 0,
           rating: parseFloat(p.rating) || 0,
@@ -82,7 +82,7 @@ export function AdminAnalytics() {
     analytics?.categories?.length > 0
       ? analytics.categories.slice(0, 5).map((c: any, i: number) => ({
           name: c.name,
-          count: parseInt(c.service_count) || 0,
+          count: parseInt(c.serviceCount || c.service_count) || 0,
           percentage: 20 - i * 4,
         }))
       : [];
