@@ -104,11 +104,14 @@ export function PrestataireProfile() {
         fetchServices(parsedUser.id);
         fetchAvailability();
         loadBankDetails();
-        const savedImage = localStorage.getItem("profileImage");
+        // User-specific storage keys
+        const imageKey = `profileImage_${parsedUser.id}`;
+        const serviceImagesKey = `serviceImages_${parsedUser.id}`;
+        const savedImage = localStorage.getItem(imageKey);
         if (savedImage) {
           setProfileImage(savedImage);
         }
-        const savedServiceImages = localStorage.getItem("serviceImages");
+        const savedServiceImages = localStorage.getItem(serviceImagesKey);
         if (savedServiceImages) {
           try {
             setServiceImages(JSON.parse(savedServiceImages));
@@ -306,20 +309,22 @@ const handleSaveLocation = async () => {
   };
 
   const handleImageUpload = (image: string | null) => {
+    const imageKey = user?.id ? `profileImage_${user.id}` : "profileImage";
     if (image) {
       setProfileImage(image);
-      localStorage.setItem("profileImage", image);
+      localStorage.setItem(imageKey, image);
       toast.success("Photo de profil mise à jour!");
     } else {
       setProfileImage(null);
-      localStorage.removeItem("profileImage");
+      localStorage.removeItem(imageKey);
       toast.success("Photo de profil supprimée!");
     }
   };
 
   const handleServiceImagesChange = (images: string[]) => {
+    const serviceImagesKey = user?.id ? `serviceImages_${user.id}` : "serviceImages";
     setServiceImages(images);
-    localStorage.setItem("serviceImages", JSON.stringify(images));
+    localStorage.setItem(serviceImagesKey, JSON.stringify(images));
     toast.success("Images du portfolio mises à jour!");
   };
 

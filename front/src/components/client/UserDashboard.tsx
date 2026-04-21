@@ -107,13 +107,14 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
         setProfileData({
           firstName: parsedUser.firstName || "",
           lastName: parsedUser.lastName || "",
-          email: parsedUser.email || "",
+email: parsedUser.email || "",
           phone: parsedUser.phone || "",
         });
-      const savedImage = localStorage.getItem("profileImage");
-        if (savedImage) {
-          setProfileImage(savedImage);
-        }
+      const imageKey = `profileImage_${parsedUser.id}`;
+      const savedImage = localStorage.getItem(imageKey);
+      if (savedImage) {
+        setProfileImage(savedImage);
+      }
       } catch (e) {
         console.error("Error parsing user data:", e);
       }
@@ -228,13 +229,14 @@ export function UserDashboard({ onNavigate }: UserDashboardProps) {
     new Intl.NumberFormat("fr-FR").format(price) + " XOF";
 
   const handleImageUpload = (image: string | null) => {
+    const imageKey = user?.id ? `profileImage_${user.id}` : "profileImage";
     if (image) {
       setProfileImage(image);
-      localStorage.setItem("profileImage", image);
+      localStorage.setItem(imageKey, image);
       toast.success("Photo de profil mise à jour!");
     } else {
       setProfileImage(null);
-      localStorage.removeItem("profileImage");
+      localStorage.removeItem(imageKey);
       toast.success("Photo de profil supprimée!");
     }
   };

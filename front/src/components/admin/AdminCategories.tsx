@@ -36,6 +36,7 @@ import {
 } from "../ui/dialog";
 import { api } from "../../lib/api";
 import { toast } from "sonner";
+import { IconPicker } from "../common/IconPicker";
 
 export function AdminCategories() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -429,14 +430,10 @@ export function AdminCategories() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Icône (emoji)</label>
-              <Input
+              <IconPicker
                 value={createForm.icon}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, icon: e.target.value })
-                }
-                className="mt-1"
-                placeholder="ex: 🚿"
+                onChange={(icon) => setCreateForm({ ...createForm, icon })}
+                label="Icône"
               />
             </div>
             <div>
@@ -505,13 +502,10 @@ export function AdminCategories() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Icône (emoji)</label>
-              <Input
+              <IconPicker
                 value={editForm.icon}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, icon: e.target.value })
-                }
-                className="mt-1"
+                onChange={(icon) => setEditForm({ ...editForm, icon })}
+                label="Icône"
               />
             </div>
             <div>
