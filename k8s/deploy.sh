@@ -35,27 +35,36 @@ if [ -z "$REGISTRY" ]; then
     REGISTRY="localhost"
 fi
 
+# Se placer à la racine du projet (parent de k8s)
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$PROJECT_ROOT"
+
 # Construire et pousser les images
 echo ""
-echo -e "${GREEN}📦 Construction et poussée des images Docker...${NC}"
+echo -e "${GREEN}📦 Construction et thérapeutage des images Docker...${NC}"
 
 echo "Backend..."
-docker build -t "$REGISTRY/kaayjob-backend:latest" -f backend/Dockerfile .
+docker build -t "$REGISTRY/kaayjob-backend:latest" ./backend
 docker push "$REGISTRY/kaayjob-backend:latest"
 
 echo "Frontend..."
-docker build -t "$REGISTRY/kaayjob-frontend:latest" -f front/Dockerfile .
+docker build -t "$REGISTRY/kaayjob-frontend:latest" ./front
 docker push "$REGISTRY/kaayjob-frontend:latest"
 
 # Mettre à jour les images dans les fichiers de déploiement
 echo ""
 echo -e "${GREEN}✏️ Mise à jour des images dans les manifestes...${NC}"
-sed -i "s|image: kaayjob_backend:latest|image: $REGISTRY/kaayjob-backend:latest|g" k8s/backend.yaml
-sed -i "s|image: kaayjob_frontend:latest|image: $REGISTRY/kaayjob-frontend:latest|g" k8s/frontend.yaml
+sed -i "s|image: kaayjob-backend:latest|image: $REGISTRY/kaayjob-backend:latest|g" k8s/backend.yaml
+sed -i "s|image: kaayjob-frontend:latest|image: $REGISTRY/kaayjob-frontend:latest|g" k8s/frontend.yaml
+
+# Supprimer les anciennes ressources pour éviter les erreurs de selector
+echo ""
+echo -e "${GREEN}🗑️ Suppression des anciennes ressources...${NC}"
+kubectl delete -k k8s/ 2>/dev/null || true
 
 # Appliquer les manifestes Kubernetes
 echo ""
-echo -e "${GREEN}� Kubernetes: Application des manifestes...${NC}"
+echo -e "${GREEN}�️ Application des manifestes Kubernetes...${NC}"
 
 if [ "$HAS_KUSTOMIZE" = true ]; then
     kubectl apply -k k8s/

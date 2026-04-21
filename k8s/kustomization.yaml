@@ -16,6 +16,8 @@ resources:
   - ingress.yaml
 
 # Configurations communes
-commonLabels:
-  app.kubernetes.io/name: kaayjob
-  app.kubernetes.io/version: "1.0.0"
+labels:
+  - pairs:
+      app.kubernetes.io/name: kaayjob
+      app.kubernetes.io/version: "1.0.0"
+    includeSelectors: false
