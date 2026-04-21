@@ -234,8 +234,15 @@ export function PrestataireProfile() {
             toast.success("Position détectée avec succès!");
           }
         },
-        () => {
-          toast.error("Impossible d'obtenir votre position. Veuillez autoriser l'accès à la géolocalisation.");
+        (error) => {
+          console.log("Geolocation error:", error);
+          if (error.code === error.PERMISSION_DENIED) {
+            toast.error("Accès à la géolocalisation refusé. Veuillez autoriser l'accès dans les paramètres du navigateur.");
+          } else if (error.code === error.TIMEOUT) {
+            toast.error("Délai d'attente dépassé. Veuillez réessayer.");
+          } else {
+            toast.error("Impossible d'obtenir votre position. Veuillez vérifier vos paramètres.");
+          }
         },
         {
           enableHighAccuracy: true,
@@ -251,7 +258,7 @@ export function PrestataireProfile() {
   const handleSaveLocation = async () => {
     setIsSavingLocation(true);
     try {
-      // Préparer les données à envoyer, en excluant les valeurs null/undefined
+      // Prepare data - map zone to city for backend compatibility
       const dataToSend: any = {};
 
       if (profileData.latitude !== null && profileData.latitude !== undefined) {
@@ -267,11 +274,11 @@ export function PrestataireProfile() {
       }
 
       if (profileData.zone !== null && profileData.zone !== undefined && profileData.zone.trim() !== "") {
-        dataToSend.zone = profileData.zone;
+        dataToSend.city = profileData.zone;
       }
 
       if (profileData.specialization !== null && profileData.specialization !== undefined && profileData.specialization.trim() !== "") {
-        dataToSend.specialization = profileData.specialization;
+        dataToSend.specialty = profileData.specialization;
       }
 
       if (profileData.bio !== null && profileData.bio !== undefined && profileData.bio.trim() !== "") {
@@ -280,10 +287,10 @@ export function PrestataireProfile() {
 
       const response = await api.put("/providers/profile/location", dataToSend);
 
-      if (response.data?.success) {
-        toast.success("Informations de géolocalisation enregistrées avec succès!");
+      if (response?.success || response?.data?.success) {
+        toast.success("Informations enregistrées avec succès!");
       } else {
-        toast.error(response.data?.message || "Erreur lors de l'enregistrement");
+        toast.error(response?.message || response?.data?.message || "Erreur lors de l'enregistrement");
       }
     } catch (error: any) {
       console.error("Erreur sauvegarde localisation:", error);
