@@ -161,23 +161,20 @@ export function PrestataireProfile() {
         setAvailability(response.data.data.availability);
       }
     } catch (error: any) {
-      console.log("Disponibilité non disponible");
+      // Ignore error
     }
   };
 
   const handleSaveAvailability = async () => {
     setIsSavingAvailability(true);
     try {
-      console.log("🗓️ Saving availability:", JSON.stringify(availability)?.substring(0, 200));
       const response = await api.put("/providers/profile/availability", { availability });
-      console.log("🗓️ Response:", response);
       if (response?.success || response?.data?.success) {
         toast.success("Disponibilité mise à jour avec succès!");
       } else {
         toast.error(response?.message || response?.data?.message || "Erreur lors de la mise à jour");
       }
     } catch (error: any) {
-      console.error("Erreur sauvegarde disponibilité:", error);
       toast.error(error.message || "Erreur lors de la mise à jour");
     } finally {
       setIsSavingAvailability(false);
@@ -240,7 +237,6 @@ export function PrestataireProfile() {
           }
         },
         (error) => {
-          console.log("Geolocation error:", error);
           if (error.code === error.PERMISSION_DENIED) {
             toast.error("Accès à la géolocalisation refusé. Veuillez autoriser l'accès dans les paramètres du navigateur.");
           } else if (error.code === error.TIMEOUT) {
@@ -263,7 +259,6 @@ export function PrestataireProfile() {
 const handleSaveLocation = async () => {
     setIsSavingLocation(true);
     try {
-      console.log("📍 Saving location...");
       // Prepare data - map zone to city for backend compatibility
       const dataToSend: any = {};
  
@@ -290,10 +285,8 @@ const handleSaveLocation = async () => {
       if (profileData.bio !== null && profileData.bio !== undefined && profileData.bio.trim() !== "") {
         dataToSend.bio = profileData.bio;
       }
-      console.log("📍 Data to send:", dataToSend);
  
       const response = await api.put("/providers/profile/location", dataToSend);
-      console.log("📍 Response:", response);
  
       if (response?.success || response?.data?.success) {
         toast.success("Informations enregistrées avec succès!");
@@ -301,7 +294,6 @@ const handleSaveLocation = async () => {
         toast.error(response?.message || response?.data?.message || "Erreur lors de l'enregistrement");
       }
     } catch (error: any) {
-      console.error("Erreur sauvegarde localisation:", error);
       toast.error(error.message || "Erreur lors de l'enregistrement");
     } finally {
       setIsSavingLocation(false);
@@ -401,17 +393,14 @@ const handleSaveLocation = async () => {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
-      console.log("👤 Saving profile...");
       // 1. Mettre à jour les infos utilisateur de base (firstName, lastName, phone)
       const userFields = {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         phone: profileData.phone,
       };
-      console.log("👤 User fields:", userFields);
 
-      const userRes = await api.put("/auth/profile", userFields);
-      console.log("👤 User response:", userRes);
+      await api.put("/auth/profile", userFields);
 
       // 2. Mettre à jour les infos prestataire (specialty, bio, address, zone, hourlyRate)
       const providerFields = {
@@ -423,17 +412,14 @@ const handleSaveLocation = async () => {
         latitude: profileData.latitude,
         longitude: profileData.longitude,
       };
-      console.log("👤 Provider fields:", providerFields);
 
-      const providerRes = await api.put("/providers/profile", providerFields);
-      console.log("👤 Provider response:", providerRes);
+      await api.put("/providers/profile", providerFields);
 
       const updatedUser = { ...user, ...profileData };
       localStorage.setItem("user", JSON.stringify(updatedUser));
       setUser(updatedUser);
       toast.success("Profil mis à jour avec succès!");
     } catch (error: any) {
-      console.error("Error updating profile:", error);
       toast.error(error.message || "Erreur lors de la mise à jour du profil");
     } finally {
       setIsSaving(false);
@@ -465,12 +451,19 @@ const handleSaveLocation = async () => {
               />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{user?.firstName} {user?.lastName}</h1>
-              <p className="text-gray-600">{profileData.specialization || "Spécialisation non définie"}</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {user?.firstName} {user?.lastName}
+              </h1>
+              <p className="text-gray-600">
+                {profileData.specialization || "Spécialisation non définie"}
+              </p>
               <div className="flex items-center mt-1">
                 <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                    <Star
+                      key={i}
+                      className="w-4 h-4 text-yellow-400 fill-current"
+                    />
                   ))}
                 </div>
                 <span className="ml-2 text-sm text-gray-600">(4.8)</span>
@@ -480,96 +473,217 @@ const handleSaveLocation = async () => {
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-4 h-12">
             <TabsTrigger value="profile" className="text-base">
-              <Settings className="w-5 h-5 mr-2" />Profil
+              <Settings className="w-5 h-5 mr-2" />
+              Profil
             </TabsTrigger>
             <TabsTrigger value="services" className="text-base">
-              <Briefcase className="w-5 h-5 mr-2" />Services
+              <Briefcase className="w-5 h-5 mr-2" />
+              Services
             </TabsTrigger>
             <TabsTrigger value="availability" className="text-base">
-              <Clock className="w-5 h-5 mr-2" />Disponibilité
+              <Clock className="w-5 h-5 mr-2" />
+              Disponibilité
             </TabsTrigger>
             <TabsTrigger value="documents" className="text-base">
-              <FileText className="w-5 h-5 mr-2" />Documents
+              <FileText className="w-5 h-5 mr-2" />
+              Documents
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-white border-0 shadow-md">
-                <CardHeader><CardTitle>Informations Personnelles</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Informations Personnelles</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="firstName">Prénom</Label>
-                      <Input id="firstName" value={profileData.firstName} onChange={(e) => setProfileData({...profileData, firstName: e.target.value})} className="mt-2" />
+                      <Input
+                        id="firstName"
+                        value={profileData.firstName}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            firstName: e.target.value,
+                          })
+                        }
+                        className="mt-2"
+                      />
                     </div>
                     <div>
                       <Label htmlFor="lastName">Nom</Label>
-                      <Input id="lastName" value={profileData.lastName} onChange={(e) => setProfileData({...profileData, lastName: e.target.value})} className="mt-2" />
+                      <Input
+                        id="lastName"
+                        value={profileData.lastName}
+                        onChange={(e) =>
+                          setProfileData({
+                            ...profileData,
+                            lastName: e.target.value,
+                          })
+                        }
+                        className="mt-2"
+                      />
                     </div>
                   </div>
                   <div>
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={profileData.email} onChange={(e) => setProfileData({...profileData, email: e.target.value})} className="mt-2" disabled />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileData.email}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          email: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                      disabled
+                    />
                   </div>
                   <div>
                     <Label htmlFor="phone">Téléphone</Label>
-                    <Input id="phone" value={profileData.phone} onChange={(e) => setProfileData({...profileData, phone: e.target.value})} className="mt-2" />
+                    <Input
+                      id="phone"
+                      value={profileData.phone}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          phone: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="specialization">Spécialisation</Label>
-                    <Input id="specialization" value={profileData.specialization} onChange={(e) => setProfileData({...profileData, specialization: e.target.value})} className="mt-2" placeholder="Ex: Plombier, Électricien..." />
+                    <Input
+                      id="specialization"
+                      value={profileData.specialization}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          specialization: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                      placeholder="Ex: Plombier, Électricien..."
+                    />
                   </div>
                   <div>
                     <Label htmlFor="hourlyRate">Tarif horaire (CFA)</Label>
-                    <Input id="hourlyRate" type="number" value={profileData.hourlyRate} onChange={(e) => setProfileData({...profileData, hourlyRate: e.target.value})} className="mt-2" placeholder="5000" />
+                    <Input
+                      id="hourlyRate"
+                      type="number"
+                      value={profileData.hourlyRate}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          hourlyRate: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                      placeholder="5000"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="bio">Biographie</Label>
-                    <Textarea id="bio" value={profileData.bio} onChange={(e) => setProfileData({...profileData, bio: e.target.value})} className="mt-2" rows={4} placeholder="Décrivez votre expérience..." />
+                    <Textarea
+                      id="bio"
+                      value={profileData.bio}
+                      onChange={(e) =>
+                        setProfileData({ ...profileData, bio: e.target.value })
+                      }
+                      className="mt-2"
+                      rows={4}
+                      placeholder="Décrivez votre expérience..."
+                    />
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-md">
-                <CardHeader><CardTitle>Zone de Service & Géolocalisation</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Zone de Service & Géolocalisation</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="address">Adresse</Label>
-                    <Input id="address" value={profileData.address} onChange={(e) => setProfileData({...profileData, address: e.target.value})} className="mt-2" placeholder="Votre adresse complète" />
+                    <Input
+                      id="address"
+                      value={profileData.address}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          address: e.target.value,
+                        })
+                      }
+                      className="mt-2"
+                      placeholder="Votre adresse complète"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="zone">Zone de couverture</Label>
-                    <Input id="zone" value={profileData.zone} onChange={(e) => setProfileData({...profileData, zone: e.target.value})} className="mt-2" placeholder="Ex: Dakar, Plateau, Yoff..." />
+                    <Input
+                      id="zone"
+                      value={profileData.zone}
+                      onChange={(e) =>
+                        setProfileData({ ...profileData, zone: e.target.value })
+                      }
+                      className="mt-2"
+                      placeholder="Ex: Dakar, Plateau, Yoff..."
+                    />
                   </div>
 
                   {/* Géolocalisation */}
                   <div className="border-t pt-4">
-                    <Label className="text-base font-semibold">Coordonnées GPS</Label>
+                    <Label className="text-base font-semibold">
+                      Coordonnées GPS
+                    </Label>
                     <div className="grid grid-cols-2 gap-4 mt-2">
                       <div>
-                        <Label htmlFor="latitude" className="text-sm">Latitude</Label>
+                        <Label htmlFor="latitude" className="text-sm">
+                          Latitude
+                        </Label>
                         <Input
                           id="latitude"
                           type="number"
                           step="0.000001"
                           value={profileData.latitude || ""}
-                          onChange={(e) => setProfileData({...profileData, latitude: parseFloat(e.target.value) || null})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              latitude: parseFloat(e.target.value) || null,
+                            })
+                          }
                           className="mt-1"
                           placeholder="14.6937"
                         />
                       </div>
                       <div>
-                        <Label htmlFor="longitude" className="text-sm">Longitude</Label>
+                        <Label htmlFor="longitude" className="text-sm">
+                          Longitude
+                        </Label>
                         <Input
                           id="longitude"
                           type="number"
                           step="0.000001"
                           value={profileData.longitude || ""}
-                          onChange={(e) => setProfileData({...profileData, longitude: parseFloat(e.target.value) || null})}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              longitude: parseFloat(e.target.value) || null,
+                            })
+                          }
                           className="mt-1"
                           placeholder="-17.4441"
                         />
@@ -598,7 +712,9 @@ const handleSaveLocation = async () => {
 
                   <div className="flex items-center space-x-2">
                     <MapPin className="w-5 h-5 text-gray-500" />
-                    <span className="text-sm text-gray-600">Rayon de service: 20km</span>
+                    <span className="text-sm text-gray-600">
+                      Rayon de service: 20km
+                    </span>
                   </div>
 
                   <div className="flex gap-2">
@@ -608,9 +724,15 @@ const handleSaveLocation = async () => {
                       disabled={isSavingLocation}
                     >
                       {isSavingLocation ? (
-                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</>
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enregistrement...
+                        </>
                       ) : (
-                        <><Save className="mr-2 h-4 w-4" />Enregistrer géolocalisation</>
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Enregistrer géolocalisation
+                        </>
                       )}
                     </Button>
                   </div>
@@ -622,7 +744,9 @@ const handleSaveLocation = async () => {
           <TabsContent value="services">
             <div className="space-y-6">
               <Card className="bg-white border-0 shadow-md">
-                <CardHeader><CardTitle>Mes Services</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Mes Services</CardTitle>
+                </CardHeader>
                 <CardContent>
                   {isLoadingServices ? (
                     <div className="flex items-center justify-center py-8">
@@ -631,24 +755,45 @@ const handleSaveLocation = async () => {
                   ) : services.length === 0 ? (
                     <div className="text-center py-8">
                       <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-                      <p className="text-gray-500">Aucun service pour le moment</p>
-                      <Button onClick={() => setShowAddService(true)} className="mt-4 bg-gray-700 hover:bg-gray-800 text-white">
-                        <Plus className="w-4 h-4 mr-2" />Ajouter un service
+                      <p className="text-gray-500">
+                        Aucun service pour le moment
+                      </p>
+                      <Button
+                        onClick={() => setShowAddService(true)}
+                        className="mt-4 bg-gray-700 hover:bg-gray-800 text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Ajouter un service
                       </Button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {services.map((service) => (
-                          <div key={service.id} className="border rounded-lg p-4 relative group">
+                          <div
+                            key={service.id}
+                            className="border rounded-lg p-4 relative group"
+                          >
                             <div className="flex justify-between items-start">
                               <div>
-                                <h3 className="font-semibold">{service.name}</h3>
-                                <p className="text-sm text-gray-600">{service.description || "Aucune description"}</p>
-                                <p className="text-lg font-bold text-green-600 mt-2">{service.price?.toLocaleString() || "0"} XOF</p>
+                                <h3 className="font-semibold">
+                                  {service.name}
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  {service.description || "Aucune description"}
+                                </p>
+                                <p className="text-lg font-bold text-green-600 mt-2">
+                                  {service.price?.toLocaleString() || "0"} XOF
+                                </p>
                               </div>
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleDeleteService(service.id)} className="p-1 text-red-500 hover:bg-red-50 rounded" title="Supprimer">
+                                <button
+                                  onClick={() =>
+                                    handleDeleteService(service.id)
+                                  }
+                                  className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                  title="Supprimer"
+                                >
                                   <Trash2 size={16} />
                                 </button>
                               </div>
@@ -656,8 +801,12 @@ const handleSaveLocation = async () => {
                           </div>
                         ))}
                       </div>
-                      <Button onClick={() => setShowAddService(true)} className="w-full bg-gray-700 hover:bg-gray-800 text-white">
-                        <Plus className="w-4 h-4 mr-2" />Ajouter un nouveau service
+                      <Button
+                        onClick={() => setShowAddService(true)}
+                        className="w-full bg-gray-700 hover:bg-gray-800 text-white"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Ajouter un nouveau service
                       </Button>
                     </div>
                   )}
@@ -669,18 +818,40 @@ const handleSaveLocation = async () => {
                   <Card className="w-full max-w-md">
                     <CardHeader className="flex flex-row items-center justify-between">
                       <CardTitle>Ajouter un service</CardTitle>
-                      <button onClick={() => setShowAddService(false)} className="p-1 hover:bg-gray-100 rounded">
+                      <button
+                        title="-"
+                        onClick={() => setShowAddService(false)}
+                        className="p-1 hover:bg-gray-100 rounded"
+                      >
                         <X size={20} />
                       </button>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
                         <Label htmlFor="serviceName">Nom du service *</Label>
-                        <Input id="serviceName" value={newService.name} onChange={(e) => setNewService({...newService, name: e.target.value})} className="mt-2" placeholder="Ex: Réparation de plomberie" />
+                        <Input
+                          id="serviceName"
+                          value={newService.name}
+                          onChange={(e) =>
+                            setNewService({
+                              ...newService,
+                              name: e.target.value,
+                            })
+                          }
+                          className="mt-2"
+                          placeholder="Ex: Réparation de plomberie"
+                        />
                       </div>
                       <div>
-                        <Label htmlFor="serviceCategory">Catégorie (optionnel)</Label>
-                        <Select value={newService.categoryId} onValueChange={(value) => setNewService({...newService, categoryId: value})}>
+                        <Label htmlFor="serviceCategory">
+                          Catégorie (optionnel)
+                        </Label>
+                        <Select
+                          value={newService.categoryId}
+                          onValueChange={(value) =>
+                            setNewService({ ...newService, categoryId: value })
+                          }
+                        >
                           <SelectTrigger className="mt-2">
                             <SelectValue placeholder="Sélectionner une catégorie (optionnel)" />
                           </SelectTrigger>
@@ -695,15 +866,49 @@ const handleSaveLocation = async () => {
                       </div>
                       <div>
                         <Label htmlFor="serviceDesc">Description</Label>
-                        <Textarea id="serviceDesc" value={newService.description} onChange={(e) => setNewService({...newService, description: e.target.value})} className="mt-2" placeholder="Décrivez votre service..." rows={3} />
+                        <Textarea
+                          id="serviceDesc"
+                          value={newService.description}
+                          onChange={(e) =>
+                            setNewService({
+                              ...newService,
+                              description: e.target.value,
+                            })
+                          }
+                          className="mt-2"
+                          placeholder="Décrivez votre service..."
+                          rows={3}
+                        />
                       </div>
                       <div>
                         <Label htmlFor="servicePrice">Prix (XOF) *</Label>
-                        <Input id="servicePrice" type="number" value={newService.price} onChange={(e) => setNewService({...newService, price: e.target.value})} className="mt-2" placeholder="25000" />
+                        <Input
+                          id="servicePrice"
+                          type="number"
+                          value={newService.price}
+                          onChange={(e) =>
+                            setNewService({
+                              ...newService,
+                              price: e.target.value,
+                            })
+                          }
+                          className="mt-2"
+                          placeholder="25000"
+                        />
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={handleAddService} className="flex-1 bg-gray-700 hover:bg-gray-800 text-white">Ajouter</Button>
-                        <Button variant="outline" onClick={() => setShowAddService(false)}>Annuler</Button>
+                        <Button
+                          onClick={handleAddService}
+                          className="flex-1 bg-gray-700 hover:bg-gray-800 text-white"
+                        >
+                          Ajouter
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowAddService(false)}
+                        >
+                          Annuler
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -711,7 +916,9 @@ const handleSaveLocation = async () => {
               )}
 
               <Card className="bg-white border-0 shadow-md">
-                <CardHeader><CardTitle>Portfolio / Travaux Réalisés</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Portfolio / Travaux Réalisés</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <ServiceImageUpload
                     images={serviceImages}
@@ -725,7 +932,9 @@ const handleSaveLocation = async () => {
 
           <TabsContent value="availability">
             <Card className="bg-white border-0 shadow-md">
-              <CardHeader><CardTitle>Calendrier de Disponibilité</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle>Calendrier de Disponibilité</CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-7 gap-2">
@@ -738,23 +947,79 @@ const handleSaveLocation = async () => {
                       { key: "saturday", label: "Sam" },
                       { key: "sunday", label: "Dim" },
                     ].map(({ key, label }) => (
-                      <div key={key} className={`text-center p-3 border rounded-lg ${availability[key]?.enabled ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}`}>
+                      <div
+                        key={key}
+                        className={`text-center p-3 border rounded-lg ${availability[key]?.enabled ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"}`}
+                      >
                         <p className="font-medium text-sm">{label}</p>
                         <label className="flex items-center justify-center mt-2">
-                          <input type="checkbox" checked={availability[key]?.enabled || false} onChange={(e) => setAvailability({...availability, [key]: {...availability[key], enabled: e.target.checked}})} className="w-4 h-4 text-gray-600 rounded" />
+                          <input
+                            title="-"
+                            type="checkbox"
+                            checked={availability[key]?.enabled || false}
+                            onChange={(e) =>
+                              setAvailability({
+                                ...availability,
+                                [key]: {
+                                  ...availability[key],
+                                  enabled: e.target.checked,
+                                },
+                              })
+                            }
+                            className="w-4 h-4 text-gray-600 rounded"
+                          />
                         </label>
                         {availability[key]?.enabled && (
                           <div className="mt-2 space-y-1">
-                            <input type="time" value={availability[key]?.start || "08:00"} onChange={(e) => setAvailability({...availability, [key]: {...availability[key], start: e.target.value}})} className="w-full text-xs p-1 border rounded" />
+                            <input
+                              title="-"
+                              type="time"
+                              value={availability[key]?.start || "08:00"}
+                              onChange={(e) =>
+                                setAvailability({
+                                  ...availability,
+                                  [key]: {
+                                    ...availability[key],
+                                    start: e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full text-xs p-1 border rounded"
+                            />
                             <span className="text-xs text-gray-400">à</span>
-                            <input type="time" value={availability[key]?.end || "18:00"} onChange={(e) => setAvailability({...availability, [key]: {...availability[key], end: e.target.value}})} className="w-full text-xs p-1 border rounded" />
+                            <input
+                              title="-"
+                              type="time"
+                              value={availability[key]?.end || "18:00"}
+                              onChange={(e) =>
+                                setAvailability({
+                                  ...availability,
+                                  [key]: {
+                                    ...availability[key],
+                                    end: e.target.value,
+                                  },
+                                })
+                              }
+                              className="w-full text-xs p-1 border rounded"
+                            />
                           </div>
                         )}
                       </div>
                     ))}
                   </div>
-                  <Button onClick={handleSaveAvailability} disabled={isSavingAvailability} className="w-full bg-gray-700 hover:bg-gray-800 text-white">
-                    {isSavingAvailability ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Enregistrement...</> : "Enregistrer les disponibilités"}
+                  <Button
+                    onClick={handleSaveAvailability}
+                    disabled={isSavingAvailability}
+                    className="w-full bg-gray-700 hover:bg-gray-800 text-white"
+                  >
+                    {isSavingAvailability ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Enregistrement...
+                      </>
+                    ) : (
+                      "Enregistrer les disponibilités"
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -764,28 +1029,70 @@ const handleSaveLocation = async () => {
           <TabsContent value="documents">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card className="bg-white border-0 shadow-md">
-                <CardHeader><CardTitle>Coordonnées Bancaires</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Coordonnées Bancaires</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <Label>Nom de la banque</Label>
-                    <Input className="mt-2" placeholder="Ex: CBAO, BICIS..." value={bankDetails.bankName} onChange={(e) => setBankDetails({...bankDetails, bankName: e.target.value})} />
+                    <Input
+                      className="mt-2"
+                      placeholder="Ex: CBAO, BICIS..."
+                      value={bankDetails.bankName}
+                      onChange={(e) =>
+                        setBankDetails({
+                          ...bankDetails,
+                          bankName: e.target.value,
+                        })
+                      }
+                    />
                   </div>
                   <div>
                     <Label>Numéro de compte</Label>
-                    <Input className="mt-2" placeholder="Numéro de compte bancaire" value={bankDetails.accountNumber} onChange={(e) => setBankDetails({...bankDetails, accountNumber: e.target.value})} />
+                    <Input
+                      className="mt-2"
+                      placeholder="Numéro de compte bancaire"
+                      value={bankDetails.accountNumber}
+                      onChange={(e) =>
+                        setBankDetails({
+                          ...bankDetails,
+                          accountNumber: e.target.value,
+                        })
+                      }
+                    />
                   </div>
                   <div>
                     <Label>Titulaire du compte</Label>
-                    <Input className="mt-2" value={bankDetails.accountHolder || `${profileData.firstName} ${profileData.lastName}`} onChange={(e) => setBankDetails({...bankDetails, accountHolder: e.target.value})} placeholder="Nom du titulaire du compte" />
+                    <Input
+                      className="mt-2"
+                      value={
+                        bankDetails.accountHolder ||
+                        `${profileData.firstName} ${profileData.lastName}`
+                      }
+                      onChange={(e) =>
+                        setBankDetails({
+                          ...bankDetails,
+                          accountHolder: e.target.value,
+                        })
+                      }
+                      placeholder="Nom du titulaire du compte"
+                    />
                   </div>
-                  <Button className="w-full bg-gray-700 hover:bg-gray-800 text-white" onClick={handleSaveBankDetails} disabled={isSavingBank}>
-                    <CreditCard className="w-4 h-4 mr-2" />{isSavingBank ? "Enregistrement..." : "Enregistrer"}
+                  <Button
+                    className="w-full bg-gray-700 hover:bg-gray-800 text-white"
+                    onClick={handleSaveBankDetails}
+                    disabled={isSavingBank}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    {isSavingBank ? "Enregistrement..." : "Enregistrer"}
                   </Button>
                 </CardContent>
               </Card>
 
               <Card className="bg-white border-0 shadow-md">
-                <CardHeader><CardTitle>Documents</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Documents</CardTitle>
+                </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 border rounded">
@@ -793,17 +1100,23 @@ const handleSaveLocation = async () => {
                         <FileText className="w-5 h-5 text-gray-500" />
                         <span>Carte d'identité</span>
                       </div>
-                      <Badge className="bg-green-100 text-green-800">Validé</Badge>
+                      <Badge className="bg-green-100 text-green-800">
+                        Validé
+                      </Badge>
                     </div>
                     <div className="flex items-center justify-between p-3 border rounded">
                       <div className="flex items-center space-x-3">
                         <FileText className="w-5 h-5 text-gray-500" />
                         <span>Certificat de qualification</span>
                       </div>
-                      <Badge className="bg-yellow-100 text-yellow-800">En attente</Badge>
+                      <Badge className="bg-yellow-100 text-yellow-800">
+                        En attente
+                      </Badge>
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full">Télécharger un document</Button>
+                  <Button variant="outline" className="w-full">
+                    Télécharger un document
+                  </Button>
                 </CardContent>
               </Card>
             </div>

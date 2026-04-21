@@ -187,6 +187,7 @@ export function CreateUserForm({
               Rôle <span className="text-red-500">*</span>
             </label>
             <select
+              title="-"
               value={form.role}
               onChange={(e) => updateField("role", e.target.value)}
               className="w-full mt-1 p-2.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-[#000080] focus:border-transparent"
