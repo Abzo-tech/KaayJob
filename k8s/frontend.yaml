@@ -20,16 +20,14 @@ spec:
     spec:
       containers:
         - name: frontend
-          # Remplacer par votre image Docker Hub ou registry
-          # image: votre-dockerhub-username/kaayjob-frontend:latest
-          image: kaayjob-frontend:latest
-          imagePullPolicy: IfNotPresent
+          image: abzotech/kaayjob-frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
               name: http
           env:
             - name: VITE_API_URL
-              value: "https://kaayjob.onrender.com/api"
+              value: "http://192.168.49.2:31403/api"
           resources:
             requests:
               memory: "128Mi"

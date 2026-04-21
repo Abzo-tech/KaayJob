@@ -18,6 +18,14 @@ spec:
         app: backend
         component: api
     spec:
+      initContainers:
+        - name: migrate
+          image: kaayjob-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "npx prisma migrate deploy || true"]
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@postgres-service:5432/kaayjob"
       containers:
         - name: backend
           # Remplacer par votre image Docker Hub ou registry
@@ -33,7 +41,7 @@ spec:
             - name: PORT
               value: "3000"
             - name: DATABASE_URL
-              value: "postgres://b9a0969b382808c1926482e10fd5a854e2fd7e020e81a9f3cc96e2885408ee95:sk_wqQoOr0QtZD7DSoDVsjPm@db.prisma.io:5432/postgres?sslmode=require"
+              value: "postgresql://postgres:postgres@postgres-service:5432/kaayjob"
             - name: JWT_SECRET
               value: "kaayjob-production-secret-key-change-in-production"
             - name: JWT_EXPIRES_IN
