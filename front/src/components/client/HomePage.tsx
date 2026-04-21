@@ -19,6 +19,7 @@ export interface Category {
   id: string;
   name: string;
   image: string;
+  icon?: string;
   description: string;
   slug: string;
 }
@@ -323,6 +324,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
                   id={category.id}
                   name={category.name}
                   image={category.image}
+                  icon={category.icon}
                   description={category.description}
                   onClick={() =>
                     onNavigate("service-providers", {
