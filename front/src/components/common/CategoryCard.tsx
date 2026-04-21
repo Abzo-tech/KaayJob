@@ -1,10 +1,12 @@
 import { ArrowRight } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { IconRenderer } from "./IconRenderer";
 
 interface CategoryCardProps {
   id: string;
   name: string;
   image: string;
+  icon?: string;
   description: string;
   onClick: () => void;
   index?: number;
@@ -14,6 +16,7 @@ export function CategoryCard({
   id,
   name,
   image,
+  icon,
   description,
   onClick,
   index = 0,
@@ -34,6 +37,13 @@ export function CategoryCard({
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        
+        {/* Icon Overlay */}
+        {icon && (
+          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg">
+            <IconRenderer name={icon} className="w-6 h-6 text-[#000080]" />
+          </div>
+        )}
       </div>
 
       {/* Content Overlay */}

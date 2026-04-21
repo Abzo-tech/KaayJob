@@ -37,6 +37,8 @@ import {
 import { api } from "../../lib/api";
 import { toast } from "sonner";
 import { IconPicker } from "../common/IconPicker";
+import { ImageUpload } from "../common/ImageUpload";
+import { IconRenderer } from "../common/IconRenderer";
 
 export function AdminCategories() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -297,7 +299,11 @@ export function AdminCategories() {
               {filteredCategories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell>
-                    <span className="text-2xl">{category.icon || "📁"}</span>
+                    {category.icon ? (
+                      <IconRenderer name={category.icon} className="w-6 h-6 text-[#000080]" />
+                    ) : (
+                      <Folder className="w-6 h-6 text-gray-400" />
+                    )}
                   </TableCell>
                   <TableCell>
                     <p className="font-medium">{category.name}</p>
@@ -358,7 +364,13 @@ export function AdminCategories() {
           {viewCategory && (
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <span className="text-4xl">{viewCategory.icon || "📁"}</span>
+                {viewCategory.icon ? (
+                  <div className="bg-blue-100 rounded-full p-3">
+                    <IconRenderer name={viewCategory.icon} className="w-8 h-8 text-[#000080]" />
+                  </div>
+                ) : (
+                  <Folder className="w-8 h-8 text-gray-400" />
+                )}
                 <div>
                   <label className="text-sm font-medium">Nom</label>
                   <p className="text-lg">{viewCategory.name}</p>
@@ -438,15 +450,12 @@ export function AdminCategories() {
             </div>
             <div>
               <label className="text-sm font-medium">
-                URL de l'image (optionnel)
+                Image de la catégorie
               </label>
-              <Input
-                value={createForm.image}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, image: e.target.value })
-                }
-                className="mt-1"
-                placeholder="https://..."
+              <ImageUpload
+                value={createForm.image || ""}
+                onChange={(image) => setCreateForm({ ...createForm, image: image || "" })}
+                label=""
               />
             </div>
           </div>
