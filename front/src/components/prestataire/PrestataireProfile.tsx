@@ -165,15 +165,17 @@ export function PrestataireProfile() {
   const handleSaveAvailability = async () => {
     setIsSavingAvailability(true);
     try {
+      console.log("🗓️ Saving availability:", JSON.stringify(availability)?.substring(0, 200));
       const response = await api.put("/providers/profile/availability", { availability });
-      if (response.data?.success) {
+      console.log("🗓️ Response:", response);
+      if (response?.success || response?.data?.success) {
         toast.success("Disponibilité mise à jour avec succès!");
       } else {
-        toast.error(response.data?.message || "Erreur lors de la mise à jour");
+        toast.error(response?.message || response?.data?.message || "Erreur lors de la mise à jour");
       }
     } catch (error: any) {
       console.error("Erreur sauvegarde disponibilité:", error);
-      toast.error(error.response?.data?.message || "Erreur lors de la mise à jour");
+      toast.error(error.message || "Erreur lors de la mise à jour");
     } finally {
       setIsSavingAvailability(false);
     }
@@ -255,38 +257,41 @@ export function PrestataireProfile() {
     }
   };
 
-  const handleSaveLocation = async () => {
+const handleSaveLocation = async () => {
     setIsSavingLocation(true);
     try {
+      console.log("📍 Saving location...");
       // Prepare data - map zone to city for backend compatibility
       const dataToSend: any = {};
-
+ 
       if (profileData.latitude !== null && profileData.latitude !== undefined) {
         dataToSend.latitude = profileData.latitude;
       }
-
+ 
       if (profileData.longitude !== null && profileData.longitude !== undefined) {
         dataToSend.longitude = profileData.longitude;
       }
-
+ 
       if (profileData.address !== null && profileData.address !== undefined && profileData.address.trim() !== "") {
         dataToSend.address = profileData.address;
       }
-
+ 
       if (profileData.zone !== null && profileData.zone !== undefined && profileData.zone.trim() !== "") {
         dataToSend.city = profileData.zone;
       }
-
+ 
       if (profileData.specialization !== null && profileData.specialization !== undefined && profileData.specialization.trim() !== "") {
         dataToSend.specialty = profileData.specialization;
       }
-
+ 
       if (profileData.bio !== null && profileData.bio !== undefined && profileData.bio.trim() !== "") {
         dataToSend.bio = profileData.bio;
       }
-
+      console.log("📍 Data to send:", dataToSend);
+ 
       const response = await api.put("/providers/profile/location", dataToSend);
-
+      console.log("📍 Response:", response);
+ 
       if (response?.success || response?.data?.success) {
         toast.success("Informations enregistrées avec succès!");
       } else {
@@ -294,7 +299,7 @@ export function PrestataireProfile() {
       }
     } catch (error: any) {
       console.error("Erreur sauvegarde localisation:", error);
-      toast.error(error.response?.data?.message || "Erreur lors de l'enregistrement");
+      toast.error(error.message || "Erreur lors de l'enregistrement");
     } finally {
       setIsSavingLocation(false);
     }
@@ -391,14 +396,17 @@ export function PrestataireProfile() {
   const handleSaveProfile = async () => {
     setIsSaving(true);
     try {
+      console.log("👤 Saving profile...");
       // 1. Mettre à jour les infos utilisateur de base (firstName, lastName, phone)
       const userFields = {
         firstName: profileData.firstName,
         lastName: profileData.lastName,
         phone: profileData.phone,
       };
+      console.log("👤 User fields:", userFields);
 
-      await api.put("/auth/profile", userFields);
+      const userRes = await api.put("/auth/profile", userFields);
+      console.log("👤 User response:", userRes);
 
       // 2. Mettre à jour les infos prestataire (specialty, bio, address, zone, hourlyRate)
       const providerFields = {
@@ -410,8 +418,10 @@ export function PrestataireProfile() {
         latitude: profileData.latitude,
         longitude: profileData.longitude,
       };
+      console.log("👤 Provider fields:", providerFields);
 
-      await api.put("/providers/profile", providerFields);
+      const providerRes = await api.put("/providers/profile", providerFields);
+      console.log("👤 Provider response:", providerRes);
 
       const updatedUser = { ...user, ...profileData };
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -419,7 +429,7 @@ export function PrestataireProfile() {
       toast.success("Profil mis à jour avec succès!");
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast.error(error.response?.data?.message || "Erreur lors de la mise à jour du profil");
+      toast.error(error.message || "Erreur lors de la mise à jour du profil");
     } finally {
       setIsSaving(false);
     }

@@ -300,6 +300,7 @@ export class ProviderController {
   static async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       const user = (req as any).user;
+      console.log("👤 updateProfile called, user:", user?.id);
 
       if (!user?.id) {
         res
@@ -331,6 +332,7 @@ export class ProviderController {
         profileImage,
         phone,
       } = req.body;
+      console.log("👤 Received:", { specialty, bio, hourlyRate, location, address, city });
 
       // Mettre à jour les informations utilisateur si fourni
       if (phone) {
@@ -341,9 +343,10 @@ export class ProviderController {
       }
 
       // Vérifier si le profil prestataire existe
-      const existingProfile = await prisma.providerProfile.findUnique({
+      let existingProfile = await prisma.providerProfile.findUnique({
         where: { userId: user.id },
       });
+      console.log("👤 Existing profile:", existingProfile?.id);
 
       const profileData: any = {};
 
@@ -362,6 +365,7 @@ export class ProviderController {
         profileData.serviceRadius = serviceRadius;
       if (profileImage !== undefined) profileData.profileImage = profileImage;
       if (isAvailable !== undefined) profileData.isAvailable = isAvailable;
+      console.log("👤 Data to save:", profileData);
 
       if (!existingProfile) {
         // Créer le profil s'il n'existe pas
@@ -369,15 +373,19 @@ export class ProviderController {
         if (profileData.isAvailable === undefined) {
           profileData.isAvailable = true;
         }
-        await prisma.providerProfile.create({
+        console.log("👤 Creating profile...");
+        existingProfile = await prisma.providerProfile.create({
           data: profileData,
         });
+        console.log("👤 Created profile:", existingProfile?.id);
       } else {
         // Mettre à jour le profil existant
-        await prisma.providerProfile.update({
+        console.log("👤 Updating profile...");
+        existingProfile = await prisma.providerProfile.update({
           where: { userId: user.id },
           data: profileData,
         });
+        console.log("👤 Updated profile:", existingProfile?.id);
       }
 
       res.json({ success: true, message: "Profil mis à jour avec succès" });
@@ -448,6 +456,7 @@ export class ProviderController {
   static async updateLocation(req: Request, res: Response): Promise<void> {
     try {
       const user = (req as any).user;
+      console.log("📍 updateLocation called, user:", user?.id, "role:", user?.role);
 
       if (!user?.id) {
         res
@@ -457,6 +466,7 @@ export class ProviderController {
       }
 
       const { latitude, longitude, address, city, region } = req.body;
+      console.log("📍 Received data:", { latitude, longitude, address, city, region });
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
         res
@@ -465,9 +475,10 @@ export class ProviderController {
         return;
       }
 
-      const existingProfile = await prisma.providerProfile.findUnique({
+      let existingProfile = await prisma.providerProfile.findUnique({
         where: { userId: user.id },
       });
+      console.log("📍 Existing profile:", existingProfile?.id);
 
       const locationData: any = {};
       if (latitude !== undefined) locationData.latitude = latitude;
@@ -477,15 +488,19 @@ export class ProviderController {
       if (region !== undefined) locationData.region = region;
 
       if (!existingProfile) {
+        console.log("📍 Creating new profile with:", locationData);
         locationData.userId = user.id;
-        await prisma.providerProfile.create({
+        existingProfile = await prisma.providerProfile.create({
           data: locationData,
         });
+        console.log("📍 Created profile:", existingProfile?.id);
       } else {
-        await prisma.providerProfile.update({
+        console.log("📍 Updating profile with:", locationData);
+        existingProfile = await prisma.providerProfile.update({
           where: { userId: user.id },
           data: locationData,
         });
+        console.log("📍 Updated profile:", existingProfile?.id);
       }
 
       await prisma.user.update({
@@ -509,6 +524,7 @@ export class ProviderController {
   static async updateAvailability(req: Request, res: Response): Promise<void> {
     try {
       const user = (req as any).user;
+      console.log("🗓️ updateAvailability called, user:", user?.id);
 
       if (!user?.id) {
         res
@@ -518,6 +534,7 @@ export class ProviderController {
       }
 
       const { isAvailable, availability } = req.body;
+      console.log("🗓️ Received:", { isAvailable, availability: JSON.stringify(availability)?.substring(0, 100) });
 
       if (user.role !== "PRESTATAIRE" && user.role !== "prestataire") {
         res
@@ -527,20 +544,23 @@ export class ProviderController {
       }
 
       // Vérifier si le profil prestataire existe
-      const existingProfile = await prisma.providerProfile.findUnique({
+      let existingProfile = await prisma.providerProfile.findUnique({
         where: { userId: user.id },
       });
+      console.log("🗓️ Existing profile:", existingProfile?.id, "isAvailable:", existingProfile?.isAvailable);
 
       if (!existingProfile) {
         // Créer le profil s'il n'existe pas avec des valeurs par défaut
         const availValue = isAvailable !== undefined ? isAvailable : true;
-        await prisma.providerProfile.create({
+        console.log("🗓️ Creating profile with:", { isAvailable: availValue, availability: !!availability });
+        existingProfile = await prisma.providerProfile.create({
           data: {
             userId: user.id,
             isAvailable: availValue,
             availability: availability || undefined,
           },
         });
+        console.log("🗓️ Created profile:", existingProfile?.id);
       } else {
         // Mettre à jour le profil existant
         const updateData: any = {};
@@ -553,10 +573,12 @@ export class ProviderController {
           updateData.availability = availability;
         }
 
-        await prisma.providerProfile.update({
+        console.log("🗓️ Updating with:", updateData);
+        existingProfile = await prisma.providerProfile.update({
           where: { userId: user.id },
           data: updateData,
         });
+        console.log("🗓️ Updated, new isAvailable:", existingProfile?.isAvailable);
       }
 
       res.json({
