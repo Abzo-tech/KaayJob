@@ -11,13 +11,13 @@ import {
 } from "../ui/dialog";
 
 interface User {
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   role: string;
-  is_verified?: boolean;
-  created_at: string;
+  isVerified?: boolean;
+  createdAt: string;
 }
 
 interface UserDetailsModalProps {
@@ -69,7 +69,7 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
           <div>
             <label className="text-sm font-medium">Nom complet</label>
             <p className="text-lg">
-              {user.first_name} {user.last_name}
+              {user.firstName} {user.lastName}
             </p>
           </div>
           <div>
@@ -86,13 +86,13 @@ export function UserDetailsModal({ user, onClose }: UserDetailsModalProps) {
           </div>
           <div>
             <label className="text-sm font-medium">Vérifié</label>
-            <p>{user.is_verified ? "Oui" : "Non"}</p>
+            <p>{user.isVerified ? "Oui" : "Non"}</p>
           </div>
           <div>
             <label className="text-sm font-medium">
               Date d'inscription
             </label>
-            <p>{formatDate(user.created_at)}</p>
+            <p>{formatDate(user.createdAt)}</p>
           </div>
         </div>
       </DialogContent>

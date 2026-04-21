@@ -14,18 +14,12 @@ export class ProviderController {
     try {
       const { limit = 50, category } = req.query as any;
 
-      // Récupérer les prestataires vérifiés avec leurs services si une catégorie est spécifiée
       const providers = await prisma.providerProfile.findMany({
         where: {
           isVerified: true,
           user: {
             role: "PRESTATAIRE",
-            isVerified: true,
           },
-          specialty: { not: null },
-          bio: { not: null },
-          hourlyRate: { not: null },
-          location: { not: null },
         },
         include: {
           user: {
@@ -68,8 +62,8 @@ export class ProviderController {
           ? parseFloat(provider.hourlyRate.toString())
           : null,
         yearsExperience: provider.yearsExperience,
-        location: provider.location,
-        isAvailable: provider.isAvailable,
+        location: provider.location || provider.city || provider.address || null,
+        isAvailable: provider.isAvailable ?? true,
         rating: parseFloat(provider.rating.toString() || "0"),
         totalReviews: provider.totalReviews || 0,
         totalBookings: provider.totalBookings || 0,
@@ -112,20 +106,17 @@ export class ProviderController {
           isVerified: true,
           latitude: { not: null },
           longitude: { not: null },
-          specialty: { not: null },
-          bio: { not: null },
-          hourlyRate: { not: null },
-          location: { not: null },
           user: {
             role: "PRESTATAIRE",
-            isVerified: true,
           },
         },
         include: {
           user: {
             select: {
+              id: true,
               firstName: true,
               lastName: true,
+              avatar: true,
             },
           },
         },
@@ -134,11 +125,25 @@ export class ProviderController {
       const transformedProviders = providers.map((provider: any) => ({
         id: provider.id,
         userId: provider.userId,
+        specialty: provider.specialty,
+        bio: provider.bio,
+        hourlyRate: provider.hourlyRate
+          ? parseFloat(provider.hourlyRate.toString())
+          : null,
+        yearsExperience: provider.yearsExperience,
+        location: provider.location || provider.city || provider.address || null,
         latitude: provider.latitude as number,
         longitude: provider.longitude as number,
+        isAvailable: provider.isAvailable ?? true,
+        rating: parseFloat(provider.rating.toString() || "0"),
+        totalReviews: provider.totalReviews || 0,
+        totalBookings: provider.totalBookings || 0,
+        isVerified: provider.isVerified,
         user: {
+          id: provider.user?.id,
           firstName: provider.user?.firstName,
           lastName: provider.user?.lastName,
+          avatar: provider.user?.avatar,
         },
       }));
 
@@ -171,7 +176,6 @@ export class ProviderController {
               phone: true,
               avatar: true,
               role: true,
-              isVerified: true,
             },
           },
           services: {
@@ -190,7 +194,7 @@ export class ProviderController {
         },
       });
 
-      if (!provider || provider.user?.role !== "PRESTATAIRE" || !provider.user?.isVerified) {
+      if (!provider || provider.user?.role !== "PRESTATAIRE" || !provider.isVerified) {
         res.status(404).json({ success: false, message: "Prestataire non trouvé" });
         return;
       }
@@ -202,7 +206,7 @@ export class ProviderController {
         bio: provider.bio,
         hourlyRate: provider.hourlyRate !== null ? parseFloat(provider.hourlyRate.toString()) : null,
         yearsExperience: provider.yearsExperience,
-        location: provider.location,
+        location: provider.location || provider.city || provider.address,
         latitude: provider.latitude,
         longitude: provider.longitude,
         isAvailable: provider.isAvailable,

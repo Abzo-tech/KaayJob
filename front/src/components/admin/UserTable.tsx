@@ -23,14 +23,14 @@ import {
 
 interface User {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   role: string;
-  is_verified?: boolean;
-  booking_count?: number;
-  created_at: string;
+  isVerified?: boolean;
+  bookingCount?: number;
+  createdAt: string;
 }
 
 interface UserTableProps {
@@ -102,7 +102,7 @@ export function UserTable({
                 <TableCell>
                   <div>
                     <p className="font-medium">
-                      {user.first_name} {user.last_name}
+                      {user.firstName} {user.lastName}
                     </p>
                     <p className="text-sm text-gray-500">{user.email}</p>
                   </div>
@@ -110,14 +110,14 @@ export function UserTable({
                 <TableCell>{user.phone || "-"}</TableCell>
                 <TableCell>
                   {getRoleBadge(user.role)}
-                  {user.role === "PRESTATAIRE" && !user.is_verified && (
+                  {user.role === "PRESTATAIRE" && !user.isVerified && (
                     <Badge className="ml-2 bg-orange-100 text-orange-800">
                       Non vérifié
                     </Badge>
                   )}
                 </TableCell>
-                <TableCell>{user.booking_count || 0}</TableCell>
-                <TableCell>{formatDate(user.created_at)}</TableCell>
+                <TableCell>{user.bookingCount || 0}</TableCell>
+                <TableCell>{formatDate(user.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -130,7 +130,7 @@ export function UserTable({
                         <Eye size={14} className="mr-2" />
                         Voir le profil
                       </DropdownMenuItem>
-                      {user.role === "PRESTATAIRE" && !user.is_verified && (
+                      {user.role === "PRESTATAIRE" && !user.isVerified && (
                         <DropdownMenuItem
                           className="text-green-600"
                           onClick={() => onVerifyProvider(user.id)}

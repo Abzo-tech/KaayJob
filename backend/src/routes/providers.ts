@@ -19,42 +19,39 @@ router.get("/", async (req: Request, res: Response) => {
   await ProviderController.getAll(req, res);
 });
 
-// GET /api/providers/:id - Détails d'un prestataire (public, doit être après les routes spécifiques)
-router.get("/:id", async (req: Request, res: Response) => {
-  await ProviderController.getById(req, res);
-});
-
-// Routes nécessitant une authentification (pour la gestion du profil)
-router.use(authenticate);
-
 // GET /api/providers/me - Profil du prestataire connecté (alias pour /profile)
-router.get("/me", async (req: Request, res: Response) => {
+router.get("/me", authenticate, async (req: Request, res: Response) => {
   await ProviderController.getProfile(req, res);
 });
 
 // GET /api/providers/profile - Profil du prestataire connecté
-router.get("/profile", async (req: Request, res: Response) => {
+router.get("/profile", authenticate, async (req: Request, res: Response) => {
   await ProviderController.getProfile(req, res);
 });
 
 // PUT /api/providers/profile - Mettre à jour le profil prestataire
-router.put("/profile", async (req: Request, res: Response) => {
+router.put("/profile", authenticate, async (req: Request, res: Response) => {
   await ProviderController.updateProfile(req, res);
 });
 
 // PUT /api/providers/profile/location - Mettre à jour la localisation
-router.put("/profile/location", async (req: Request, res: Response) => {
+router.put("/profile/location", authenticate, async (req: Request, res: Response) => {
   await ProviderController.updateLocation(req, res);
 });
 
 // PUT /api/providers/profile/availability - Mettre à jour la disponibilité
-router.put("/profile/availability", async (req: Request, res: Response) => {
+router.put("/profile/availability", authenticate, async (req: Request, res: Response) => {
   await ProviderController.updateAvailability(req, res);
 });
 
 // PUT /api/providers/profile/verification - Demander vérification
-router.put("/profile/verification", async (req: Request, res: Response) => {
+router.put("/profile/verification", authenticate, async (req: Request, res: Response) => {
   await ProviderController.requestVerification(req, res);
+});
+
+// GET /api/providers/:id - Détails d'un prestataire (public, doit être après les routes spécifiques)
+router.get("/:id", async (req: Request, res: Response) => {
+  await ProviderController.getById(req, res);
 });
 
 export default router;

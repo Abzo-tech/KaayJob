@@ -19,14 +19,28 @@ import { CreateUserForm, CreateUserData } from "./CreateUserForm";
 
 interface User {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   role: string;
-  is_verified?: boolean;
-  booking_count?: number;
-  created_at: string;
+  isVerified?: boolean;
+  bookingCount?: number;
+  createdAt: string;
+}
+
+function normalizeUser(user: any): User {
+  return {
+    id: user.id,
+    firstName: user.firstName ?? user.first_name ?? "",
+    lastName: user.lastName ?? user.last_name ?? "",
+    email: user.email ?? "",
+    phone: user.phone ?? undefined,
+    role: user.role ?? "",
+    isVerified: user.isVerified ?? user.is_verified ?? false,
+    bookingCount: user.bookingCount ?? user.booking_count ?? 0,
+    createdAt: user.createdAt ?? user.created_at ?? "",
+  };
 }
 
 export function AdminUsers() {
@@ -49,8 +63,10 @@ export function AdminUsers() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get("/admin/users?limit=100");
-      const usersData = response?.data || [];
+      const response = await api.get("/admin/users?limit=100", false);
+      const usersData = Array.isArray(response?.data)
+        ? response.data.map(normalizeUser)
+        : [];
       setUsers(usersData);
     } catch (error: any) {
       console.error("Erreur chargement utilisateurs:", error);
@@ -62,7 +78,7 @@ export function AdminUsers() {
 
   // Filtrer les utilisateurs
   const filteredUsers = users.filter((user) => {
-    const fullName = `${user.first_name || ""} ${user.last_name || ""}`.toLowerCase();
+    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.toLowerCase();
     const matchesSearch =
       fullName.includes(searchTerm.toLowerCase()) ||
       (user.email || "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -77,7 +93,7 @@ export function AdminUsers() {
   const totalProviders = users.filter((u) => u.role === "PRESTATAIRE").length;
   const totalClients = users.filter((u) => u.role === "CLIENT").length;
   const unverifiedProviders = users.filter(
-    (u) => u.role === "PRESTATAIRE" && !u.is_verified,
+    (u) => u.role === "PRESTATAIRE" && !u.isVerified,
   ).length;
 
   // Actions

@@ -140,7 +140,9 @@ export function ServiceProvidersMapPage({
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    params.categoryName || "all",
+  );
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [userAddress, setUserAddress] = useState("");
   const [mapCenter, setMapCenter] = useState<[number, number]>([14.7167, -17.4677]); // Dakar, Sénégal
@@ -150,7 +152,7 @@ export function ServiceProvidersMapPage({
     maxDistance: 50,
     minRating: 0,
     availableOnly: false, // Désactivé par défaut car données manquantes
-    maxPrice: 100,
+    maxPrice: 100000,
     verifiedOnly: false,
   });
 
@@ -164,8 +166,8 @@ export function ServiceProvidersMapPage({
         setLoading(true);
 
         const [categoriesResponse, providersResponse] = await Promise.all([
-          api.get("/categories"),
-          api.get("/providers/map")
+          api.get("/categories", false),
+          api.get("/providers/map", false)
         ]);
 
         if (categoriesResponse.success) {
@@ -436,12 +438,14 @@ export function ServiceProvidersMapPage({
                     <Slider
                       value={[filters.maxPrice]}
                       onValueChange={([value]) => setFilters({...filters, maxPrice: value})}
-                      max={200}
-                      min={10}
-                      step={10}
+                      max={100000}
+                      min={5000}
+                      step={5000}
                       className="mt-2"
                     />
-                    <span className="text-sm text-gray-600">{filters.maxPrice} CFA</span>
+                    <span className="text-sm text-gray-600">
+                      {filters.maxPrice.toLocaleString("fr-SN")} CFA
+                    </span>
                   </div>
 
                   <div className="space-y-3">

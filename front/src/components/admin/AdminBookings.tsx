@@ -58,12 +58,12 @@ export function AdminBookings() {
   };
 
   const filteredBookings = bookings.filter((booking) => {
-    const clientName = `${booking.client_first_name || ""} ${booking.client_last_name || ""}`.toLowerCase();
-    const providerName = `${booking.provider_first_name || ""} ${booking.provider_last_name || ""}`.toLowerCase();
+    const clientName = `${booking.clientFirstName || booking.client_first_name || ""} ${booking.clientLastName || booking.client_last_name || ""}`.toLowerCase();
+    const providerName = `${booking.providerFirstName || booking.provider_first_name || ""} ${booking.providerLastName || booking.provider_last_name || ""}`.toLowerCase();
     const matchesSearch =
       clientName.includes(searchTerm.toLowerCase()) ||
       providerName.includes(searchTerm.toLowerCase()) ||
-      (booking.service_name || "").toLowerCase().includes(searchTerm.toLowerCase());
+      (booking.serviceName || booking.service_name || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" ||
       booking.status?.toUpperCase() === statusFilter.toUpperCase();
@@ -291,22 +291,22 @@ export function AdminBookings() {
                   </TableCell>
                   <TableCell>
                     <p className="font-medium">
-                      {bookingItem.client_first_name} {bookingItem.client_last_name}
+                      {bookingItem.clientFirstName || bookingItem.client_first_name} {bookingItem.clientLastName || bookingItem.client_last_name}
                     </p>
                   </TableCell>
-                  <TableCell>{bookingItem.service_name || "-"}</TableCell>
+                  <TableCell>{bookingItem.serviceName || bookingItem.service_name || "-"}</TableCell>
                    <TableCell>
-                     {bookingItem.provider_first_name ? `${bookingItem.provider_first_name} ${bookingItem.provider_last_name}` : "Prestataire inconnu"}
+                     {(bookingItem.providerFirstName || bookingItem.provider_first_name) ? `${bookingItem.providerFirstName || bookingItem.provider_first_name} ${bookingItem.providerLastName || bookingItem.provider_last_name}` : "Prestataire inconnu"}
                    </TableCell>
                    <TableCell>
                      <div className="flex items-center gap-2">
                        <Calendar size={14} className="text-gray-400" />
                        <span>
-                         {formatDate(bookingItem.date)} {bookingItem.time}
+                         {formatDate(bookingItem.scheduledAt || bookingItem.date)} {bookingItem.time}
                        </span>
                      </div>
                    </TableCell>
-                   <TableCell>{formatPrice(bookingItem.total_price)} CFA</TableCell>
+                   <TableCell>{formatPrice(bookingItem.totalPrice || bookingItem.total_price)} CFA</TableCell>
                   <TableCell>{getStatusBadge(bookingItem.status)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

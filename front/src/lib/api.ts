@@ -14,6 +14,10 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, ""
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+const clearCache = () => {
+  cache.clear();
+};
+
 /**
  * headers par défaut pour les requêtes
  */
@@ -89,7 +93,9 @@ export const api = {
       headers: getHeaders(),
       body: body ? JSON.stringify(body) : undefined,
     });
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    clearCache();
+    return data;
   },
 
   // PUT request
@@ -99,7 +105,9 @@ export const api = {
       headers: getHeaders(),
       body: body ? JSON.stringify(body) : undefined,
     });
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    clearCache();
+    return data;
   },
 
   // DELETE request
@@ -108,7 +116,9 @@ export const api = {
       method: "DELETE",
       headers: getHeaders(),
     });
-    return handleResponse(response);
+    const data = await handleResponse(response);
+    clearCache();
+    return data;
   },
 };
 

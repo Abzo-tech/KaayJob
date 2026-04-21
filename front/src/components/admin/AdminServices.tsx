@@ -286,10 +286,10 @@ export function AdminServices() {
                     <p className="font-medium">{service.name}</p>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{service.category_name || "-"}</Badge>
+                    <Badge variant="outline">{service.categoryName || service.category_name || "-"}</Badge>
                   </TableCell>
                   <TableCell>
-                    {service.first_name} {service.last_name}
+                    {service.providerFirstName || service.first_name} {service.providerLastName || service.last_name}
                   </TableCell>
                   <TableCell>{formatPrice(service.price)}</TableCell>
                   <TableCell>{service.duration || "-"}</TableCell>
@@ -358,11 +358,11 @@ export function AdminServices() {
               </div>
               <div>
                 <label className="text-sm font-medium">Catégorie</label>
-                <p>{viewService.category_name || "-"}</p>
+                <p>{viewService.categoryName || viewService.category_name || "-"}</p>
               </div>
               <div>
                 <label className="text-sm font-medium">Prestataire</label>
-                <p>{viewService.first_name} {viewService.last_name}</p>
+                <p>{viewService.providerFirstName || viewService.first_name} {viewService.providerLastName || viewService.last_name}</p>
               </div>
               <div>
                 <label className="text-sm font-medium">Statut</label>

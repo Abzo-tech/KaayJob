@@ -58,9 +58,9 @@ export function AdminPayments() {
   }, []);
 
   const filteredPayments = payments.filter((payment: any) => {
-    const providerName = `${payment.first_name || ''} ${payment.last_name || ''}`.toLowerCase();
+    const providerName = `${payment.firstName || payment.first_name || ''} ${payment.lastName || payment.last_name || ''}`.toLowerCase();
     const matchesSearch = providerName.includes(searchTerm.toLowerCase()) ||
-      (payment.transaction_id || '').toLowerCase().includes(searchTerm.toLowerCase());
+      (payment.transactionId || payment.transaction_id || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || payment.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -320,24 +320,24 @@ export function AdminPayments() {
                   <TableRow key={payment.id}>
                     <TableCell>
                       <p className="font-medium">
-                        {payment.first_name} {payment.last_name}
+                        {payment.firstName || payment.first_name} {payment.lastName || payment.last_name}
                       </p>
                     </TableCell>
                     <TableCell>{parseFloat(payment.amount).toLocaleString()} CFA</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {getMethodIcon(payment.payment_method)}
-                        <span>{payment.payment_method || '-'}</span>
+                        {getMethodIcon(payment.paymentMethod || payment.payment_method)}
+                        <span>{payment.paymentMethod || payment.payment_method || '-'}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <code className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        {payment.transaction_id || '-'}
+                        {payment.transactionId || payment.transaction_id || '-'}
                       </code>
                     </TableCell>
                     <TableCell>
-                      {payment.created_at 
-                        ? new Date(payment.created_at).toLocaleDateString() 
+                      {payment.createdAt || payment.created_at 
+                        ? new Date(payment.createdAt || payment.created_at).toLocaleDateString() 
                         : '-'}
                     </TableCell>
                     <TableCell>{getStatusBadge(payment.status)}</TableCell>

@@ -160,18 +160,26 @@ async function verifyProvider(providerId, adminId) {
     if (user.role !== "PRESTATAIRE") {
         throw new Error("Cet utilisateur n'est pas un prestataire");
     }
-    const profile = await prisma_1.prisma.providerProfile.upsert({
-        where: { userId: providerId },
-        update: {
-            isVerified: true,
-            updatedAt: new Date(),
-        },
-        create: {
-            userId: providerId,
-            isVerified: true,
-            isAvailable: true,
-        },
-    });
+    const [, profile] = await prisma_1.prisma.$transaction([
+        prisma_1.prisma.user.update({
+            where: { id: providerId },
+            data: {
+                isVerified: true,
+            },
+        }),
+        prisma_1.prisma.providerProfile.upsert({
+            where: { userId: providerId },
+            update: {
+                isVerified: true,
+                updatedAt: new Date(),
+            },
+            create: {
+                userId: providerId,
+                isVerified: true,
+                isAvailable: true,
+            },
+        }),
+    ]);
     await (0, notificationService_1.createFormattedNotification)(user, "Compte vérifié", "Votre compte prestataire a été vérifié par l'administrateur. Vous pouvez maintenant offrir vos services sur la plateforme.", "success", "/prestataire/dashboard");
     return {
         id: profile.id,
