@@ -17,8 +17,9 @@ RUN npm ci
 # Copier le code source
 COPY . .
 
-# Variable d'environnement pour le build
-ENV VITE_API_URL=/api
+# Variable d'environnement pour le build (peut être surchargée avec --build-arg)
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_APP_NAME=KaayJob
 
 # Builder l'application
