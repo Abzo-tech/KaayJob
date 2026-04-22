@@ -7,20 +7,16 @@ metadata:
   name: kaayjob-ingress
   namespace: kaayjob
   annotations:
-    # Pour AWS EKS - utiliser alb.ingress.kubernetes.io
-    # Pour GKE - utiliser kubernetes.io/ingress.class: nginx
-    # Pour AKS - utiliser kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-    # Remplacer par votre domaine
-    - host: kaayjob.example.com
-      http:
+    - http:
         paths:
-          # Frontend
+          # Frontend (tous les chemins)
           - path: /
             pathType: Prefix
             backend:
@@ -28,7 +24,7 @@ spec:
                 name: frontend-service
                 port:
                   number: 80
-          # Backend API
+          # Backend API (/api prefix)
           - path: /api
             pathType: Prefix
             backend:
