@@ -18,7 +18,7 @@ export function HeroSection({ searchQuery, onSearchChange, onSearch, onNavigate 
           className="h-full w-full bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('https://blogger.googleusercontent.com/img/a/AVvXsEiQQekaAuYbcJ1ViZyux5Ff7VJcyBFdrskLnuLeBR4LWZDUmI-Z6It6cVziDg524vX4FdrRnAXuNXK3IGjkF91O5lrtd_H4tBwWTFfkIM9p_zX3fqjtbpRwf1PbtEC0JylkioIWPk1Y7KempJngy8eB1IVJ9cBCHx10OfT6eDmZM6RFWSgieIh2JI_F7NXp=s16000')",
+              "url(/public/images/home-hero-bg.png)",
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/45 to-[#000080]/55" />
