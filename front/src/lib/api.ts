@@ -74,8 +74,8 @@ export const api = {
 
     const data = await handleResponse(response);
 
-    // Mettre en cache les réponses réussies
-    if (useCache && response.ok) {
+    // Mettre en cache les réponses réussies (toujours mettre à jour le cache après une requête)
+    if (response.ok) {
       cache.set(cacheKey, { data, timestamp: Date.now() });
     }
 

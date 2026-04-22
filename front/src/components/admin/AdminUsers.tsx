@@ -46,10 +46,10 @@ export function AdminUsers() {
     loadUsers();
   }, []);
 
-  const loadUsers = async () => {
+  const loadUsers = async (useCache: boolean = true) => {
     try {
       setLoading(true);
-      const response = await api.get("/admin/users?limit=100");
+      const response = await api.get("/admin/users?limit=100", useCache);
       const usersData = response?.data || [];
       setUsers(usersData);
     } catch (error: any) {
@@ -80,28 +80,28 @@ export function AdminUsers() {
     (u) => u.role === "PRESTATAIRE" && !u.is_verified,
   ).length;
 
-  // Actions
-  const handleVerifyProvider = async (userId: string) => {
-    try {
-      setActionLoading(userId);
-      await api.put(`/admin/users/${userId}/verify`);
-      toast.success("Prestataire vérifié avec succès !");
-      loadUsers();
-      setTimeout(() => fetchNotifications(), 500);
-    } catch (error: any) {
-      console.error("Erreur vérification:", error);
-      toast.error(error.message || "Erreur lors de la vérification");
-    } finally {
-      setActionLoading(null);
-    }
-  };
+   // Actions
+   const handleVerifyProvider = async (userId: string) => {
+     try {
+       setActionLoading(userId);
+       await api.put(`/admin/users/${userId}/verify`);
+       toast.success("Prestataire vérifié avec succès !");
+       loadUsers(false);
+       setTimeout(() => fetchNotifications(), 500);
+     } catch (error: any) {
+       console.error("Erreur vérification:", error);
+       toast.error(error.message || "Erreur lors de la vérification");
+     } finally {
+       setActionLoading(null);
+     }
+   };
 
   const handleDeleteUser = async (userId: string) => {
     try {
       setActionLoading(userId);
       await api.delete(`/admin/users/${userId}`);
       toast.success("Utilisateur supprimé avec succès!");
-      loadUsers();
+      loadUsers(false);
       setTimeout(() => fetchNotifications(), 500);
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la suppression");
@@ -116,7 +116,7 @@ export function AdminUsers() {
       await api.post("/admin/users", data);
       toast.success("Utilisateur créé avec succès!");
       setCreateUserOpen(false);
-      loadUsers();
+      loadUsers(false);
       setTimeout(() => fetchNotifications(), 500);
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de la création");
