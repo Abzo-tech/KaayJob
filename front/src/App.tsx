@@ -74,10 +74,11 @@ export default function App() {
       if (token && userData) {
         try {
           const user = JSON.parse(userData);
-          if (user.role === "admin" && pageFromLocation.startsWith("admin-")) {
+          const userRole = (user.role || "").toLowerCase();
+          if (userRole === "admin" && pageFromLocation.startsWith("admin-")) {
             return pageFromLocation;
           }
-          if (user.role === "prestataire" && pageFromLocation.startsWith("prestataire-")) {
+          if (userRole === "prestataire" && pageFromLocation.startsWith("prestataire-")) {
             return pageFromLocation;
           }
         } catch {
@@ -89,23 +90,26 @@ export default function App() {
     if (token && userData) {
       try {
         const user = JSON.parse(userData);
+        // Normaliser le rôle pour la comparaison (camelCase)
+          const userRole = (user.role || "").toLowerCase();
+          
         // Vérifier si une page a été sauvegardée ET si elle est appropriée pour le rôle actuel
         if (savedPage) {
           const isAdminPage = savedPage.startsWith("admin-");
           const isPrestatairePage = savedPage.startsWith("prestataire-");
           
           // Ne restaurer que les pages appropriées au rôle
-          if (user.role === "admin" && isAdminPage) {
+          if ((userRole === "admin") && isAdminPage) {
             return savedPage;
-          } else if (user.role === "prestataire" && isPrestatairePage) {
+          } else if ((userRole === "prestataire") && isPrestatairePage) {
             return savedPage;
           }
           // Sinon, rediriger vers le dashboard par défaut selon le rôle
         }
         // Sinon, rediriger vers le dashboard approprié selon le rôle
-        if (user.role === "admin") {
+        if (userRole === "admin") {
           return "admin-dashboard";
-        } else if (user.role === "prestataire") {
+        } else if (userRole === "prestataire") {
           return "prestataire-dashboard";
         }
         // Pour les clients, rester sur la page d'accueil
@@ -150,10 +154,11 @@ export default function App() {
     localStorage.setItem("user", JSON.stringify(authData.user));
     setUser(authData.user);
 
-    // Redirect based on role
-    if (authData.user.role === "admin") {
+    // Redirect based on role (normalize to lowercase)
+    const userRole = (authData.user.role || "").toLowerCase();
+    if (userRole === "admin") {
       setCurrentPage("admin-dashboard");
-    } else if (authData.user.role === "prestataire") {
+    } else if (userRole === "prestataire") {
       setCurrentPage("prestataire-dashboard");
     } else {
       // Client stays on home
